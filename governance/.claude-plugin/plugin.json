@@ -1,0 +1,11 @@
+{
+  "name": "governance",
+  "description": "Executive AI personas and governance establish/audit skills for agentic-governance adopters",
+  "version": "0.1.0",
+  "author": {
+    "name": "djjay0131",
+    "email": "djjay@vt.edu"
+  },
+  "repository": "https://github.com/djjay0131/agentic-governance",
+  "keywords": ["governance", "adr", "memory-bank", "personas"]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "agentic-governance",
+  "description": "Portfolio governance: executive AI personas and establish/audit skills",
+  "owner": {
+    "name": "djjay0131",
+    "email": "djjay@vt.edu"
+  },
+  "plugins": [
+    {
+      "name": "governance",
+      "source": "./governance",
+      "description": "Executive personas (chief-architect, chief-reviewer, chief-product-officer) and /governance:establish + /governance:audit skills",
+      "version": "0.1.0",
+      "author": {
+        "name": "djjay0131"
+      }
+    }
+  ]
+}
