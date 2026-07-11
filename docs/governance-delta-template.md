@@ -66,6 +66,7 @@ allow docs/** link-target-only
 deny src/**
 deny scripts/**
 deny .github/**
+deny docs/adr/0000-template.md
 ```
 
 ## Platform Enforcement Reality
