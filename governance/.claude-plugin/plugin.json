@@ -1,7 +1,7 @@
 {
   "name": "governance",
-  "description": "Executive AI personas and governance establish/audit skills for agentic-governance adopters",
-  "version": "0.1.0",
+  "description": "Executive AI personas (incl. Repository Steward) and governance establish/audit skills for agentic-governance adopters",
+  "version": "0.2.0",
   "author": {
     "name": "djjay0131",
     "email": "djjay@vt.edu"
