@@ -1,12 +1,30 @@
 # Definition of Done
 
 Status: Active
-Last updated: 2026-07-09
+Last updated: 2026-07-11
+Owner: Project owner (canonical governance)
 
 ## Purpose
 
-This document defines when work is considered complete for adopting
-projects. Projects may add work types in their governance delta.
+This document is the single source of truth for when work is considered
+complete for adopting projects. Projects may add work types in their
+governance delta.
+
+## Which Checklist Applies at Which Governance Level
+
+Every change carries a governance level (`docs/governance-levels.md`):
+
+- **L0 — Administrative:** this document does not apply. L0 completion is
+  the Administrative Change Certification plus independent audit, per the
+  L0 Fast-Track Policy (`docs/l0-fast-track.md`).
+- **L1 — Governance & Architecture:** Design Work, Research Work, and/or
+  ADR Work below, as applicable.
+- **L2 — Implementation:** Implementation Work below, plus AI Feature Work
+  and Integration Work where applicable.
+- **L3 — Product:** Design Work below (product design docs), plus Research
+  Work where applicable.
+
+Merge Readiness applies to all semantic (L1–L3) PRs.
 
 ## Design Work
 
@@ -85,4 +103,12 @@ A PR is ready to merge when:
 - [ ] Review comments are resolved.
 - [ ] Required docs are updated.
 - [ ] ADR/memory-bank needs are addressed.
-- [ ] Project owner approves.
+- [ ] Project owner approves (L1–L3); L0 PRs merge via the steward fast
+      track where activated (`docs/l0-fast-track.md`), otherwise by the
+      project owner.
+
+## Cross-References
+
+- `docs/governance-levels.md` — classification model
+- `docs/l0-fast-track.md` — L0 completion (certification + audit)
+- `docs/review-checklist.md` — review criteria (source of truth)

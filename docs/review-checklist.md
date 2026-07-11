@@ -1,13 +1,26 @@
 # Review Checklist
 
 Status: Active
-Last updated: 2026-07-09
+Last updated: 2026-07-11
+Owner: Project owner (canonical governance)
 
 ## Purpose
 
-This checklist helps reviewers evaluate documentation, architecture, design,
-and implementation pull requests. The project's governance delta adds
-domain-specific alignment questions.
+This checklist is the single source of truth for review criteria. It helps
+reviewers evaluate documentation, architecture, design, and implementation
+pull requests. The project's governance delta adds domain-specific
+alignment questions. Do not maintain private question lists; propose
+changes to this checklist instead.
+
+## Applicability
+
+This checklist applies to all semantic (L1–L3) PRs. It does not apply to
+L0 fast-track PRs, which are audited solely against the eligibility
+conditions and path allowlist in `docs/l0-fast-track.md`. Apply the
+Universal and Alignment sections to every semantic PR; apply the
+Documentation, Architecture, AI, and Implementation sections wherever the
+PR touches that kind of work (typically Documentation/Architecture for L1,
+Implementation/AI for L2, Documentation for L3).
 
 ## Universal Review
 
@@ -68,3 +81,10 @@ domain-specific alignment questions.
 
 Would a future contributor understand this decision without reading the
 original chat? If not, the PR is not ready.
+
+## Cross-References
+
+- `docs/governance-levels.md` — level definitions and review requirements
+- `docs/l0-fast-track.md` — the L0 audit instrument (this checklist does
+  not apply there)
+- `docs/definition-of-done.md` — completion criteria (source of truth)

@@ -1,7 +1,8 @@
 # GitHub Labels
 
 Status: Active
-Last updated: 2026-07-09
+Last updated: 2026-07-11
+Owner: Project owner (canonical governance)
 
 ## Purpose
 
@@ -38,6 +39,18 @@ governance delta.
 - `priority-medium`
 - `priority-low`
 
+## Governance Level Labels
+
+- `gov-L0` — administrative, non-semantic; eligible for the Repository
+  Steward fast track where activated
+- `gov-L1` — governance & architecture (semantic; human review)
+- `gov-L2` — implementation (semantic; human review)
+- `gov-L3` — product (semantic; human review)
+
+Apply exactly one governance-level label to every PR, matching the level
+declared in the PR template. Level definitions live in
+`docs/governance-levels.md`.
+
 ## Milestone Labels
 
 Defined per project in `docs/governance-delta.md` (e.g.
@@ -59,6 +72,9 @@ Every issue/PR should have at least:
 - one type label,
 - one status label,
 - and one priority label when appropriate.
+
+Every PR additionally carries exactly one governance-level label
+(`gov-L0`…`gov-L3`).
 
 Prefer taxonomy type labels over GitHub defaults when classifying work (use
 `product` or `implementation` rather than `enhancement`); defaults remain
