@@ -1,16 +1,27 @@
 # Project Operating System
 
 Status: Active
-Last updated: 2026-07-09
+Last updated: 2026-07-11
+Owner: Project owner (canonical governance)
 Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
 
 ## Purpose
 
 This document explains how an adopting project operates day to day. The
-project's design-authority document (named in its governance delta — e.g. a
-Foundational Design Specification or approved design spec) defines *what* is
-being built. Architecture Governance defines *how decisions are controlled*.
-This document defines *how people and AI agents execute work*.
+project's design-authority document (named in its governance delta) defines
+*what* is being built. Architecture Governance
+(`docs/architecture-governance.md`) defines *how decisions are controlled*.
+This document defines *how people and AI agents execute work* — including
+which execution mode to use for a given work item. It is the single source
+of truth for the work-item lifecycle, the workflow-selection policy, the
+agent-contract field set, handoff requirements, quality gates, conflict
+resolution, and local sync.
+
+## Scope
+
+Day-to-day execution. Governance levels, roles, review policy, and merge
+authority live in `docs/architecture-governance.md` and
+`docs/governance-levels.md` and are cited here, not restated.
 
 ## Operating Model
 
@@ -18,10 +29,10 @@ Each project runs like a small AI-assisted product and engineering
 organization.
 
 The project owner acts as Chief Architect authority and final decision
-maker. AI agents act as executive role-holders (see `constitution/`) and
-specialist contributors (Constellize personas). All work is coordinated
-through GitHub issues, branches, pull requests, Markdown documents, ADRs,
-and the memory bank.
+maker. AI agents act as executive role-holders (see `constitution/` and
+`governance/agents/`) and specialist contributors (Constellize personas).
+All work is coordinated through GitHub issues, branches, pull requests,
+Markdown documents, ADRs, and the memory bank.
 
 ## Core Workflow
 
@@ -36,7 +47,8 @@ emergency repair.
 
 ### 1. Roadmap Selection
 
-Select work from the project roadmap or an approved issue.
+Select work from the project roadmap (path declared in the delta) or an
+approved issue.
 
 ### 2. Issue Creation
 
@@ -62,7 +74,8 @@ after design approval.
 
 ### 5. Draft PR
 
-Open a draft PR early. The PR becomes the collaboration space.
+Open a draft PR early, declaring the governance level (L0–L3). The PR
+becomes the collaboration space.
 
 ### 6. Review
 
@@ -71,61 +84,146 @@ ADR needs.
 
 ### 7. Approval and Merge
 
-The project owner approves and merges. Post-merge, local clones should pull
-from `main`.
+Merge per level (`docs/governance-levels.md`): L1–L3 by the project owner
+after review; L0 per the fast-track policy where activated. Post-merge,
+local clones should pull from `main`.
 
-## Weekly Operating Rhythm
+## Workflow-Selection Policy
 
-Suggested cadence:
+The Chief Architect selects the execution mode BEFORE substantial work
+begins and records the choice in the issue or PR. Execution mode is about
+how work is produced; it never changes what review the work requires
+(see Non-Negotiables below).
 
-### Planning
+### Mode 1 — Single Agent
 
-- Review roadmap.
-- Pick highest-value workstreams.
-- Assign agents.
-- Confirm dependencies.
+One agent, one bounded contract, one branch.
 
-### Production
+Use for: narrow fixes, bounded documentation edits, small implementation
+tasks, localized bugs, and uncomplicated L0 administration.
 
-- Agents work on branches.
-- Draft PRs are opened early.
-- Questions are captured in PRs or issues.
+### Mode 2 — Specialist Team
 
-### Architecture Review
+Static parallel agents with disjoint file scopes, followed by a
+reconciliation round.
 
-- Compare active PRs against the design-authority document and ADRs.
-- Resolve conflicts.
+Use for: cross-document design, domain work, data architecture, platform
+decisions, product definition, multi-expertise research, and
+implementation spanning several concerns.
+
+### Mode 3 — Dynamic Workflow (Ultracode)
+
+A dependency-aware orchestration script that launches bounded specialist
+agents in waves, runs an independent Governance Audit, and reconciles
+through a Lead Architect.
+
+Strong triggers:
+
+- Multi-repository work.
+- Cross-domain architecture.
+- Several parallel research streams.
+- Repository-wide transformations.
+- Dependency-ordered specialist waves.
+- Repeated audit/reconciliation cycles.
+- Tasks whose intermediate findings dynamically create new sub-tasks.
+- Work expected to use many agents or long context.
+- Tasks where an orchestration script should be generated and run.
+
+Canonical prompt language for invoking Mode 3:
+
+> Use an ultracode dynamic workflow. Construct a dependency-aware
+> orchestration plan, launch bounded specialist agents, run an independent
+> Governance Audit, reconcile through the Lead Architect, and preserve
+> progress across interruptions.
+
+### Mode-Selection Table
+
+| Signals in the work item | Mode |
+|---|---|
+| One file cluster, one expertise, bounded outcome; localized bug; routine L0 administration | Mode 1 — Single Agent |
+| Several documents or concerns, multiple expertises, scopes known up front and separable | Mode 2 — Specialist Team |
+| Dependencies between work units; findings will spawn sub-tasks; repo-wide or multi-repo scope; audit/reconcile cycles expected; many agents or long context | Mode 3 — Ultracode |
+
+Reusable prompt skeletons for all three modes live in
+`docs/patterns/prompt-patterns.md`; each repo accumulates its own
+evidence-backed execution lessons in a local `docs/patterns/execution-patterns.md`
+seeded from `docs/patterns/execution-patterns-template.md`.
+
+### Non-Negotiables (All Modes)
+
+- Ultracode is an execution mechanism, NOT a governance bypass. Semantic
+  work (L1/L2/L3) produced through ultracode still requires human review
+  per the governance levels in `docs/governance-levels.md`.
+- Every mode's output flows through Issue -> Branch -> PR. No mode skips
+  the Core Workflow above.
+- Interruption resilience is required in Modes 2 and 3: commit completed
+  specialist deliverables promptly, resume agents from transcripts, and
+  never lose specialist output.
+- Uncertain classification => semantic => human review (conservative
+  default; see `docs/governance-levels.md`).
+
+## Operating Rhythm
+
+Work runs in issue-scoped sprints, not on a fixed weekly calendar. Each
+sprint follows the same arc:
+
+### Plan
+
+- Select work from the roadmap or an approved issue.
+- The Chief Architect classifies the work (levels per
+  `docs/governance-levels.md`), selects the execution mode
+  (Workflow-Selection Policy above), and records both in the issue or PR.
+- Confirm dependencies between deliverables.
+
+### Execute
+
+- Agents work on branches under bounded contracts.
+- Draft PRs are opened early; questions are captured in PRs or issues.
+
+### Review
+
+- Compare the PR against the design-authority document and ADRs; resolve
+  conflicts.
 - Decide which changes require ADRs.
+- Human review for all semantic (L1/L2/L3) work.
 
-### Merge / Memory Update
+### Merge and Memory Update
 
-- Merge approved PRs.
-- Update memory bank.
-- Update roadmap status.
+- Merge approved PRs (per-level merge authority,
+  `docs/governance-levels.md`).
+- Update memory bank and roadmap status.
 - Create follow-up issues.
 
 ## Agent Assignment Contract
 
-Every AI agent should receive a bounded contract:
+Every AI agent must receive a bounded contract before starting work. The
+required elements are:
 
 ```text
 Role:
-Scope:
-Read first:
+Objective:
+Required reading:
 Required skills/workflows:
 Allowed files/directories:
 Do not modify:
 Deliverables:
 Definition of Done:
 Required sections:
+Sprint scope boundary (what this work is NOT):
 Open questions to answer:
 ADR candidates to identify:
-Branch name:
-PR title:
+Git rules (no git/gh mutations; who commits):
+Final report shape:
 ```
 
-The `Required skills/workflows` section must identify applicable Superpowers
-and Constellize workflows.
+The `Required skills/workflows` element must identify applicable
+Superpowers and Constellize workflows. The `Definition of Done` element
+cites the applicable checklist in `docs/definition-of-done.md`.
+
+The fully worked, parameterized skeleton for this contract — and its
+specializations per work type — is the Universal Bounded-Contract Skeleton
+in `docs/patterns/prompt-patterns.md`. Use it rather than improvising
+contract text.
 
 ## Agent Handoff Requirements
 
@@ -142,10 +240,9 @@ Each agent deliverable must include:
 
 ## Repository Areas
 
-### `llm/memory_bank/` (or `llm/memory-bank/`)
+### Memory bank (path declared in the delta)
 
-Current project context for AI continuity. The delta file records which
-layout the project uses.
+Current project context for AI continuity.
 
 ### `docs/`
 
@@ -239,3 +336,29 @@ git checkout <branch-name>
 A project should preserve the reasoning behind the product as carefully as
 it preserves the code. Projects are expected to evolve, but evolution must
 remain visible and reviewable.
+
+## Assumptions
+
+- Each adopting repo declares its roadmap and memory-bank paths in its
+  governance delta; this document refers to them abstractly.
+- Team shape and platform enforcement vary per repo; the delta's Platform
+  Enforcement Reality section records what is convention-enforced.
+
+## Open Questions
+
+- Whether Mode 3 warrants a standing, versioned orchestration script
+  template versus per-sprint generation (revisit as adopting repos
+  accumulate ultracode sprint evidence in their execution-patterns files).
+
+## Cross-References
+
+- `docs/architecture-governance.md` — decision control, roles, branch
+  naming.
+- `docs/governance-levels.md` — classification model, merge authority.
+- `docs/l0-fast-track.md` — the L0 lane.
+- `docs/patterns/prompt-patterns.md` — prompt skeletons and the Universal
+  Bounded-Contract Skeleton.
+- `docs/patterns/execution-patterns-template.md` — the execution-lessons
+  template repos instantiate.
+- `docs/definition-of-done.md` — Definition of Done checklists.
+- `docs/review-checklist.md` — reviewer checklist.
