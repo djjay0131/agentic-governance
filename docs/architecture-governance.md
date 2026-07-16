@@ -1,7 +1,7 @@
 # Architecture Governance
 
 Status: Active
-Last updated: 2026-07-11
+Last updated: 2026-07-14
 Owner: Project owner (canonical governance)
 Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
 
@@ -92,19 +92,27 @@ repo as one of:
 
 ## Roles and Responsibilities
 
-### Project Owner / Chief Architect (human)
+### Repository Owner (human)
 
-The project owner owns final decision authority. Responsibilities:
+The repository owner holds final decision authority and is the sole merge
+authority above L0. Responsibilities:
 
-- Approve or reject durable design decisions.
-- Review and merge all semantic (L1/L2/L3) pull requests — the sole merge
+- Merge approved semantic (L1/L2/L3) pull requests — the sole merge
   authority above L0.
+- Manage branch protection.
+- Repository administration.
+- Approve or reject durable design decisions.
 - Resolve conflicts between agents or documents, including classification
   disputes.
 - Set milestone priority.
 - Protect the project vision (per the delta).
 - Decide whether and when to activate the steward fast track
   (`docs/l0-fast-track.md` §Per-Repo Activation).
+
+Ownership does not, by itself, make the owner the author of the PRs they
+merge. Authoring a change and merging it are distinct responsibilities
+(see §Git Workflow → PR Responsibilities); for L1–L3 work the owner merges
+only after an independent reviewer approves.
 
 ### Chief Architect (AI executive role)
 
@@ -159,19 +167,72 @@ platform enforcement is unavailable, every rule in this workflow is
 convention-enforced. Squash merge is the recommended convention for all
 merges (`docs/branch-protection.md`).
 
-Normal workflow:
+### Governance invariant: PR before review
 
-1. Create or select GitHub issue.
-2. Create branch from `main`.
-3. Make scoped changes.
-4. Open draft PR, declaring the governance level (L0–L3).
-5. Review design and files changed.
-6. Update memory bank and ADRs if needed.
-7. Mark PR ready for review.
-8. Merge per level: L1–L3 by the human owner after review; L0 by the
-   Repository Steward after certification and audit where the fast track is
-   activated, otherwise by the human owner.
-9. Delete the merged branch.
+> Every semantic (L1–L3) change MUST exist as a Pull Request before review
+> can occur. Therefore opening a draft PR is an **author** responsibility.
+
+Review is an act performed *on* a pull request: a change that is not yet a
+PR cannot be reviewed, approved, or merged. It follows that the party doing
+the work — the author — is responsible for opening the draft PR that makes
+review possible. The repository owner does not open PRs on behalf of
+authors; the owner's role begins at merge.
+
+### PR Responsibilities
+
+Three distinct responsibilities govern every semantic change. In a solo
+project one person may wear more than one hat, but the responsibilities
+stay distinct, and for L1–L3 work the author↔reviewer and reviewer↔merge
+separations are never collapsed.
+
+**Author** — the party doing the work (human contributor or AI specialist):
+
+- Create the feature branch.
+- Implement the work.
+- Commit.
+- Push.
+- Open the DRAFT pull request (declaring the governance level).
+- Keep the PR description current.
+- Respond to review comments.
+- Update the branch.
+- Mark the PR ready for review.
+
+**Reviewer** — Chief Reviewer / Governance Auditor, or a delegated reviewer:
+
+- Architecture review.
+- Governance review.
+- Implementation review.
+- Approve or request changes.
+- Verify ADR compliance.
+- Verify invariants.
+
+**Repository Owner** — the human owner:
+
+- Merge approved PRs (sole merge authority above L0).
+- Manage branch protection.
+- Repository administration.
+
+### PR Lifecycle (normative)
+
+```
+Task → Branch → Draft PR → Review → Fix loop → Approval → Merge
+```
+
+| Stage | Actor | What happens |
+|---|---|---|
+| Task | Author (from issue / roadmap) | A scoped work item exists as a GitHub issue. |
+| Branch | Author | Branch created from `main`. |
+| Draft PR | Author | Author opens a DRAFT PR declaring the governance level — the change now exists as a reviewable PR (see the invariant above). |
+| Review | Reviewer | Reviewer applies `docs/review-checklist.md` to L1–L3 work. |
+| Fix loop | Author ↔ Reviewer | Author addresses comments and updates the branch; reviewer re-reviews. Repeats until resolved. |
+| Approval | Reviewer | Reviewer approves; author marks the PR ready for review. |
+| Merge | Repository Owner (L1–L3) / Repository Steward (L0, where activated) | Owner merges approved semantic PRs; L0 merges per the fast-track lane. Branch deleted post-merge. |
+
+Memory-bank and ADR updates the change requires are part of the author's
+work (`docs/definition-of-done.md`), completed before the PR is marked
+ready. No AI role merges its own work — the only exception is the
+Repository Steward on certified, independently audited L0 PRs in repos that
+have activated the fast track (`docs/l0-fast-track.md`).
 
 ## Branch Naming
 

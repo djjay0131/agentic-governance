@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.1 — 2026-07-14
+
+Governance correction (not a policy change): makes explicit the PR-authorship
+responsibility split we have consistently followed. Resolves issue #2 — the
+docs described the PR workflow actor-less, which implied the repository owner
+opens semantic PRs.
+
+- **PR Responsibilities** (`docs/architecture-governance.md` §Git Workflow):
+  three distinct responsibilities defined — **Author** (branch, implement,
+  commit, push, open DRAFT PR, keep description current, respond to review,
+  update branch, mark ready), **Reviewer** (architecture / governance /
+  implementation review, approve or request changes, verify ADR compliance,
+  verify invariants), **Repository Owner** (merge approved PRs, manage branch
+  protection, repository administration).
+- **Governance invariant** added: "Every semantic (L1–L3) change MUST exist
+  as a Pull Request before review can occur. Therefore opening a draft PR is
+  an author responsibility."
+- **Normative PR lifecycle / state machine**: Task → Branch → Draft PR →
+  Review → Fix loop → Approval → Merge, with each stage attributed to an
+  actor (replaces the actor-less "Normal workflow" list).
+- **Role de-conflation**: `### Project Owner / Chief Architect (human)` split
+  into a distinct **Repository Owner (human)** role; authoring and merging are
+  now explicitly separate responsibilities.
+- Aligned wording in `docs/project-operating-system.md` (Draft PR step) and
+  `docs/templates/contributing-template.md` (author opens the PR).
+
 ## 0.2.0 — 2026-07-11
 
 Generalizes baseball-ai's "Governance 2.0" (PR #26 / ADR-0013, 2026-07-11)

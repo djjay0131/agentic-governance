@@ -38,9 +38,12 @@ Orientation and pointers only.
 3. Classify your change at a governance level (L0–L3) before opening the
    PR. Uncertain classification means semantic, which means human review
    (agentic-governance `docs/governance-levels.md`, Conservative Default).
-4. Open a draft PR early using `.github/pull_request_template.md`,
-   including the governance-level declaration. Keep the PR scoped to one
-   concern.
+4. As the author, open a draft PR early using
+   `.github/pull_request_template.md`, including the governance-level
+   declaration. Keep the PR scoped to one concern. Opening the PR is an
+   author responsibility — the owner does not open PRs on your behalf
+   (agentic-governance `docs/architecture-governance.md` §Git Workflow →
+   PR Responsibilities).
 5. Meet the applicable Definition of Done for the declared level:
    agentic-governance `docs/definition-of-done.md`.
 6. Reviews of semantic (L1–L3) work apply agentic-governance
