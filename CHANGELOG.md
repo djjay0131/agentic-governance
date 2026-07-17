@@ -21,8 +21,10 @@ opens semantic PRs.
   Review → Fix loop → Approval → Merge, with each stage attributed to an
   actor (replaces the actor-less "Normal workflow" list).
 - **Role de-conflation**: `### Project Owner / Chief Architect (human)` split
-  into a distinct **Repository Owner (human)** role; authoring and merging are
-  now explicitly separate responsibilities.
+  so the human **Project Owner** is a distinct role from the AI Chief
+  Architect; authoring and merging are now explicitly separate
+  responsibilities. The Project Owner is named as the sole merge authority
+  once, citing `docs/governance-levels.md` as the source of truth.
 - Aligned wording in `docs/project-operating-system.md` (Draft PR step) and
   `docs/templates/contributing-template.md` (author opens the PR).
 

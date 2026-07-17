@@ -92,13 +92,14 @@ repo as one of:
 
 ## Roles and Responsibilities
 
-### Repository Owner (human)
+### Project Owner (human)
 
-The repository owner holds final decision authority and is the sole merge
-authority above L0. Responsibilities:
+The project owner (the "repository owner" in PR-responsibility terms) holds
+final decision authority and is the sole merge authority above L0
+(`docs/governance-levels.md` is the source of truth for merge authority).
+Responsibilities:
 
-- Merge approved semantic (L1/L2/L3) pull requests — the sole merge
-  authority above L0.
+- Merge approved semantic (L1/L2/L3) pull requests.
 - Manage branch protection.
 - Repository administration.
 - Approve or reject durable design decisions.
@@ -225,7 +226,7 @@ Task → Branch → Draft PR → Review → Fix loop → Approval → Merge
 | Draft PR | Author | Author opens a DRAFT PR declaring the governance level — the change now exists as a reviewable PR (see the invariant above). |
 | Review | Reviewer | Reviewer applies `docs/review-checklist.md` to L1–L3 work. |
 | Fix loop | Author ↔ Reviewer | Author addresses comments and updates the branch; reviewer re-reviews. Repeats until resolved. |
-| Approval | Reviewer | Reviewer approves; author marks the PR ready for review. |
+| Approval | Author, then Reviewer | Author marks the PR ready (converts it from draft); reviewer gives final approval. |
 | Merge | Repository Owner (L1–L3) / Repository Steward (L0, where activated) | Owner merges approved semantic PRs; L0 merges per the fast-track lane. Branch deleted post-merge. |
 
 Memory-bank and ADR updates the change requires are part of the author's
