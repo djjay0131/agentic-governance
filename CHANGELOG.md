@@ -2,8 +2,8 @@
 
 ## 0.2.0 — 2026-07-11
 
-Generalizes baseball-ai's "Governance 2.0" (PR #26 / ADR-0013, 2026-07-11)
-into the canonical framework.
+Generalizes a prior internal project's "Governance 2.0" into the canonical
+framework.
 
 - **Governance levels (L0–L3)**: new `docs/governance-levels.md` — the
   semantic vs non-semantic test, the conservative default, the closed
@@ -46,7 +46,7 @@ into the canonical framework.
 
 ## 0.1.0 — 2026-07-09
 
-- Initial release: generalized from baseball-ai's governance system
+- Initial release: generalized from a prior internal project's governance system
   (project-operating-system, architecture-governance, constitution,
   definition-of-done, review-checklist, branch-protection, labels,
   ADR/design/feature/research templates).

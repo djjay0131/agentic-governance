@@ -7,10 +7,9 @@ The AI Engineering Operating System for this portfolio: how work is
 planned, classified, executed, reviewed, decided, merged, and remembered —
 by humans and AI agents alike, across every adopting project.
 
-Seeded from the governance system developed in `baseball-ai` (2026-07-08),
-generalized for portfolio-wide use; v0.2 absorbs baseball-ai's
-"Governance 2.0" (levels, steward, workflow selection — PR #26 /
-ADR-0013).
+Seeded from a governance system developed in a prior internal project
+(2026-07-08), generalized for portfolio-wide use; v0.2 absorbs that
+project's "Governance 2.0" (levels, steward, workflow selection).
 
 ## The Model
 
