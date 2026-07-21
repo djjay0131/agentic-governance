@@ -62,8 +62,9 @@ Defined per project in `docs/governance-delta.md` (e.g.
 - `adr-needed`
 - `security-privacy`
 
-Projects may add domain-specific special labels in their delta (e.g.
-`youth-data`, `multi-sport`, `learning-system` in baseball-ai).
+Projects may add domain-specific special labels in their delta (e.g. a
+sports-analytics project might add `youth-data`, `multi-sport`,
+`learning-system`).
 
 ## Labeling Rules
 
