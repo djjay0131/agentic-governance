@@ -1,0 +1,22 @@
+# Reference: publish the Tier-1 Design Surface on every push to main.
+# Tier-2 (the LLM narrative) is NOT published here — it lands via the
+# /governance:publish-design-surface skill's review-gated PR. Adapt the
+# "Deploy" step to your Pages mechanism (jekyll / mkdocs / actions-pages).
+name: design-surface
+on:
+  push:
+    branches: [main]
+jobs:
+  design-surface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # design-surface + governance-checks diff against origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Generate Tier-1 surface
+        run: node governance/scripts/design-surface.mjs --delta docs/governance-delta.md --out docs/design
+      # - name: Deploy to Pages   # <-- adapt to your mechanism
+      #   run: ...
