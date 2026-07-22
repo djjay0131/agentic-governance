@@ -9,6 +9,8 @@ import {
   parseDeltaBlock,
   computeManifest,
   generate,
+  adrMeta,
+  buildAdrIndex,
 } from '../design-surface.mjs';
 
 // Build a throwaway fixture repo. Returns its absolute root.
@@ -106,4 +108,52 @@ test('generate writes the manifest to the output dir', () => {
   const written = JSON.parse(fs.readFileSync(path.join(root, 'docs', 'design', 'design-surface-manifest.json'), 'utf8'));
   assert.equal(written.narrative_inputs_hash, manifest.narrative_inputs_hash);
   assert.equal(gaps.length, 0);
+});
+
+test('adrMeta parses id, title, status, and supersedes', () => {
+  const root = fixture();
+  fs.writeFileSync(
+    path.join(root, 'docs', 'adr', '0002-second.md'),
+    '# ADR-0002: Second Decision\n\nStatus: Superseded\n\n## Supersedes\n\n0001-first.md\n'
+  );
+  const m = adrMeta(root, 'docs/adr', '0002-second.md');
+  assert.equal(m.id, '0002');
+  assert.equal(m.title, 'Second Decision');
+  assert.equal(m.status, 'Superseded');
+  assert.equal(m.supersedes, '0001-first.md');
+});
+
+test('adrMeta returns null supersedes when the section says None', () => {
+  const root = fixture();
+  const m = adrMeta(root, 'docs/adr', '0001-first.md');
+  assert.equal(m.supersedes, null);
+});
+
+test('buildAdrIndex renders a table row per ADR, sorted by id', () => {
+  const root = fixture();
+  fs.writeFileSync(
+    path.join(root, 'docs', 'adr', '0002-second.md'),
+    '# ADR-0002: Second Decision\n\nStatus: Accepted\n\n## Supersedes\n\nNone.\n'
+  );
+  const md = buildAdrIndex(root, 'docs/adr', []);
+  assert.match(md, /\| 0001 \| First Decision \| Accepted \| — \|/);
+  assert.match(md, /\| 0002 \| Second Decision \| Accepted \| — \|/);
+  assert.ok(md.indexOf('0001') < md.indexOf('0002'));
+});
+
+test('buildAdrIndex handles an empty ADR dir without crashing', () => {
+  const root = fixture();
+  for (const f of fs.readdirSync(path.join(root, 'docs', 'adr'))) {
+    fs.rmSync(path.join(root, 'docs', 'adr', f));
+  }
+  const md = buildAdrIndex(root, 'docs/adr', []);
+  assert.match(md, /No ADRs found/);
+});
+
+test('generate writes adr-index.md', () => {
+  const root = fixture();
+  const decl = parseDeltaBlock(fs.readFileSync(path.join(root, 'docs', 'governance-delta.md'), 'utf8'));
+  generate(root, decl, 'docs/design', { now: 'x' });
+  const md = fs.readFileSync(path.join(root, 'docs', 'design', 'adr-index.md'), 'utf8');
+  assert.match(md, /First Decision/);
 });
