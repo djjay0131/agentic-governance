@@ -1,0 +1,14 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  governance-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # governance-checks' adr-status diffs against origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run governance convention checks
+        run: node governance/scripts/governance-checks.mjs
