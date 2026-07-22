@@ -164,3 +164,96 @@ records its own platform's enforcement reality.
 - `docs/governance-delta-template.md` — the delta fields the script reads.
 - `governance/agents/repository-steward.md` — steward duties, including
   running these checks.
+
+---
+
+# design-surface.mjs — Design Surface Generator + Audit
+
+Status: Active
+Last updated: 2026-07-22
+Owner: Project owner (canonical governance)
+
+## Purpose
+
+Documents `governance/scripts/design-surface.mjs`, the generator and audit
+library for the opt-in **Design Surface** capability
+(`docs/design-surface.md`, `docs/adr/0001-design-surface-capability.md`).
+Like `governance-checks.mjs`, it is a plain Node ES module with **zero
+runtime dependencies** (`node:child_process`, `node:crypto`, `node:fs`,
+`node:path`, `node:url` only) and is exercised entirely by the built-in
+`node:test` runner (`node --test governance/scripts/test/*.test.mjs`) — no
+test framework, no `npm install`.
+
+It operates on the repository containing the current working directory
+(git toplevel), not the directory holding the script, and only acts when
+the target repo's `docs/governance-delta.md` carries a `## Design Surface`
+block with `Status: ENABLED`. Undeclared or `DISABLED` repos are entirely
+unaffected.
+
+## What It Generates
+
+Running the generator produces **Tier 1 only** — the deterministic,
+mechanically-derived facts (ADR index, taxonomy inclusion, module map,
+memory-bank/governance status, and a content-hash manifest). It never
+produces Tier 2, the LLM-synthesized "what we built and why" narrative;
+that is the job of the review-gated `/governance:publish-design-surface`
+skill (`governance/skills/publish-design-surface/SKILL.md`), which calls
+this generator for Tier 1 and then writes the cited narrative into a draft
+PR that only a human merges.
+
+## Usage
+
+```bash
+# Generate Tier 1 into the delta's declared output dir:
+node governance/scripts/design-surface.mjs
+
+# Overrides:
+node governance/scripts/design-surface.mjs --delta docs/governance-delta.md --out docs/design
+```
+
+## Flags
+
+- `--delta <path>` — path to the governance delta to read the
+  `## Design Surface` declaration from. Default: `docs/governance-delta.md`.
+- `--out <path>` — override the delta's declared `Output dir:` for where
+  Tier-1 artifacts and the manifest are written.
+- `--design-surface` — not a flag on this script's own CLI; this is the
+  mode `governance-checks.mjs` exposes (see below) to run the advisory
+  drift audit rather than the default L0/link/ADR checks.
+
+Exit code is non-zero only when the projection rule is violated — a
+declared source is missing (a "gap"). Gaps are always printed, never
+silent, and never fabricated as content.
+
+## `--design-surface` Audit Mode (in `governance-checks.mjs`)
+
+```bash
+node governance/scripts/governance-checks.mjs --design-surface
+```
+
+Non-blocking and self-contained: it does not run alongside the default
+link/ADR checks, and it **always exits 0**. It recomputes the current
+source hashes and compares them against the published manifest and the
+Tier-2 narrative's stamped input hash, printing one line per outcome:
+
+- `SKIP  design-surface (not declared)` / `(disabled)` — the block is
+  absent or `Status: DISABLED`.
+- `PASS  design-surface (fresh)` — no findings.
+- `WARN  design-surface: <message>` — one per finding, of kind
+  `missing-source` (a declared source is gone), `tier-1-out-of-date`
+  (published Tier-1 hashes disagree with current sources — CI hasn't
+  regenerated, or a generated file was hand-edited), or `stale-narrative`
+  (sources changed since the Tier-2 narrative was last generated — the one
+  that matters most; re-run `/governance:publish-design-surface`).
+
+## Cross-References
+
+- `docs/design-surface.md` — the canonical capability doc (two tiers, the
+  projection rule, adoption steps).
+- `docs/adr/0001-design-surface-capability.md` — the decision record.
+- `docs/governance-delta-template.md` — the `## Design Surface` block
+  fields (default `DISABLED`).
+- `governance/skills/publish-design-surface/SKILL.md` — the Tier-2,
+  review-gated skill that calls this generator.
+- `docs/templates/design-surface-ci-template.yml` — reference CI workflow
+  that runs this generator and publishes Tier 1 only.

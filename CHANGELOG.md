@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.3.0 — 2026-07-22
+
+Adds the **Design Surface** capability: an opt-in, default-disabled way for
+an adopting repo to publish a design view where every element is
+attributable to an authoritative source (the projection rule) — a two-tier
+generate/publish/verify model, never a new hand-authored source of truth.
+
+- **Generator** (`governance/scripts/design-surface.mjs`): zero-dependency
+  Node ES module, plain `node:` imports only, tested with the built-in
+  `node:test` runner (no `npm install`). Parses the delta's
+  `## Design Surface` block and deterministically emits Tier-1 artifacts —
+  ADR index, taxonomy (included from the repo's own pre-rendered artifact
+  plus a source-content hash, never re-rendered/parsed as YAML),
+  module-map/architecture tree, status page — plus a content-hash manifest.
+  Never fabricates: a missing declared source produces a visible gap marker
+  and a non-zero exit, not silence.
+- **`--design-surface` audit**: a non-blocking, advisory mode wired into
+  `governance/scripts/governance-checks.mjs` that recomputes current source
+  hashes and reports `missing-source`, `tier-1-out-of-date`, and
+  `stale-narrative` findings — `SKIP` when the capability is undeclared or
+  disabled, `PASS`/`WARN` otherwise; always exits 0.
+- **`publish-design-surface` skill** (`governance/skills/publish-design-surface/SKILL.md`):
+  Tier-2, review-gated. Regenerates Tier 1, synthesizes a cited "what we
+  built and why" narrative from ADRs/memory-bank/spec, stamps its input
+  hash for later drift detection, and opens a **draft PR** — the AI never
+  merges it; a human merge is the publish gate.
+- **Delta block**: `## Design Surface` added to
+  `docs/governance-delta-template.md` shipping `Status: DISABLED` — repos
+  that don't declare the block, or leave it disabled, are entirely
+  unaffected (no artifacts, no findings, no version-pin move).
+  `/governance:establish` offers to scaffold it; `/governance:audit` runs
+  the `--design-surface` check and reports currency.
+- **Reference CI template** (`docs/templates/design-surface-ci-template.yml`):
+  copy-paste workflow that fetches full history, runs the generator, and
+  publishes Tier 1 only — Tier 2 stays PR-gated, untouched by CI.
+- **Canonical doc + ADR-0001**: `docs/design-surface.md` describes the two
+  tiers and the projection rule; `docs/adr/0001-design-surface-capability.md`
+  records the decision (this also bootstraps agentic-governance's own
+  `docs/adr/` system, previously repo-local to adopters only).
+
+**Adoption is opt-in.** The Design Surface block ships DISABLED by default,
+and the delta-pin move to `v0.3` is likewise opt-in: only repos that
+actively adopt the capability need bump their governance version pin to
+`0.3.0`; repos that don't adopt it stay on their current pin unaffected.
+
 ## 0.2.0 — 2026-07-11
 
 Generalizes a prior internal project's "Governance 2.0" into the canonical
