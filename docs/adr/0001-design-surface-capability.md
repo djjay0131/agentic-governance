@@ -113,9 +113,10 @@ constraint. Instead the delta declares two paths:
 
 `buildTaxonomy` includes the rendered artifact verbatim (with a
 generated-from header noting both paths) and records the source file's SHA-256
-in the manifest for drift detection. `Taxonomy source: none` (and/or
-`Taxonomy rendered: none`) omits the taxonomy section entirely — taxonomy is
-domain-specific and not every adopting repo has one.
+in the manifest for drift detection. Only `Taxonomy rendered: none` (an absent
+rendered artifact) omits the taxonomy section entirely — taxonomy is
+domain-specific and not every adopting repo has one. `Taxonomy source: none`
+merely means no source hash is recorded (the header shows `source: n/a`).
 
 ## Consequences
 
