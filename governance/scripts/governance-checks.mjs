@@ -18,9 +18,11 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseDeltaBlock, auditDesignSurface } from './design-surface.mjs';
 
 const args = process.argv.slice(2);
 const l0Mode = args.includes('--l0');
+const designSurfaceMode = args.includes('--design-surface');
 function argValue(flag, fallback) {
   const i = args.indexOf(flag);
   return i >= 0 ? args[i + 1] : fallback;
@@ -380,6 +382,43 @@ function checkCert() {
     }
   }
   return failures;
+}
+
+// ---------- design-surface audit (--design-surface; advisory, spec §5) ----------
+//
+// Non-blocking: prints findings and always exits 0. This mode does NOT run
+// alongside the other checks above — it is a separate, self-contained report
+// on the opt-in Design Surface capability (governance/scripts/design-surface.mjs).
+
+function runDesignSurfaceAudit() {
+  const deltaPath = path.join(ROOT, DELTA);
+  if (!fs.existsSync(deltaPath)) {
+    console.log('SKIP  design-surface (not declared)');
+    return;
+  }
+  const decl = parseDeltaBlock(read(deltaPath));
+  if (!decl) {
+    console.log('SKIP  design-surface (not declared)');
+    return;
+  }
+  if (decl.status !== 'ENABLED') {
+    console.log('SKIP  design-surface (disabled)');
+    return;
+  }
+  const narrativeRel = path.join(decl.outputDir, 'narrative.md');
+  const findings = auditDesignSurface(ROOT, decl, { out: decl.outputDir, narrative: narrativeRel });
+  if (findings.length === 0) {
+    console.log('PASS  design-surface (fresh)');
+    return;
+  }
+  for (const f of findings) {
+    console.log(`WARN  design-surface: ${f.message}`);
+  }
+}
+
+if (designSurfaceMode) {
+  runDesignSurfaceAudit();
+  process.exit(0);
 }
 
 // ---------- runner ----------

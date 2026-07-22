@@ -292,6 +292,51 @@ export function generate(root, decl, outRel, opts = {}) {
   return { manifest, gaps };
 }
 
+// ---------- drift audit (--design-surface, advisory; spec §5) ----------
+
+export function readPublishedManifest(root, outRel) {
+  const p = path.join(root, outRel, 'design-surface-manifest.json');
+  if (!fs.existsSync(p)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+export function narrativeStampedHash(root, narrativeRel) {
+  const p = path.join(root, narrativeRel);
+  if (!fs.existsSync(p)) return null;
+  const m = fs.readFileSync(p, 'utf8').match(/narrative_inputs_hash:\s*([0-9a-f]+)/i);
+  return m ? m[1] : null;
+}
+
+// Compares the current sources against the published manifest and the
+// narrative's stamped hash. Advisory only: never throws, never blocks — the
+// caller (governance-checks.mjs --design-surface) prints WARN and exits 0.
+export function auditDesignSurface(root, decl, { out, narrative }) {
+  const findings = [];
+  const gaps = [];
+  const current = computeManifest(root, decl, { now: '', gaps });
+  for (const g of gaps) findings.push({ kind: 'missing-source', message: g });
+
+  const published = readPublishedManifest(root, out);
+  if (published) {
+    for (const k of ['taxonomy_hash', 'adr_set_hash', 'memory_bank_rev']) {
+      if (published[k] !== current[k]) {
+        findings.push({ kind: 'tier-1-out-of-date', message: `${k} differs from published surface (regenerate Tier 1 in CI)` });
+      }
+    }
+  }
+  if (narrative) {
+    const stamped = narrativeStampedHash(root, narrative);
+    if (stamped !== current.narrative_inputs_hash) {
+      findings.push({ kind: 'stale-narrative', message: 'narrative is stale vs current sources — run /governance:publish-design-surface' });
+    }
+  }
+  return findings;
+}
+
 // ---------- CLI ----------
 
 export function parseArgs(argv) {
