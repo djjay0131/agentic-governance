@@ -109,3 +109,15 @@ Status: INACTIVE
 
 [Sibling repos in this project's constellation and how authority flows
 between them.]
+
+## Design Surface
+
+Status: DISABLED                            # ENABLED to publish a design surface
+Taxonomy source: none                       # path to raw taxonomy (hashed), or none
+Taxonomy rendered: none                     # path to the repo's pre-rendered taxonomy artifact, or none
+ADR dir: docs/adr
+Memory bank: <memory-bank-path>
+Narrative sources: docs/adr, <memory-bank-path>
+Output dir: docs/design                     # published surface root
+Pages mechanism: none                        # jekyll | mkdocs | actions-pages | none
+Narrative review: required                   # Tier-2 is always PR-gated

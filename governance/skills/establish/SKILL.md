@@ -95,7 +95,16 @@ the ADR if the user asks, but never flip the status yourself.
    date, delta path). If it has none, recommend the Constellize
    `memory:establish` workflow before proceeding.
 
-8. **Report.** Summarize what was created, what needs the user (e.g. branch
+8. **Design Surface (opt-in, default DISABLED).** Offer to scaffold the
+   delta's `## Design Surface` block (already present in the template with
+   `Status: DISABLED`) — leave it disabled unless the user explicitly wants
+   to publish a design surface now. If they do, fill in `Taxonomy source`/
+   `Taxonomy rendered` (or `none`), `ADR dir`, `Memory bank`,
+   `Narrative sources`, `Output dir`, and `Pages mechanism`, and point them
+   at `docs/design-surface.md` and the `/governance:publish-design-surface`
+   skill. Declining leaves the repo entirely unaffected.
+
+9. **Report.** Summarize what was created, what needs the user (e.g. branch
    protection requires the remote or a paid plan), the ADR back-fill list,
    the platform-enforcement findings, and the first governed workflow
    reminder: from now on, Issue → Branch → Draft PR (with a governance-level

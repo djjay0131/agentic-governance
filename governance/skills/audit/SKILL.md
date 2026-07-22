@@ -75,6 +75,17 @@ This skill reports; it does not fix unless the user asks afterward.
    restates canonical policy instead of citing it (consolidation
    principle).
 
+10. **Design Surface currency (opt-in).** If the delta's `## Design Surface`
+    block is absent or `Status: DISABLED`, skip — the repo hasn't adopted
+    the capability and is unaffected. If `Status: ENABLED`, run
+    `node ~/code/agentic-governance/governance/scripts/governance-checks.mjs --design-surface`
+    (advisory; always exits 0) and report its findings: `missing-source`
+    (a declared taxonomy/ADR/memory-bank path doesn't exist),
+    `tier-1-out-of-date` (published manifest hashes differ from current
+    sources — CI didn't run or a generated file was hand-edited), and
+    `stale-narrative` (sources changed since the Tier-2 narrative was last
+    generated — recommend `/governance:publish-design-surface`).
+
 ## Report
 
 Output a findings table ranked by severity (blocking / should-fix / note),
