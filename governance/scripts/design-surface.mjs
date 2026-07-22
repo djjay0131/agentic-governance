@@ -1,0 +1,223 @@
+#!/usr/bin/env node
+// design-surface.mjs — deterministic Tier-1 Design Surface generator + audit
+// library for agentic-governance. Plain Node, zero dependencies (node: imports
+// only), same style as governance-checks.mjs. Runs against the adopting repo
+// (git toplevel of the cwd), NOT the directory holding this script.
+//
+// The generator NEVER fabricates: a missing declared source produces a visible
+// gap and a non-zero exit (the projection rule, spec §3). See docs/design-surface.md.
+//
+// Usage:
+//   node design-surface.mjs                          # generate Tier-1 + manifest
+//   node design-surface.mjs --delta docs/governance-delta.md  # delta path override
+//   node design-surface.mjs --out docs/design        # output dir override
+
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import url from 'node:url';
+
+const SCRIPT_DIR = path.dirname(url.fileURLToPath(import.meta.url));
+
+// ---------- hashing ----------
+
+export function sha256(buf) {
+  return createHash('sha256').update(buf).digest('hex');
+}
+export function hashString(s) {
+  return sha256(Buffer.from(s, 'utf8'));
+}
+export function hashFile(absPath) {
+  return sha256(fs.readFileSync(absPath));
+}
+
+// ---------- environment ----------
+
+export function gitToplevel(cwd = process.cwd()) {
+  return execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8' }).trim();
+}
+// The canonical package version this generator ships in (agentic-governance/VERSION),
+// two levels up from governance/scripts/.
+export function governanceVersion() {
+  return fs.readFileSync(path.join(SCRIPT_DIR, '..', '..', 'VERSION'), 'utf8').trim();
+}
+
+// ---------- markdown + delta parsing ----------
+
+// Body of a `## <name>` section, trimmed, up to the next `## ` heading or EOF.
+export function section(text, name) {
+  const lines = text.split('\n');
+  let inSec = false;
+  const out = [];
+  for (const line of lines) {
+    if (new RegExp(`^##\\s+${name}\\s*$`).test(line)) {
+      inSec = true;
+      continue;
+    }
+    if (inSec && /^##\s+/.test(line)) break;
+    if (inSec) out.push(line);
+  }
+  return out.join('\n').trim();
+}
+
+function norm(v) {
+  if (v === null || v === undefined) return null;
+  return /^none$/i.test(v.trim()) ? null : v.trim();
+}
+
+export function parseDeltaBlock(deltaText) {
+  if (!/^##\s+Design Surface\s*$/m.test(deltaText)) return null;
+  const body = section(deltaText, 'Design Surface');
+  const bodyLines = body.split('\n');
+  const field = (label) => {
+    for (const raw of bodyLines) {
+      const l = raw.replace(/\s+#.*$/, '').trim(); // strip trailing " # comment"
+      const m = l.match(new RegExp(`^${label}\\s*:\\s*(.*)$`, 'i'));
+      if (m) return m[1].trim();
+    }
+    return null;
+  };
+  return {
+    status: (field('Status') || 'DISABLED').toUpperCase(),
+    taxonomySource: norm(field('Taxonomy source')),
+    taxonomyRendered: norm(field('Taxonomy rendered')),
+    adrDir: field('ADR dir') || 'docs/adr',
+    memoryBank: norm(field('Memory bank')),
+    narrativeSources: (field('Narrative sources') || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    outputDir: field('Output dir') || 'docs/design',
+    pagesMechanism: (field('Pages mechanism') || 'none').toLowerCase(),
+    narrativeReview: field('Narrative review') || 'required',
+  };
+}
+
+// ---------- Tier-1 source hashing ----------
+
+export function adrFiles(root, adrRel) {
+  const dir = path.join(root, adrRel);
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => /^\d{4}-.*\.md$/.test(f) && f !== '0000-template.md')
+    .sort();
+}
+function adrStatus(root, adrRel, file) {
+  const m = fs.readFileSync(path.join(root, adrRel, file), 'utf8').match(/^Status:\s*(\w+)/m);
+  return m ? m[1] : null;
+}
+export function adrSetHash(root, adrRel, gaps) {
+  const dir = path.join(root, adrRel);
+  if (!fs.existsSync(dir)) {
+    gaps.push(`missing ADR dir: ${adrRel}`);
+    return null;
+  }
+  const parts = adrFiles(root, adrRel).map((f) => `${f.slice(0, 4)}:${adrStatus(root, adrRel, f) || '?'}`);
+  return hashString(parts.join('|'));
+}
+
+export function memoryBankFiles(root, memRel) {
+  const dir = path.join(root, memRel);
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .sort();
+}
+export function memoryBankRev(root, memRel, gaps) {
+  if (!memRel) return null;
+  const dir = path.join(root, memRel);
+  if (!fs.existsSync(dir)) {
+    gaps.push(`missing memory bank: ${memRel}`);
+    return null;
+  }
+  const h = createHash('sha256');
+  for (const f of memoryBankFiles(root, memRel)) {
+    h.update(f);
+    h.update('\0');
+    h.update(fs.readFileSync(path.join(dir, f)));
+  }
+  return h.digest('hex');
+}
+
+export function taxonomyHash(root, decl, gaps) {
+  if (!decl.taxonomySource) return null;
+  const p = path.join(root, decl.taxonomySource);
+  if (!fs.existsSync(p)) {
+    gaps.push(`missing taxonomy source: ${decl.taxonomySource}`);
+    return null;
+  }
+  return hashFile(p);
+}
+
+// ---------- manifest ----------
+
+export function computeManifest(root, decl, opts = {}) {
+  const gaps = opts.gaps || [];
+  const now = opts.now || new Date().toISOString();
+  const taxonomy_hash = taxonomyHash(root, decl, gaps);
+  const adr_set_hash = adrSetHash(root, decl.adrDir, gaps);
+  const memory_bank_rev = memoryBankRev(root, decl.memoryBank, gaps);
+  const narrative_inputs_hash = hashString([taxonomy_hash, adr_set_hash, memory_bank_rev].join('|'));
+  return {
+    taxonomy_hash,
+    adr_set_hash,
+    memory_bank_rev,
+    narrative_inputs_hash,
+    generated_at: now,
+    governance_version: governanceVersion(),
+  };
+}
+
+// ---------- generate (Tier-1 orchestration; extended in later tasks) ----------
+
+export function generate(root, decl, outRel, opts = {}) {
+  const gaps = [];
+  const manifest = computeManifest(root, decl, { now: opts.now, gaps });
+  const outDir = path.join(root, outRel);
+  fs.mkdirSync(outDir, { recursive: true });
+  const write = (name, content) =>
+    fs.writeFileSync(path.join(outDir, name), content.endsWith('\n') ? content : content + '\n');
+  write('design-surface-manifest.json', JSON.stringify(manifest, null, 2));
+  return { manifest, gaps };
+}
+
+// ---------- CLI ----------
+
+export function parseArgs(argv) {
+  const args = argv.slice(2);
+  const val = (flag, fb) => {
+    const i = args.indexOf(flag);
+    return i >= 0 ? args[i + 1] : fb;
+  };
+  return {
+    delta: val('--delta', 'docs/governance-delta.md'),
+    out: val('--out', null),
+    designSurface: args.includes('--design-surface'),
+  };
+}
+
+export function main(argv = process.argv) {
+  const opts = parseArgs(argv);
+  const root = gitToplevel();
+  const decl = parseDeltaBlock(fs.readFileSync(path.join(root, opts.delta), 'utf8'));
+  if (!decl || decl.status !== 'ENABLED') {
+    console.log('design-surface: capability DISABLED or not declared; nothing to do.');
+    return 0;
+  }
+  const outRel = opts.out || decl.outputDir;
+  const { gaps } = generate(root, decl, outRel);
+  if (gaps.length) {
+    console.error('design-surface: gaps found (missing declared sources — never fabricated):');
+    for (const g of gaps) console.error(`  - ${g}`);
+    return 1;
+  }
+  console.log(`design-surface: Tier-1 surface written to ${outRel}`);
+  return 0;
+}
+
+if (process.argv[1] && url.fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  process.exit(main());
+}
