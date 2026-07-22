@@ -11,6 +11,7 @@ import {
   generate,
   adrMeta,
   buildAdrIndex,
+  buildTaxonomy,
 } from '../design-surface.mjs';
 
 // Build a throwaway fixture repo. Returns its absolute root.
@@ -156,4 +157,34 @@ test('generate writes adr-index.md', () => {
   generate(root, decl, 'docs/design', { now: 'x' });
   const md = fs.readFileSync(path.join(root, 'docs', 'design', 'adr-index.md'), 'utf8');
   assert.match(md, /First Decision/);
+});
+
+test('buildTaxonomy includes the pre-rendered artifact when declared', () => {
+  const root = fixture();
+  const decl = parseDeltaBlock(
+    fs.readFileSync(path.join(root, 'docs', 'governance-delta.md'), 'utf8')
+  );
+  const gaps = [];
+  const tax = buildTaxonomy(root, decl, gaps);
+  assert.equal(tax.filename, 'taxonomy.md');
+  assert.match(tax.markdown, /# Topics/);
+  assert.match(tax.markdown, /Alpha/);
+  assert.equal(gaps.length, 0);
+});
+
+test('buildTaxonomy returns null when taxonomy is "none"', () => {
+  const decl = { taxonomyRendered: null, taxonomySource: null };
+  assert.equal(buildTaxonomy('/nope', decl, []), null);
+});
+
+test('buildTaxonomy records a gap when the declared artifact is missing', () => {
+  const root = fixture();
+  fs.rmSync(path.join(root, 'docs', 'topic-taxonomy.md'));
+  const decl = parseDeltaBlock(
+    fs.readFileSync(path.join(root, 'docs', 'governance-delta.md'), 'utf8')
+  );
+  const gaps = [];
+  const tax = buildTaxonomy(root, decl, gaps);
+  assert.match(tax.markdown, /_missing declared taxonomy artifact/i);
+  assert.equal(gaps.length, 1);
 });
