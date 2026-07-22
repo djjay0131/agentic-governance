@@ -205,6 +205,56 @@ export function buildTaxonomy(root, decl, gaps) {
   return { filename: 'taxonomy.md', markdown: `${header}${body}\n` };
 }
 
+// ---------- module map + status (Tier 1) ----------
+
+function walkTree(absDir, relDir, ignore, depth, maxDepth, lines) {
+  if (depth > maxDepth) return;
+  const entries = fs
+    .readdirSync(absDir, { withFileTypes: true })
+    .filter((e) => !e.name.startsWith('.'))
+    .filter((e) => {
+      const rel = relDir ? `${relDir}/${e.name}` : e.name;
+      return !ignore.includes(e.name) && !ignore.includes(rel);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+  for (const e of entries) {
+    const rel = relDir ? `${relDir}/${e.name}` : e.name;
+    lines.push(`${'  '.repeat(depth)}- ${e.name}${e.isDirectory() ? '/' : ''}`);
+    if (e.isDirectory()) {
+      walkTree(path.join(absDir, e.name), rel, ignore, depth + 1, maxDepth, lines);
+    }
+  }
+}
+
+// Deterministic, sorted, ignore-filtered, depth-limited directory tree of the
+// repo. Same inputs always produce the same output (no timestamps, no
+// filesystem-order dependence — entries are sorted at every level).
+export function buildModuleMap(root, { ignore, outRel }) {
+  const skip = [...new Set([...(ignore || []), '.git', 'node_modules', outRel])];
+  const lines = [];
+  walkTree(root, '', skip, 0, 3, lines);
+  return `# Architecture\n\nDeterministic module/package tree (depth ≤ 3), generated from the repository layout.\n\n${lines.join('\n')}\n`;
+}
+
+export function buildStatus(root, decl, manifest) {
+  const memFiles = decl.memoryBank
+    ? memoryBankFiles(root, decl.memoryBank).map((f) => `- \`${decl.memoryBank}/${f}\``)
+    : [];
+  return [
+    '# Status',
+    '',
+    `- Governance version: \`${manifest.governance_version}\``,
+    `- Design Surface: \`${decl.status}\``,
+    `- Pages mechanism: \`${decl.pagesMechanism}\``,
+    `- Generated at: \`${manifest.generated_at}\``,
+    '',
+    '## Memory bank',
+    '',
+    ...(memFiles.length ? memFiles : ['- _none declared_']),
+    '',
+  ].join('\n');
+}
+
 // ---------- manifest ----------
 
 export function computeManifest(root, decl, opts = {}) {
@@ -237,6 +287,8 @@ export function generate(root, decl, outRel, opts = {}) {
   write('adr-index.md', buildAdrIndex(root, decl.adrDir, gaps));
   const tax = buildTaxonomy(root, decl, gaps);
   if (tax) write(tax.filename, tax.markdown);
+  write('architecture.md', buildModuleMap(root, { ignore: [outRel], outRel }));
+  write('status.md', buildStatus(root, decl, manifest));
   return { manifest, gaps };
 }
 

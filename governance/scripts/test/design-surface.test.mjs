@@ -12,6 +12,8 @@ import {
   adrMeta,
   buildAdrIndex,
   buildTaxonomy,
+  buildModuleMap,
+  buildStatus,
 } from '../design-surface.mjs';
 
 // Build a throwaway fixture repo. Returns its absolute root.
@@ -187,4 +189,27 @@ test('buildTaxonomy records a gap when the declared artifact is missing', () => 
   const tax = buildTaxonomy(root, decl, gaps);
   assert.match(tax.markdown, /_missing declared taxonomy artifact/i);
   assert.equal(gaps.length, 1);
+});
+
+test('buildModuleMap renders a sorted, ignore-filtered tree', () => {
+  const root = fixture();
+  const md = buildModuleMap(root, { ignore: ['.git', 'node_modules', 'docs/design'], outRel: 'docs/design' });
+  assert.match(md, /# Architecture/);
+  assert.match(md, /docs\//);
+  assert.match(md, /llm\//);
+  assert.doesNotMatch(md, /node_modules/);
+  // deterministic: same inputs -> same output
+  assert.equal(md, buildModuleMap(root, { ignore: ['.git', 'node_modules', 'docs/design'], outRel: 'docs/design' }));
+});
+
+test('buildStatus reports version pin, memory-bank files, and generated_at', () => {
+  const root = fixture();
+  const decl = parseDeltaBlock(
+    fs.readFileSync(path.join(root, 'docs', 'governance-delta.md'), 'utf8')
+  );
+  const manifest = computeManifest(root, decl, { now: '2026-07-22T00:00:00Z', gaps: [] });
+  const md = buildStatus(root, decl, manifest);
+  assert.match(md, /# Status/);
+  assert.match(md, /activeContext\.md/);
+  assert.match(md, /2026-07-22T00:00:00Z/);
 });
