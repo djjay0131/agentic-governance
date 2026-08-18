@@ -73,7 +73,7 @@ preserves the design-authority hierarchy.
 ## 4. Components (added to agentic-governance)
 
 ### 4.1 Skill `/governance:publish-design-surface`
-`governance/skills/publish-design-surface/SKILL.md`. Run by an executive
+`plugin/skills/publish-design-surface/SKILL.md`. Run by an executive
 persona (chief-architect). Steps:
 1. Read the repo's delta `## Design Surface` declaration (sources, output dir,
    Pages mechanism).
@@ -84,7 +84,7 @@ persona (chief-architect). Steps:
    level; mark ready only after the citation self-check passes; **never merge**.
 5. If a declared source is missing, record a visible gap — never fabricate.
 
-### 4.2 Deterministic generator `governance/scripts/design-surface.mjs`
+### 4.2 Deterministic generator `plugin/scripts/design-surface.mjs`
 Plain Node, zero dependencies (like `governance-checks.mjs`). Emits Tier-1
 artifacts to the declared output dir and writes a **manifest**
 (`design-surface-manifest.json`): `taxonomy_hash`, `adr_set_hash`,
@@ -99,16 +99,16 @@ sources and the Tier-2 narrative's stamped `narrative_inputs_hash`. Reports
 findings (never auto-fixes). Optionally a non-blocking CI warning.
 
 ### 4.4 Delta capability declaration
-A `## Design Surface` block added to `docs/governance-delta-template.md`,
+A `## Design Surface` block added to `llm/governance/governance-delta-template.md`,
 capability-declared like temporal support; default DISABLED. See §6.
 
 ### 4.5 Reference CI workflow template
-`docs/templates/design-surface-ci-template.yml`: runs the generator and deploys
+`llm/governance/templates/design-surface-ci-template.yml`: runs the generator and deploys
 Tier-1 to Pages on push to `main`; leaves Tier-2 to the PR flow. Repos adapt it
 to their Pages mechanism (Jekyll / mkdocs / actions-pages).
 
 ### 4.6 Canonical doc + ADR
-`docs/design-surface.md` (the capability, the two tiers, the projection rule,
+`llm/governance/design-surface.md` (the capability, the two tiers, the projection rule,
 rollout) and an ADR recording the decision and the projection rule.
 
 ## 5. Data flow
@@ -137,9 +137,9 @@ catches "CI did not run" or a manual edit to a generated file).
 
 Status: ENABLED                            # DISABLED by default
 Taxonomy source: <path or "none">          # domain-specific; section omitted if "none"
-ADR dir: docs/adr
+ADR dir: llm/governance/adr
 Memory bank: <path>
-Narrative sources: <comma-separated paths> # e.g. docs/superpowers/specs, docs/adr, <memory-bank>
+Narrative sources: <comma-separated paths> # e.g. llm/specs, llm/governance/adr, <memory-bank>
 Output dir: docs/design                    # published surface root
 Pages mechanism: jekyll                     # jekyll | mkdocs | actions-pages | none
 Narrative review: required                  # Tier-2 is always PR-gated
@@ -156,7 +156,7 @@ publish). A repo omitting the block entirely has no Design Surface.
   claim carries a source anchor; an uncited claim blocks the PR from being
   marked ready.
 - **Human gate** → the Tier-2 PR is the review-before-publish control; the AI
-  never merges it (consistent with `constitution/shared-principles.md`).
+  never merges it (consistent with `llm/constitution/shared-principles.md`).
 - **Default-disabled** → zero impact on non-adopting repos.
 - **Staleness** → reported by the audit, never auto-fixed.
 
@@ -175,7 +175,7 @@ publish). A repo omitting the block entirely has no Design Surface.
   downstream delta pin moves to `v0.3` only for repos that adopt the capability;
   non-adopters stay on their current pin).
 - Ships: the skill, the generator, the `--design-surface` audit mode, the delta
-  template block, the reference CI workflow, `docs/design-surface.md`, and the
+  template block, the reference CI workflow, `llm/governance/design-surface.md`, and the
   ADR.
 - **Pilot on `agentic-kg`** — it already has the taxonomy (`seed_taxonomy.yml` →
   `topic-taxonomy.md`) and a Pages docs site, so adoption *generalizes its

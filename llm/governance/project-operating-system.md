@@ -3,14 +3,14 @@
 Status: Active
 Last updated: 2026-07-11
 Owner: Project owner (canonical governance)
-Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
+Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
 ## Purpose
 
 This document explains how an adopting project operates day to day. The
 project's design-authority document (named in its governance delta) defines
 *what* is being built. Architecture Governance
-(`docs/architecture-governance.md`) defines *how decisions are controlled*.
+(`llm/governance/architecture-governance.md`) defines *how decisions are controlled*.
 This document defines *how people and AI agents execute work* — including
 which execution mode to use for a given work item. It is the single source
 of truth for the work-item lifecycle, the workflow-selection policy, the
@@ -20,8 +20,8 @@ resolution, and local sync.
 ## Scope
 
 Day-to-day execution. Governance levels, roles, review policy, and merge
-authority live in `docs/architecture-governance.md` and
-`docs/governance-levels.md` and are cited here, not restated.
+authority live in `llm/governance/architecture-governance.md` and
+`llm/governance/governance-levels.md` and are cited here, not restated.
 
 ## Operating Model
 
@@ -29,8 +29,8 @@ Each project runs like a small AI-assisted product and engineering
 organization.
 
 The project owner acts as Chief Architect authority and final decision
-maker. AI agents act as executive role-holders (see `constitution/` and
-`governance/agents/`) and specialist contributors (Constellize personas).
+maker. AI agents act as executive role-holders (see `llm/constitution/` and
+`plugin/agents/`) and specialist contributors (Constellize personas).
 All work is coordinated through GitHub issues, branches, pull requests,
 Markdown documents, ADRs, and the memory bank.
 
@@ -84,7 +84,7 @@ ADR needs.
 
 ### 7. Approval and Merge
 
-Merge per level (`docs/governance-levels.md`): L1–L3 by the project owner
+Merge per level (`llm/governance/governance-levels.md`): L1–L3 by the project owner
 after review; L0 per the fast-track policy where activated. Post-merge,
 local clones should pull from `main`.
 
@@ -145,22 +145,22 @@ Canonical prompt language for invoking Mode 3:
 | Dependencies between work units; findings will spawn sub-tasks; repo-wide or multi-repo scope; audit/reconcile cycles expected; many agents or long context | Mode 3 — Ultracode |
 
 Reusable prompt skeletons for all three modes live in
-`docs/patterns/prompt-patterns.md`; each repo accumulates its own
-evidence-backed execution lessons in a local `docs/patterns/execution-patterns.md`
-seeded from `docs/patterns/execution-patterns-template.md`.
+`llm/governance/patterns/prompt-patterns.md`; each repo accumulates its own
+evidence-backed execution lessons in a local `llm/governance/patterns/execution-patterns.md`
+seeded from `llm/governance/patterns/execution-patterns-template.md`.
 
 ### Non-Negotiables (All Modes)
 
 - Ultracode is an execution mechanism, NOT a governance bypass. Semantic
   work (L1/L2/L3) produced through ultracode still requires human review
-  per the governance levels in `docs/governance-levels.md`.
+  per the governance levels in `llm/governance/governance-levels.md`.
 - Every mode's output flows through Issue -> Branch -> PR. No mode skips
   the Core Workflow above.
 - Interruption resilience is required in Modes 2 and 3: commit completed
   specialist deliverables promptly, resume agents from transcripts, and
   never lose specialist output.
 - Uncertain classification => semantic => human review (conservative
-  default; see `docs/governance-levels.md`).
+  default; see `llm/governance/governance-levels.md`).
 
 ## Operating Rhythm
 
@@ -171,7 +171,7 @@ sprint follows the same arc:
 
 - Select work from the roadmap or an approved issue.
 - The Chief Architect classifies the work (levels per
-  `docs/governance-levels.md`), selects the execution mode
+  `llm/governance/governance-levels.md`), selects the execution mode
   (Workflow-Selection Policy above), and records both in the issue or PR.
 - Confirm dependencies between deliverables.
 
@@ -190,7 +190,7 @@ sprint follows the same arc:
 ### Merge and Memory Update
 
 - Merge approved PRs (per-level merge authority,
-  `docs/governance-levels.md`).
+  `llm/governance/governance-levels.md`).
 - Update memory bank and roadmap status.
 - Create follow-up issues.
 
@@ -218,11 +218,11 @@ Final report shape:
 
 The `Required skills/workflows` element must identify applicable
 Superpowers and Constellize workflows. The `Definition of Done` element
-cites the applicable checklist in `docs/definition-of-done.md`.
+cites the applicable checklist in `llm/governance/definition-of-done.md`.
 
 The fully worked, parameterized skeleton for this contract — and its
 specializations per work type — is the Universal Bounded-Contract Skeleton
-in `docs/patterns/prompt-patterns.md`. Use it rather than improvising
+in `llm/governance/patterns/prompt-patterns.md`. Use it rather than improvising
 contract text.
 
 ## Agent Handoff Requirements
@@ -240,21 +240,108 @@ Each agent deliverable must include:
 
 ## Repository Areas
 
-### Memory bank (path declared in the delta)
+This repository has two planes, plus a small exempt class. Every path
+below is **declared in the repo's governance delta** (§Repository
+Layout), never hardcoded here: the canon prescribes the shape, the
+delta binds the paths. This is the memory-bank lesson applied
+consistently.
 
-Current project context for AI continuity.
+### The two planes
 
-### `docs/`
+The split is by **role**, not by authorship. Who wrote a document
+decides nothing; what the document *does* decides everything.
 
-Design, architecture, product, roadmap, and governance-delta documents.
+**Control plane — the `llm/` tree.** Artifacts that govern, plan,
+record, review, or operate this repository: governance policy and the
+governance delta, role charters, workflows, prompts and skills, design
+specs acting as design authority, implementation plans, backlog and
+feature specs, the memory bank, ADRs, roadmaps, execution patterns, and
+review and retrospective records. Control-plane documents are sources
+of truth, and nothing downstream is authoritative over them.
 
-### `docs/adr/`
+**Data plane — the artifacts tree (`docs/`).** Project and domain
+deliverables, external material, and derived views of control-plane
+content: product and API documentation, project/domain technical
+specifications and reference material, vendor and third-party
+specifications, external proposals, research sources, PDFs, diagrams,
+datasets, and published sites and generated views. Nothing here governs
+how this repository is operated.
 
-Architecture Decision Records.
+The Design Surface projection rule requires every published element to
+be attributable to an authoritative source. This is its inverse: **no
+artifact that governs repository operation lives in the artifacts
+tree, and any view placed there must name the `llm/` document it
+projects.**
 
-### `.github/`
+### Deciding where a document goes
 
-GitHub workflows, issue templates, and PR templates.
+Before creating any document, answer two questions in order.
+
+**Q1 — Does this artifact control how the repository is governed,
+planned, remembered, reviewed, or operated?** YES → control plane
+(`llm/`). This is governance policy and the governance delta, role
+charters, workflows, prompts and skills, design specs acting as design
+authority, implementation plans, backlog and feature specs, the memory
+bank, ADRs, roadmaps, execution patterns, and review and retrospective
+records.
+
+**Q2 — Otherwise: is it a project or domain deliverable, technical
+reference, external source, specification, or generated project
+documentation?** YES → the artifacts tree (`docs/`). This is product
+and API documentation, project/domain technical specifications and
+reference material, vendor and third-party specifications, external
+proposals, research sources, PDFs, diagrams, datasets, and published
+sites and generated views. A derived view of a control-plane document
+belongs here too, and must name the `llm/` document it projects.
+
+**Otherwise — do not invent a location.** Use the existing structure
+the artifact plainly belongs to (`src/`, `tests/`, `.github/`), or
+escalate to the Repository Steward
+(`plugin/agents/repository-steward.md` §Layout Escalations (Inbound)).
+
+If the answer to Q1 is unclear, treat the artifact as control plane.
+Misfiling a source of truth as an artifact is the failure this rule
+exists to prevent; the reverse is cheap to correct.
+
+### Canonical destinations
+
+| Content | Destination |
+|---|---|
+| Role charters, shared principles | `llm/constitution/` |
+| Governance policy, the delta, templates, patterns | `llm/governance/` |
+| Architecture Decision Records | `llm/governance/adr/` |
+| Design specs, the design-authority document | `llm/specs/` |
+| Implementation plans | `llm/plans/` |
+| Feature specs and backlog | `llm/features/` |
+| Memory bank | `llm/memory_bank/` |
+| Product/domain docs, external material, published views | `docs/` |
+
+ADRs are control plane: an ADR *is* the decision, not a report of one.
+A published ADR index may be generated into the artifacts tree as a
+derived view.
+
+A repo declares only the paths it uses. An absent slot is not a
+violation; an undeclared path is.
+
+### Tool-contract paths
+
+Some paths are fixed by a tool or a platform rather than chosen by
+this project. They sit outside both planes and are exempt. The class
+is closed:
+
+- `.github/` — workflows, issue templates, PR templates.
+- `.claude-plugin/` — the marketplace manifest.
+- The plugin payload root — whatever directory a marketplace `source`
+  field points at.
+- Root-convention files: `README.md`, `CHANGELOG.md`, `VERSION`,
+  `CONTRIBUTING.md`, `LICENSE`, `CLAUDE.md`, `AGENTS.md`.
+
+The exemption covers **location only**. A tool default is never design
+authority. Where a tool writes control-plane content into the
+artifacts tree, override the tool — in the repo's `CLAUDE.md`, which
+is the channel tools honor — and relocate the output. `docs/superpowers/`
+is the worked example, and the reason this section exists
+(`llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`).
 
 ### Application directories
 
@@ -352,13 +439,13 @@ remain visible and reviewable.
 
 ## Cross-References
 
-- `docs/architecture-governance.md` — decision control, roles, branch
+- `llm/governance/architecture-governance.md` — decision control, roles, branch
   naming.
-- `docs/governance-levels.md` — classification model, merge authority.
-- `docs/l0-fast-track.md` — the L0 lane.
-- `docs/patterns/prompt-patterns.md` — prompt skeletons and the Universal
+- `llm/governance/governance-levels.md` — classification model, merge authority.
+- `llm/governance/l0-fast-track.md` — the L0 lane.
+- `llm/governance/patterns/prompt-patterns.md` — prompt skeletons and the Universal
   Bounded-Contract Skeleton.
-- `docs/patterns/execution-patterns-template.md` — the execution-lessons
+- `llm/governance/patterns/execution-patterns-template.md` — the execution-lessons
   template repos instantiate.
-- `docs/definition-of-done.md` — Definition of Done checklists.
-- `docs/review-checklist.md` — reviewer checklist.
+- `llm/governance/definition-of-done.md` — Definition of Done checklists.
+- `llm/governance/review-checklist.md` — reviewer checklist.

@@ -3,7 +3,7 @@
 Status: Active
 Last updated: 2026-07-11
 Owner: Project owner (canonical governance)
-Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
+Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
 ## Purpose
 
@@ -11,8 +11,8 @@ A composable, parameterized library of reusable prompt patterns for agent
 work in adopting repositories. Each pattern names when to use it, gives a
 skeleton with `<PLACEHOLDERS>`, states what must always be included, and
 points to the governing policy instead of duplicating it. Pair with each
-repo's `docs/patterns/execution-patterns.md` (seeded from
-`docs/patterns/execution-patterns-template.md` — the lessons behind these
+repo's `llm/governance/patterns/execution-patterns.md` (seeded from
+`llm/governance/patterns/execution-patterns-template.md` — the lessons behind these
 patterns).
 
 ## Scope
@@ -57,14 +57,14 @@ DELIVERABLES: <exact file paths + required content>. Every file you create
   files you edit.
 
 DEFINITION OF DONE: <the applicable checklist in
-  docs/definition-of-done.md for this work type and level>.
+  llm/governance/definition-of-done.md for this work type and level>.
 
 CONSTRAINTS:
   - <SPRINT-SPECIFIC SCOPE BOUNDARY — what this sprint is NOT>.
   - Do not redefine another specialist's decisions; where you depend on
     one, cite it.
   - Uncertain classification => semantic => human review (conservative
-    default; see docs/governance-levels.md in agentic-governance).
+    default; see llm/governance/governance-levels.md in agentic-governance).
 
 GIT: NEVER run git or gh mutations; read-only git/gh is allowed. The Lead
   Architect commits.
@@ -75,7 +75,7 @@ FINAL REPORT: Return <REPORT SHAPE — typically: files delivered, decisions
 ```
 
 Referenced below as **[UBC]**. The required contract elements it realizes
-are defined in `docs/project-operating-system.md` §Agent Assignment
+are defined in `llm/governance/project-operating-system.md` §Agent Assignment
 Contract.
 
 ---
@@ -92,8 +92,8 @@ Contract.
   downgrade findings you cannot verify`.
 - **Always include:** the decision the research must inform, so the report
   ends with a recommendation, not a survey.
-- **Policy pointer:** `docs/definition-of-done.md` §Research Work;
-  `docs/templates/research-template.md`.
+- **Policy pointer:** `llm/governance/definition-of-done.md` §Research Work;
+  `llm/governance/templates/research-template.md`.
 
 ### 2. Implementation
 
@@ -107,9 +107,9 @@ Contract.
   unretrofittable decisions (<LIST>) are mandatory from the first
   migration`.
 - **Always include:** the definition of done
-  (`docs/definition-of-done.md`) and the phase gate this work must not
+  (`llm/governance/definition-of-done.md`) and the phase gate this work must not
   cross.
-- **Policy pointer:** `docs/architecture-governance.md` (code is lowest in
+- **Policy pointer:** `llm/governance/architecture-governance.md` (code is lowest in
   the authority hierarchy).
 
 ### 3. Administrative Maintenance (L0 / Steward)
@@ -124,8 +124,8 @@ Contract.
 - **Always include:** the L0 eligibility conditions (cite, don't restate);
   the independent-audit requirement before any fast-track merge; the
   repo's Steward Activation Status (merge is forbidden while INACTIVE).
-- **Policy pointer:** `docs/l0-fast-track.md`; the Repository Steward
-  charter (`governance/agents/repository-steward.md`).
+- **Policy pointer:** `llm/governance/l0-fast-track.md`; the Repository Steward
+  charter (`plugin/agents/repository-steward.md`).
 
 ### 4. Governance Audit
 
@@ -146,8 +146,8 @@ Contract.
   ```
 - **Always include:** independence (auditor ≠ author); severity triage;
   citation of the violated rule, so reconciliation is mechanical.
-- **Policy pointer:** `docs/review-checklist.md`,
-  `docs/architecture-governance.md`.
+- **Policy pointer:** `llm/governance/review-checklist.md`,
+  `llm/governance/architecture-governance.md`.
 
 ### 5. Lead Architect Reconciliation
 
@@ -168,8 +168,8 @@ Contract.
   ```
 - **Always include:** owner-routing before application; per-file commits;
   the single-PR rule.
-- **Policy pointer:** `docs/project-operating-system.md` (core workflow),
-  `docs/architecture-governance.md` (authority hierarchy).
+- **Policy pointer:** `llm/governance/project-operating-system.md` (core workflow),
+  `llm/governance/architecture-governance.md` (authority hierarchy).
 
 ### 6. Ultracode Dynamic Workflow Missions
 
@@ -195,7 +195,7 @@ Contract.
   ```
 - **Always include:** the canonical invocation verbatim; the interruption
   policy.
-- **Policy pointer:** `docs/project-operating-system.md`
+- **Policy pointer:** `llm/governance/project-operating-system.md`
   §Workflow-Selection Policy and §Non-Negotiables.
 
 ### 7. PR Close-Out
@@ -214,7 +214,7 @@ Contract.
   ```
 - **Always include:** the no-orphan-decisions check; residuals explicitly
   tracked.
-- **Policy pointer:** `docs/architecture-governance.md` (no orphan
+- **Policy pointer:** `llm/governance/architecture-governance.md` (no orphan
   decisions).
 
 ### 8. ADR Acceptance Bookkeeping
@@ -225,14 +225,14 @@ Contract.
   ```text
   ROLE: Repository Steward (L0). TASK: flip ADR <NNNN> Status:
     Proposed -> Accepted, recording the authorizing merge (PR #<N>,
-    <DATE>); update docs/adr/README.md index; touch NOTHING else in the
+    <DATE>); update llm/governance/adr/README.md index; touch NOTHING else in the
     ADR body — any wording change is semantic and escalates.
   OUTPUT: Administrative Change Certification listing exact lines changed.
   ```
 - **Always include:** the authorizing PR reference; the status-line-only
   constraint; the certification.
-- **Policy pointer:** `docs/l0-fast-track.md` (status-line shape,
-  certification standard); the repo's `docs/adr/README.md`.
+- **Policy pointer:** `llm/governance/l0-fast-track.md` (status-line shape,
+  certification standard); the repo's `llm/governance/adr/README.md`.
 
 ---
 
@@ -254,12 +254,12 @@ Contract.
 
 ## Cross-References
 
-- `docs/patterns/execution-patterns-template.md` — the lessons template
+- `llm/governance/patterns/execution-patterns-template.md` — the lessons template
   behind these patterns
-- `docs/project-operating-system.md` — agent contract elements, workflow
+- `llm/governance/project-operating-system.md` — agent contract elements, workflow
   selection
-- `docs/governance-levels.md`, `docs/l0-fast-track.md` — classification
+- `llm/governance/governance-levels.md`, `llm/governance/l0-fast-track.md` — classification
   and the L0 lane
-- `docs/architecture-governance.md` — authority hierarchy,
+- `llm/governance/architecture-governance.md` — authority hierarchy,
   no-orphan-decisions
-- `docs/review-checklist.md`, `docs/definition-of-done.md`
+- `llm/governance/review-checklist.md`, `llm/governance/definition-of-done.md`

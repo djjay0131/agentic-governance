@@ -19,7 +19,8 @@ deny-listed from the L0 fast track.
 ## Design-Authority Document
 
 [Path to the FDS or approved design spec that sits at rank 2 of the design
-authority hierarchy — e.g. `docs/superpowers/specs/YYYY-MM-DD-...-design.md`.]
+authority hierarchy, under the declared spec directory — e.g.
+`llm/specs/YYYY-MM-DD-<topic>-design.md`.]
 
 ## Project Principles
 
@@ -33,40 +34,64 @@ every write boundary," "rejections are data," "never lose raw source data."]
 
 - Does this ...?
 
-## Memory Bank
+## Repository Layout
 
-Path: [`llm/memory_bank/` | `llm/memory-bank/` | other]
+The paths this repo binds. The canon prescribes the shape
+(agentic-governance `llm/governance/project-operating-system.md`
+§Repository Areas); this block binds it here, so nothing downstream
+hardcodes a path. Declare only the slots this repo uses — an absent slot
+is not a violation, an undeclared path is. Bracketed values are the
+canonical defaults.
+
+- Constitution directory (role charters): [`llm/constitution/`]
+- Governance directory: [`llm/governance/`]
+- ADR directory: [`llm/governance/adr/`]
+- Spec directory: [`llm/specs/`]
+- Plans directory: [`llm/plans/`]
+- Features directory: [`llm/features/`]
+- Memory-bank path: [`llm/memory_bank/` | `llm/memory-bank/` | other]
+- Artifacts directory (the data plane): [`docs/`]
 
 ## Roadmap
 
-Path: [e.g. `docs/master-roadmap.md`; "none" if the project has no roadmap
+Path: [e.g. `llm/master-roadmap.md`; "none" if the project has no roadmap
 document yet.]
 
 ## Governance Check Command
 
 [The exact command that runs the canonical governance checks against this
-repo — e.g. `node ~/code/agentic-governance/governance/scripts/governance-checks.mjs`.
-Cited by L0 fast-track condition 9 (`docs/l0-fast-track.md`). "none" until
+repo — e.g.
+`node ~/code/agentic-governance/plugin/scripts/governance-checks.mjs --layout`.
+Include `--layout` so the two-plane rule and the paths declared above are
+enforced on every run, not only at onboarding; it is additive to the default
+checks and composes with `--base`, `--delta`, and `--adr-dir`. Cited by L0
+fast-track condition 9 (`llm/governance/l0-fast-track.md`). "none" until
 wired up — which means no fast-track merge can occur here.]
 
 ## L0 Path Allowlist
 
-The fenced block below is parsed by the governance check command in `--l0`
-mode (format and shapes: agentic-governance `docs/l0-fast-track.md` §L0
-Path Allowlist). The check reads it from `origin/main`, never from a PR's
-tree. Instantiate with this repo's real paths; delete rules that do not
-apply.
+The fenced block below is an instance of the canonical rule set in
+agentic-governance `llm/governance/l0-fast-track.md` §Template Allowlist,
+which also defines the block grammar and the diff shapes (§L0 Path
+Allowlist). The check command parses **this** block, not that one, and
+reads it from `origin/main`, never from a PR's tree. Replace every
+angle-bracketed name with the path declared in §Repository Layout above;
+delete rules that do not apply.
 
 ```l0-allowlist
-allow [memory-bank path]/** path-only
-allow docs/adr/README.md index-table-rows
-allow docs/adr/[0-9][0-9][0-9][0-9]-*.md status-line-only
-allow [roadmap path] checkbox-only
-allow docs/** link-target-only
+# Instance of agentic-governance `llm/governance/l0-fast-track.md`
+# §Template Allowlist — the source of this rule set and its grammar.
+allow <memory-bank path>/** path-only
+allow <adr dir>/README.md index-table-rows
+allow <adr dir>/[0-9][0-9][0-9][0-9]-*.md status-line-only
+allow <roadmap path> checkbox-only
+allow llm/** link-target-only
+allow <artifacts dir>/** link-target-only
 deny src/**
 deny scripts/**
 deny .github/**
-deny docs/adr/0000-template.md
+deny <governance delta path>
+deny <adr dir>/0000-template.md
 ```
 
 ## Platform Enforcement Reality
@@ -87,9 +112,9 @@ verified (not assumed) — e.g. via `gh api`. Cover at least:]
 Status: INACTIVE
 
 [Steward merge authority ships inert (agentic-governance
-`docs/l0-fast-track.md` §Per-Repo Activation). To activate, record here:]
+`llm/governance/l0-fast-track.md` §Per-Repo Activation). To activate, record here:]
 
-- Activation ADR: [docs/adr/NNNN-....md — required]
+- Activation ADR: [llm/governance/adr/NNNN-....md — required]
 - Activation PR: [#n, human-approved and human-merged — required]
 
 ## Milestone Labels

@@ -10,12 +10,12 @@ keeping the delta as the local entry point.
 ## Governance Level
 
 Declare exactly one level (definitions: agentic-governance
-`docs/governance-levels.md`). Uncertain classification is semantic — pick
+`llm/governance/governance-levels.md`). Uncertain classification is semantic — pick
 the lowest plausible semantic level.
 
 - [ ] L0 — Administrative (non-semantic). Complete and include the
       Administrative Change Certification block from agentic-governance
-      `docs/l0-fast-track.md` in this PR body.
+      `llm/governance/l0-fast-track.md` in this PR body.
 - [ ] L1 — Governance & Architecture (semantic; human review required)
 - [ ] L2 — Implementation (semantic; human review required)
 - [ ] L3 — Product (semantic; human review required)
@@ -81,9 +81,9 @@ Closes #
 
 ## Review
 
-Reviewers apply agentic-governance `docs/review-checklist.md` (semantic
+Reviewers apply agentic-governance `llm/governance/review-checklist.md` (semantic
 L1–L3 PRs). L0 fast-track PRs are audited against the conditions in
-agentic-governance `docs/l0-fast-track.md` instead.
+agentic-governance `llm/governance/l0-fast-track.md` instead.
 
 ## Open Questions
 

@@ -3,7 +3,7 @@
 Status: Active
 Last updated: 2026-07-11
 Owner: Project owner (canonical governance)
-Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
+Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
 ## Purpose
 
@@ -24,21 +24,23 @@ never a failure.
 Fast-track eligibility, certification, allowlisting, merge procedure, and
 activation. Classification itself (the L0 definition, semantic test,
 conservative default, escalation rules) lives in
-`docs/governance-levels.md`. Steward duties and prohibitions live in the
-Repository Steward charter (`governance/agents/repository-steward.md`).
+`llm/governance/governance-levels.md`. Steward duties and prohibitions live in the
+Repository Steward charter (`plugin/agents/repository-steward.md`).
 
 ## Delta Parameters
 
 This policy is parameterized per repo. Each adopting repo's
-`docs/governance-delta.md` declares (fields defined in
-`docs/governance-delta-template.md`):
+`llm/governance/governance-delta.md` declares (fields defined in
+`llm/governance/governance-delta-template.md`):
 
 - **Governance check command** — the command that runs the repo's
-  governance checks (canonical script: `governance/scripts/governance-checks.mjs`
+  governance checks (canonical script: `plugin/scripts/governance-checks.mjs`
   in this repo, installed or referenced per repo).
 - **Design-authority document** — the document name/path substituted where
   this policy says "design-authority document."
-- **Memory-bank path** and **roadmap path**.
+- **Repository Layout** — the governance, ADR, spec, plans, features,
+  memory-bank, and artifacts paths the repo binds — and the **roadmap
+  path**.
 - **L0 Path Allowlist** — the fenced `l0-allowlist` block the check command
   parses.
 - **Platform Enforcement Reality** — what the hosting platform actually
@@ -77,9 +79,9 @@ Any single condition failing routes the PR to normal review rules for its
 level.
 
 1. The PR is classified **L0** under the Governance Classification Model
-   (`docs/governance-levels.md`).
+   (`llm/governance/governance-levels.md`).
 2. Every diff line is **non-semantic** per the Semantic vs Non-Semantic
-   Test (`docs/governance-levels.md`).
+   Test (`llm/governance/governance-levels.md`).
 3. **No production code** is touched.
 4. **No executable schema or migration** is touched.
 5. **No behavioral configuration change** — nothing whose value alters
@@ -137,30 +139,39 @@ below and is required on every `allow` line.
 
 ### Template Allowlist
 
-The starting-point block for a new repo (instantiate in the delta with the
-repo's real paths):
+This is the canonical rule set — the block that
+`llm/governance/governance-delta-template.md` §L0 Path Allowlist
+instantiates. It is stated once, here, alongside the grammar and shapes
+above. The check command parses the **delta's** instance, never this
+block; where the two differ, this one is the defect to fix. Angle-bracketed
+names are paths the repo declares in its delta's `## Repository Layout`.
 
 ```l0-allowlist
 allow <memory-bank path>/** path-only
-allow docs/adr/README.md index-table-rows
-allow docs/adr/[0-9][0-9][0-9][0-9]-*.md status-line-only
+allow <adr dir>/README.md index-table-rows
+allow <adr dir>/[0-9][0-9][0-9][0-9]-*.md status-line-only
 allow <roadmap path> checkbox-only
-allow docs/** link-target-only
+allow llm/** link-target-only
+allow <artifacts dir>/** link-target-only
 deny src/**
 deny scripts/**
 deny .github/**
-deny docs/governance-delta.md
-deny docs/adr/0000-template.md
+deny <governance delta path>
+deny <adr dir>/0000-template.md
 ```
+
+`llm/**` and `<artifacts dir>/**` are two `link-target-only` lines because
+both trees hold link targets: control-plane documents, and the derived
+views that project them.
 
 ### The Deny Rule
 
 The following are **always denied**, whether or not a repo's block lists
 them — the check command enforces this unconditionally:
 
-- The repo's governance delta (`docs/governance-delta.md`) — it contains
-  the allowlist itself, and an L0 PR must never amend the rules that judge
-  it.
+- The repo's governance delta (the declared delta path, canonically
+  `llm/governance/governance-delta.md`) — it contains the allowlist
+  itself, and an L0 PR must never amend the rules that judge it.
 - Governance policy documents: any repo-local counterpart of the canonical
   governance docs (architecture governance, operating system, review
   checklist, definition of done, labels, branch protection) and role
@@ -246,9 +257,9 @@ operation per the audit-trail mechanism in the Repository Steward charter.
 **Failure handling.** Any missing, failed, or unproducible artifact; any
 non-PASS audit; any check failure; or any classification uncertainty ⇒ the
 PR leaves the fast track and takes normal review rules (see the escalation
-rules in `docs/governance-levels.md` — the auditor's rejection is final for
+rules in `llm/governance/governance-levels.md` — the auditor's rejection is final for
 this lane). The Governance Auditor audits solely against the twelve
-conditions and the repo's allowlist; `docs/review-checklist.md` remains the
+conditions and the repo's allowlist; `llm/governance/review-checklist.md` remains the
 L1–L3 review instrument and gains no L0 subsection.
 
 ## Honest-Gaps Declaration
@@ -289,7 +300,7 @@ detectable after the fact.
 
 ## Assumptions
 
-- The canonical check script (`governance/scripts/governance-checks.mjs`)
+- The canonical check script (`plugin/scripts/governance-checks.mjs`)
   implements the block format and shapes above; a repo may substitute an
   equivalent command, declared in its delta, provided it preserves both
   security properties: the read-from-base allowlist and the paired
@@ -305,11 +316,11 @@ detectable after the fact.
 
 ## Cross-References
 
-- `docs/governance-levels.md` — classification model, escalation rules
-- `docs/governance-delta-template.md` — the delta fields this policy reads
-- `governance/scripts/governance-checks.mjs` + `governance/scripts/README.md`
+- `llm/governance/governance-levels.md` — classification model, escalation rules
+- `llm/governance/governance-delta-template.md` — the delta fields this policy reads
+- `plugin/scripts/governance-checks.mjs` + `plugin/scripts/README.md`
   — the canonical check implementation and its honest limits
-- `governance/agents/repository-steward.md` — steward charter, audit trail
-- `governance/agents/chief-reviewer.md` — Governance Auditor duty
-- `constitution/shared-principles.md` — the single-exception merge rule
-- `docs/patterns/prompt-patterns.md` — steward/L0 and audit prompt patterns
+- `plugin/agents/repository-steward.md` — steward charter, audit trail
+- `plugin/agents/chief-reviewer.md` — Governance Auditor duty
+- `llm/constitution/shared-principles.md` — the single-exception merge rule
+- `llm/governance/patterns/prompt-patterns.md` — steward/L0 and audit prompt patterns

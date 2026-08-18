@@ -49,11 +49,11 @@ governance delta.
 
 Apply exactly one governance-level label to every PR, matching the level
 declared in the PR template. Level definitions live in
-`docs/governance-levels.md`.
+`llm/governance/governance-levels.md`.
 
 ## Milestone Labels
 
-Defined per project in `docs/governance-delta.md` (e.g.
+Defined per project in `llm/governance/governance-delta.md` (e.g.
 `phase-0-foundation`, `phase-1-contracts`, ...).
 
 ## Special Labels

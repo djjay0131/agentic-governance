@@ -45,7 +45,7 @@ repair.
 AI agents may open draft PRs but must not merge their own PRs — with the
 single exception of the Repository Steward's certified, independently
 audited L0 fast track, where the repo has activated it
-(`docs/l0-fast-track.md`; `constitution/shared-principles.md` §Operating
+(`llm/governance/l0-fast-track.md`; `llm/constitution/shared-principles.md` §Operating
 Rule).
 
 ## Required Status Checks

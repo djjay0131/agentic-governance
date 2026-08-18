@@ -3,7 +3,7 @@
 Status: Active
 Last updated: 2026-07-11
 Owner: Project owner (canonical governance)
-Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
+Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
 ## Purpose
 
@@ -22,9 +22,9 @@ logged instead of silently trusted.
 
 Classification policy for all repository changes, by humans or AI agents.
 The L0 fast-track lane that classification feeds is defined in
-`docs/l0-fast-track.md`. Decision control (authority hierarchy, ADR process)
-is defined in `docs/architecture-governance.md`. Day-to-day execution is
-defined in `docs/project-operating-system.md`.
+`llm/governance/l0-fast-track.md`. Decision control (authority hierarchy, ADR process)
+is defined in `llm/governance/architecture-governance.md`. Day-to-day execution is
+defined in `llm/governance/project-operating-system.md`.
 
 ## The Semantic vs Non-Semantic Test
 
@@ -58,7 +58,7 @@ it and who may merge it.
 
 | Level | Name | Nature | Review | Merge authority |
 |---|---|---|---|---|
-| L0 | Administrative | Non-semantic maintenance | Steward certification + independent Governance Auditor audit | Repository Steward, after certification and audit pass — only where the repo has activated the fast track (`docs/l0-fast-track.md` §Per-Repo Activation); otherwise the human owner |
+| L0 | Administrative | Non-semantic maintenance | Steward certification + independent Governance Auditor audit | Repository Steward, after certification and audit pass — only where the repo has activated the fast track (`llm/governance/l0-fast-track.md` §Per-Repo Activation); otherwise the human owner |
 | L1 | Governance & Architecture | Semantic | Human review required | Human owner only |
 | L2 | Implementation | Semantic | Human review required | Human owner only |
 | L3 | Product | Semantic | Human review required | Human owner only |
@@ -99,7 +99,7 @@ L0 consists of exactly these fourteen categories:
 Anything not on this list is not L0. A change is only L0 if **every part**
 of its diff is L0. L0 changes are eligible for Repository Steward fast-track
 merge only when all conditions of the L0 Fast-Track Policy
-(`docs/l0-fast-track.md`) pass **and** the repo has activated the fast
+(`llm/governance/l0-fast-track.md`) pass **and** the repo has activated the fast
 track; an L0 change that fails any fast-track condition — or lands in a repo
 where the fast track is inactive — still requires human review.
 
@@ -133,15 +133,15 @@ housekeeping out of semantic PRs so the L0 lane stays usable.
 ## Review and Audit Requirements per Level
 
 - **L0**: The Repository Steward certifies the change against the
-  Administrative Change Certification standard (`docs/l0-fast-track.md`).
+  Administrative Change Certification standard (`llm/governance/l0-fast-track.md`).
   The Governance Auditor independently audits every certified L0 PR before
   merge. The full audit-trail requirements live in the Repository Steward
-  charter (`governance/agents/repository-steward.md`).
+  charter (`plugin/agents/repository-steward.md`).
 - **L1–L3**: Human review by the project owner is mandatory. Reviewers use
-  `docs/review-checklist.md` (the single source of truth for review
+  `llm/governance/review-checklist.md` (the single source of truth for review
   criteria). ADR-bearing L1 changes additionally follow the ADR process in
-  `docs/architecture-governance.md`. All semantic changes must meet the
-  applicable Definition of Done (`docs/definition-of-done.md`).
+  `llm/governance/architecture-governance.md`. All semantic changes must meet the
+  applicable Definition of Done (`llm/governance/definition-of-done.md`).
 
 ## Escalation and Reclassification Rules
 
@@ -170,7 +170,7 @@ only the human owner may move it **down**.
   team size.
 - **L0:** the Repository Steward may merge only certified, independently
   audited, checks-passing L0 PRs, and only in repos whose governance delta
-  shows `Steward Activation Status: ACTIVE` (see `docs/l0-fast-track.md`
+  shows `Steward Activation Status: ACTIVE` (see `llm/governance/l0-fast-track.md`
   §Per-Repo Activation). Everywhere else, L0 PRs are merged by the human
   owner (the certification and audit artifacts remain valuable as review
   accelerators).
@@ -185,8 +185,8 @@ bookkeeping.
 - Each adopting repo declares its design-authority document, memory-bank
   path, roadmap path, governance check command, L0 path allowlist, platform
   enforcement reality, and steward activation status in its
-  `docs/governance-delta.md` (fields defined in
-  `docs/governance-delta-template.md`).
+  `llm/governance/governance-delta.md` (fields defined in
+  `llm/governance/governance-delta-template.md`).
 - Where a repo's platform cannot enforce role separation (shared tokens, no
   branch protection), separation is procedural and artifactual — declared
   honestly in the delta's Platform Enforcement Reality section.
@@ -199,13 +199,13 @@ bookkeeping.
 
 ## Cross-References
 
-- `docs/l0-fast-track.md` — the L0 fast-track policy (conditions,
+- `llm/governance/l0-fast-track.md` — the L0 fast-track policy (conditions,
   certification, allowlist, activation)
-- `docs/architecture-governance.md` — decision control, ADR process,
+- `llm/governance/architecture-governance.md` — decision control, ADR process,
   authority hierarchy
-- `docs/project-operating-system.md` — execution, workflow selection
-- `docs/definition-of-done.md` — level → completion-checklist mapping
-- `docs/review-checklist.md` — L1–L3 review instrument
-- `docs/labels.md` — `gov-L0`…`gov-L3` labels
-- `constitution/shared-principles.md` — role principles, merge rule
-- `governance/agents/repository-steward.md` — Repository Steward charter
+- `llm/governance/project-operating-system.md` — execution, workflow selection
+- `llm/governance/definition-of-done.md` — level → completion-checklist mapping
+- `llm/governance/review-checklist.md` — L1–L3 review instrument
+- `llm/governance/labels.md` — `gov-L0`…`gov-L3` labels
+- `llm/constitution/shared-principles.md` — role principles, merge rule
+- `plugin/agents/repository-steward.md` — Repository Steward charter

@@ -5,7 +5,7 @@ Last updated: YYYY-MM-DD
 Owner: [Prompt & Execution Patterns Curator / Chief Architect]
 
 > **Template usage.** Copy this file to the adopting repo as
-> `docs/patterns/execution-patterns.md`. The seeded lessons below are
+> `llm/governance/patterns/execution-patterns.md`. The seeded lessons below are
 > portfolio-general: they were earned in prior adopting repos and start
 > here as defaults. Each carries an **Evidence** slot — replace the seed
 > note with this repo's own PR-numbered evidence as it accumulates, and
@@ -19,7 +19,7 @@ The durable execution lessons from this repo's agent sprints, each tied to
 the evidence that earned it. Lessons here are rules of thumb for planning
 the NEXT sprint; one-time anecdotes are deliberately excluded (see
 "Excluded as Anecdote"). Prompt-level machinery for applying these lessons
-lives in agentic-governance `docs/patterns/prompt-patterns.md`.
+lives in agentic-governance `llm/governance/patterns/prompt-patterns.md`.
 
 ## Scope
 
@@ -96,11 +96,11 @@ promptly and stalled threads resumed from transcripts.
   truth.** Duplicated policy drifts; consolidate and cite.
 - **Using ultracode as a governance bypass.** It is an execution
   mechanism; classification and review requirements are unchanged by team
-  size (`docs/project-operating-system.md` §Non-Negotiables, in
+  size (`llm/governance/project-operating-system.md` §Non-Negotiables, in
   agentic-governance).
 - **Treating an uncertain change as administrative.** The default is the
   reverse: uncertain => semantic => human review
-  (`docs/governance-levels.md`).
+  (`llm/governance/governance-levels.md`).
 - **Restarting stalled specialists from scratch.** Restarts lose decisions
   made mid-thread and re-spend budget; resume from transcripts (lesson 4).
 
@@ -129,8 +129,8 @@ one-time exceptions.
 
 ## Cross-References
 
-- agentic-governance `docs/patterns/prompt-patterns.md` — the prompt
+- agentic-governance `llm/governance/patterns/prompt-patterns.md` — the prompt
   machinery for these lessons
 - This repo's memory bank — evidence trail
-- agentic-governance `docs/project-operating-system.md`,
-  `docs/governance-levels.md`
+- agentic-governance `llm/governance/project-operating-system.md`,
+  `llm/governance/governance-levels.md`

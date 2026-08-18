@@ -3,7 +3,7 @@
 Status: Active
 Last updated: 2026-07-11
 Owner: Project owner (canonical governance)
-Applies to: all repos adopting agentic-governance (see each repo's `docs/governance-delta.md`)
+Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
 ## Purpose
 
@@ -23,10 +23,10 @@ its foundational vision (declared in the project's governance delta).
 
 Decision-control policy for all repository changes. The governance
 classification model (levels L0–L3, semantic test, escalation) is owned by
-`docs/governance-levels.md`; the L0 fast-track lane by
-`docs/l0-fast-track.md`; day-to-day execution mechanics (work-item
+`llm/governance/governance-levels.md`; the L0 fast-track lane by
+`llm/governance/l0-fast-track.md`; day-to-day execution mechanics (work-item
 lifecycle, workflow selection, agent contracts, quality gates) by
-`docs/project-operating-system.md`. This document cites those; it does not
+`llm/governance/project-operating-system.md`. This document cites those; it does not
 restate them.
 
 ## Core Governance Rule
@@ -48,9 +48,9 @@ it is merged; the level determines who must review it and who may merge it.
 The classification model — the semantic vs non-semantic test, the
 conservative default, the closed L0 category list, mixed-level rules,
 escalation and reclassification rules, and level-aware merge authority — is
-defined once, in `docs/governance-levels.md`. The L0 fast-track lane
+defined once, in `llm/governance/governance-levels.md`. The L0 fast-track lane
 (conditions, certification, allowlist, activation) is defined in
-`docs/l0-fast-track.md`.
+`llm/governance/l0-fast-track.md`.
 
 ## Design Authority Hierarchy
 
@@ -104,23 +104,23 @@ The project owner owns final decision authority. Responsibilities:
 - Set milestone priority.
 - Protect the project vision (per the delta).
 - Decide whether and when to activate the steward fast track
-  (`docs/l0-fast-track.md` §Per-Repo Activation).
+  (`llm/governance/l0-fast-track.md` §Per-Repo Activation).
 
 ### Chief Architect (AI executive role)
 
 Responsible for architectural coherence, level classification, and
-execution-mode selection. Charter: `governance/agents/chief-architect.md`.
+execution-mode selection. Charter: `plugin/agents/chief-architect.md`.
 
 ### Chief Reviewer / Governance Auditor (AI executive role)
 
 Responsible for review quality and decision integrity (L1–L3), and serves
 as the Governance Auditor for the L0 lane. Charter:
-`governance/agents/chief-reviewer.md`.
+`plugin/agents/chief-reviewer.md`.
 
 ### Chief Product Officer (AI executive role)
 
 Responsible for user value and MVP discipline. Charter:
-`governance/agents/chief-product-officer.md`.
+`plugin/agents/chief-product-officer.md`.
 
 ### Repository Steward (AI executive role)
 
@@ -128,11 +128,11 @@ Executes the L0 administrative lane: certifies, opens, and — after
 independent audit, and only in repos that have activated the fast track —
 merges narrow L0 PRs, and maintains repository bookkeeping. Duties,
 prohibitions, audit trail, and escalation mechanics:
-`governance/agents/repository-steward.md`. The steward's merge authority is
+`plugin/agents/repository-steward.md`. The steward's merge authority is
 the **only** exception to "no AI role merges its own work"
-(`constitution/shared-principles.md`), exists solely for certified+audited
+(`llm/constitution/shared-principles.md`), exists solely for certified+audited
 L0 changes, and is inert in every repo until activated per
-`docs/l0-fast-track.md` §Per-Repo Activation.
+`llm/governance/l0-fast-track.md` §Per-Repo Activation.
 
 ### Specialist Agents / Contributors
 
@@ -146,7 +146,7 @@ for specialist analysis. Responsibilities:
 - Identify ADR candidates.
 - Use branches and pull requests.
 - Classify their work's governance level; when uncertain, apply the
-  conservative default (`docs/governance-levels.md`).
+  conservative default (`llm/governance/governance-levels.md`).
 
 ## Git Workflow
 
@@ -157,7 +157,7 @@ Note on enforcement: what the platform actually blocks varies per repo and
 is recorded in each delta's Platform Enforcement Reality section; where
 platform enforcement is unavailable, every rule in this workflow is
 convention-enforced. Squash merge is the recommended convention for all
-merges (`docs/branch-protection.md`).
+merges (`llm/governance/branch-protection.md`).
 
 Normal workflow:
 
@@ -214,18 +214,18 @@ Every PR should include:
 
 PRs should be opened as drafts until the author believes the work is
 reviewable. L0 PRs additionally carry the Administrative Change
-Certification (`docs/l0-fast-track.md`). The PR template each repo installs
-is `docs/templates/pr-template-template.md`.
+Certification (`llm/governance/l0-fast-track.md`). The PR template each repo installs
+is `llm/governance/templates/pr-template-template.md`.
 
 ## Review Requirements
 
 The single source of truth for review criteria is
-`docs/review-checklist.md`; reviewers apply it to all semantic (L1–L3) PRs.
+`llm/governance/review-checklist.md`; reviewers apply it to all semantic (L1–L3) PRs.
 L0 fast-track PRs are audited solely against the conditions and allowlist
-in `docs/l0-fast-track.md`. The single source of truth for completion
-criteria is `docs/definition-of-done.md`. This document intentionally does
+in `llm/governance/l0-fast-track.md`. The single source of truth for completion
+criteria is `llm/governance/definition-of-done.md`. This document intentionally does
 not restate any of them — it defines only *who* must review and merge at
-each level (see `docs/governance-levels.md`).
+each level (see `llm/governance/governance-levels.md`).
 
 ## ADR Process
 
@@ -244,11 +244,11 @@ ADR lifecycle:
 3. Superseded
 4. Deprecated
 
-ADR files live in `docs/adr/`, named `0001-short-title.md`,
+ADR files live in `llm/governance/adr/`, named `0001-short-title.md`,
 `0002-short-title.md`, ...
 
 Each ADR should include: Status, Context, Decision, Alternatives considered,
-Consequences, Related documents. Use `docs/templates/adr-template.md`.
+Consequences, Related documents. Use `llm/governance/templates/adr-template.md`.
 
 ## Memory Bank Rules
 
@@ -297,13 +297,13 @@ AI agents must:
 
 - Read the design-authority document and relevant memory-bank files before
   design work.
-- Read the project's `docs/governance-delta.md`.
+- Read the project's `llm/governance/governance-delta.md`.
 - Work on a branch and open a PR instead of committing directly to `main`.
 - Classify every change at a governance level before opening the PR; apply
   the conservative default when uncertain.
 - Never merge their own work — with the single exception of the Repository
   Steward's certified+audited L0 lane, where the repo has activated it
-  (`docs/l0-fast-track.md`).
+  (`llm/governance/l0-fast-track.md`).
 - Stay inside assigned scope.
 - Document assumptions and uncertainty.
 - Avoid making undocumented durable decisions.
@@ -334,7 +334,7 @@ mechanical is certified, audited, and logged instead of silently trusted.
 
 ## Assumptions
 
-- Each adopting repo carries a filled-in `docs/governance-delta.md`
+- Each adopting repo carries a filled-in `llm/governance/governance-delta.md`
   declaring the project facts this document parameterizes (design-authority
   document, memory-bank and roadmap paths, platform enforcement reality,
   steward activation status, L0 allowlist).
@@ -347,12 +347,12 @@ mechanical is certified, audited, and logged instead of silently trusted.
 
 ## Cross-References
 
-- `docs/governance-levels.md` — classification model (source of truth)
-- `docs/l0-fast-track.md` — L0 fast-track policy (source of truth)
-- `docs/project-operating-system.md` — execution, workflow selection
-- `docs/review-checklist.md` — review criteria (source of truth)
-- `docs/definition-of-done.md` — completion criteria (source of truth)
-- `docs/labels.md` — label taxonomy, including `gov-L0`…`gov-L3`
-- `docs/branch-protection.md` — recommended platform settings
-- `docs/governance-delta-template.md` — the per-repo delta fields
-- `constitution/shared-principles.md` + `governance/agents/` — role charters
+- `llm/governance/governance-levels.md` — classification model (source of truth)
+- `llm/governance/l0-fast-track.md` — L0 fast-track policy (source of truth)
+- `llm/governance/project-operating-system.md` — execution, workflow selection
+- `llm/governance/review-checklist.md` — review criteria (source of truth)
+- `llm/governance/definition-of-done.md` — completion criteria (source of truth)
+- `llm/governance/labels.md` — label taxonomy, including `gov-L0`…`gov-L3`
+- `llm/governance/branch-protection.md` — recommended platform settings
+- `llm/governance/governance-delta-template.md` — the per-repo delta fields
+- `llm/constitution/shared-principles.md` + `plugin/agents/` — role charters

@@ -12,11 +12,11 @@ governance delta.
 
 ## Which Checklist Applies at Which Governance Level
 
-Every change carries a governance level (`docs/governance-levels.md`):
+Every change carries a governance level (`llm/governance/governance-levels.md`):
 
 - **L0 — Administrative:** this document does not apply. L0 completion is
   the Administrative Change Certification plus independent audit, per the
-  L0 Fast-Track Policy (`docs/l0-fast-track.md`).
+  L0 Fast-Track Policy (`llm/governance/l0-fast-track.md`).
 - **L1 — Governance & Architecture:** Design Work, Research Work, and/or
   ADR Work below, as applicable.
 - **L2 — Implementation:** Implementation Work below, plus AI Feature Work
@@ -104,11 +104,11 @@ A PR is ready to merge when:
 - [ ] Required docs are updated.
 - [ ] ADR/memory-bank needs are addressed.
 - [ ] Project owner approves (L1–L3); L0 PRs merge via the steward fast
-      track where activated (`docs/l0-fast-track.md`), otherwise by the
+      track where activated (`llm/governance/l0-fast-track.md`), otherwise by the
       project owner.
 
 ## Cross-References
 
-- `docs/governance-levels.md` — classification model
-- `docs/l0-fast-track.md` — L0 completion (certification + audit)
-- `docs/review-checklist.md` — review criteria (source of truth)
+- `llm/governance/governance-levels.md` — classification model
+- `llm/governance/l0-fast-track.md` — L0 completion (certification + audit)
+- `llm/governance/review-checklist.md` — review criteria (source of truth)

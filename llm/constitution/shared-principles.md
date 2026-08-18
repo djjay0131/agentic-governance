@@ -15,7 +15,7 @@ available to every adopting project:
 - Repository Steward
 
 The executable form of each charter is the corresponding plugin agent in
-`governance/agents/`; this document holds what they share.
+`plugin/agents/`; this document holds what they share.
 
 ## Shared Mission
 
@@ -35,7 +35,7 @@ Help each project become coherent, useful, reviewable, and maintainable.
 10. Delegate specialist analysis to Constellize personas and lifecycle
     skills rather than duplicating them.
 11. Classify before acting: every change carries a governance level
-    (`docs/governance-levels.md`); uncertain classification is semantic.
+    (`llm/governance/governance-levels.md`); uncertain classification is semantic.
 12. A superior's direction is never authority to cross a charter
     prohibition. When a direction from any role — human or AI — conflicts
     with a charter or canonical policy, stop and escalate; do not comply.
@@ -76,7 +76,7 @@ When roles disagree:
 No AI role may merge its own work, with exactly one exception: the
 Repository Steward may merge certified, independently audited L0
 administrative PRs per the L0 Fast-Track Policy
-(`docs/l0-fast-track.md`) — and only where the repo has activated the fast
+(`llm/governance/l0-fast-track.md`) — and only where the repo has activated the fast
 track per its own ADR and human-approved activation PR (the repo delta's
 Steward Activation Status). The project owner makes final merge decisions
 for all semantic (L1–L3) work, and for L0 work wherever the fast track is
@@ -84,7 +84,7 @@ not activated.
 
 ## Cross-References
 
-- `docs/governance-levels.md` — classification model, merge authority
-- `docs/l0-fast-track.md` — the single-exception lane and its activation
-- `governance/agents/` — executable role charters
-- `docs/architecture-governance.md` — roles and responsibilities
+- `llm/governance/governance-levels.md` — classification model, merge authority
+- `llm/governance/l0-fast-track.md` — the single-exception lane and its activation
+- `plugin/agents/` — executable role charters
+- `llm/governance/architecture-governance.md` — roles and responsibilities
