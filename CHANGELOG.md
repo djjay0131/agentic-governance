@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.3.0 — 2026-08-18
+
+Corrects the repository architecture: `llm/` is the control plane, `docs/`
+is the data plane. Breaking — every canonical path moved.
+
+- **The two-plane rule**: new `llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`
+  and a rewritten `llm/governance/project-operating-system.md` §Repository
+  Areas — the control/data split, the pre-write decision procedure, and a
+  closed exemption class for tool-contract paths (`.github/`,
+  `.claude-plugin/`, the plugin payload root, root-convention files).
+  §Repository Areas was previously the package's only statement of layout,
+  and it named `docs/` as the home for design, architecture, product and
+  roadmap documents — the inverse of the intended architecture.
+- **Control-plane migration**: role charters to `llm/constitution/`, policy
+  docs, templates and patterns to `llm/governance/`, ADRs to
+  `llm/governance/adr/`, design specs to `llm/specs/`. `docs/` now holds
+  only a README naming what belongs there.
+- **Plugin payload renamed** `governance/` → `plugin/`, removing the
+  collision with `llm/governance/`. The plugin's `name` is unchanged, so
+  `/governance:establish` and `/governance:audit` still work; the
+  marketplace `source` moved to `./plugin`, so installs need one re-add.
+- **Repository layout is declared, not hardcoded**: new `## Repository
+  Layout` block in `llm/governance/governance-delta-template.md`. The
+  canon prescribes the shape; each repo binds the paths.
+- **The routing rule propagates**: `/governance:establish` now installs it
+  into each onboarded repo's `CLAUDE.md` and `AGENTS.md`. Its absence was
+  the drift vector — onboarding installed `docs/`-shaped machinery and
+  nothing opposing a tool's default output path.
+- **The delta template no longer ratifies a vendor default.** Its
+  Design-Authority Document field cited `docs/superpowers/specs/…` as the
+  worked example, which promoted a third-party tool's hardcoded output path
+  to rank-2 design authority in every adopting repo.
+- **`/governance:audit` stops scoring the drift as compliance**: checks
+  retargeted at declared paths, plus findings for source-of-truth content
+  under the artifacts dir and for undeclared layout paths.
+- **`governance-checks.mjs`**: new `--layout` check; reads paths from the
+  delta's layout block (CLI flag > delta > default); `plugin/**` added to
+  the hard denies (`scripts/**` only ever matched a top-level `scripts/`,
+  so the check script was never denied in its own repo); fixed an infinite
+  loop in `globToRegExp` on an unterminated `[`, and a temporal-dead-zone
+  crash in layout parsing that would have affected every adopting repo.
+- **L0 allowlist de-duplicated.** Two copies existed and had diverged;
+  `llm/governance/l0-fast-track.md` is now the declared source and the
+  delta template's block is a labelled instance, so drift is detectable.
+
+### Migration for repos pinned at v0.2
+
+Pins are by commit SHA, so nothing breaks until a repo bumps. To upgrade:
+move `docs/governance-delta.md` → the declared governance dir and
+`docs/adr/` → the declared ADR dir, add the `## Repository Layout` block,
+re-express the L0 allowlist against declared paths, install the routing
+rule into `CLAUDE.md`/`AGENTS.md`, and repoint the check command at
+`plugin/scripts/governance-checks.mjs`. Verify cross-references by grep:
+`governance-links` strips inline code spans, so it cannot see them.
+
 ## 0.2.0 — 2026-07-11
 
 Generalizes a prior internal project's "Governance 2.0" into the canonical
