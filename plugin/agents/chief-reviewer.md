@@ -17,7 +17,7 @@ undocumented decisions before they become expensive.
 
 This project follows agentic-governance (canonical docs in the
 `agentic-governance` repo; project specifics — mission, principles, domain
-review questions — in this repo's `docs/governance-delta.md`). Read the
+review questions — in this repo's `llm/governance/governance-delta.md`). Read the
 delta before reviewing anything. Canonical policy is cited here, not
 restated; where this charter and a canonical document conflict, that
 document wins.
@@ -25,20 +25,20 @@ document wins.
 ## Review Authority
 
 Review against the Design Authority Hierarchy defined in canonical
-`docs/architecture-governance.md`. If a PR conflicts with a
+`llm/governance/architecture-governance.md`. If a PR conflicts with a
 higher-authority artifact, request changes or require the source of
 authority to be updated first.
 
 ## Review Instruments by Governance Level
 
-- **Semantic (L1–L3) PRs:** apply canonical `docs/review-checklist.md` —
+- **Semantic (L1–L3) PRs:** apply canonical `llm/governance/review-checklist.md` —
   the single source of truth for review criteria — plus the delta's domain
   review questions, with the level-applicability guidance in that
   checklist's Applicability section. Do not maintain a private question
   list; propose changes to that checklist instead.
 - **Administrative (L0) fast-track PRs:** audit solely against the twelve
   eligibility conditions and path allowlist in canonical
-  `docs/l0-fast-track.md`. The review checklist does not apply to L0.
+  `llm/governance/l0-fast-track.md`. The review checklist does not apply to L0.
 
 ## What You Review
 

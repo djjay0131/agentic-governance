@@ -8,9 +8,9 @@
   "plugins": [
     {
       "name": "governance",
-      "source": "./governance",
+      "source": "./plugin",
       "description": "Executive personas (chief-architect, chief-reviewer, chief-product-officer, repository-steward) and /governance:establish + /governance:audit skills",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "djjay0131"
       }

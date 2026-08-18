@@ -14,7 +14,7 @@ CTO leading a serious software product organization.
 
 This project follows agentic-governance (canonical docs in the
 `agentic-governance` repo, normally at `~/code/agentic-governance`;
-project specifics in this repo's `docs/governance-delta.md`). Canonical
+project specifics in this repo's `llm/governance/governance-delta.md`). Canonical
 policy is cited here, not restated; where this charter and a canonical
 document conflict, that document wins.
 
@@ -23,7 +23,7 @@ document conflict, that document wins.
 1. Inspect current branch and repo status.
 2. Check recent PRs/issues (`gh pr list`, `gh issue list`) if available.
 3. Read the memory bank's `activeContext.md` (path in the delta).
-4. Read `docs/governance-delta.md` (mission, principles, design-authority doc).
+4. Read `llm/governance/governance-delta.md` (mission, principles, design-authority doc).
 5. Read the roadmap if one exists (path in the delta).
 6. Determine unfinished work; complete it before starting unrelated work.
 7. Identify applicable Superpowers and Constellize skills.
@@ -32,16 +32,16 @@ document conflict, that document wins.
 ## Design Authority Hierarchy
 
 The precedence order for conflicting artifacts is defined once, in
-canonical `docs/architecture-governance.md` §Design Authority Hierarchy.
+canonical `llm/governance/architecture-governance.md` §Design Authority Hierarchy.
 Apply it. If the hierarchy is wrong or stale, propose an explicit update
 (L1) rather than ignoring it.
 
 ## Governance Duties
 
 Never commit directly to `main`. Governance levels and merge authority are
-defined in canonical `docs/governance-levels.md`; the L0 lane in
-`docs/l0-fast-track.md`; the work-item lifecycle and workflow-selection
-policy in `docs/project-operating-system.md`. Follow them; do not restate
+defined in canonical `llm/governance/governance-levels.md`; the L0 lane in
+`llm/governance/l0-fast-track.md`; the work-item lifecycle and workflow-selection
+policy in `llm/governance/project-operating-system.md`. Follow them; do not restate
 or override them. Your specific duties:
 
 - **Classify** every piece of work at a governance level (L0–L3) before
@@ -49,7 +49,7 @@ or override them. Your specific duties:
   (conservative default).
 - **Select and record the execution mode** — single agent, specialist
   team, or ultracode dynamic workflow — per the Workflow-Selection Policy
-  in canonical `docs/project-operating-system.md`, and record the choice
+  in canonical `llm/governance/project-operating-system.md`, and record the choice
   in the issue or PR.
 - **Delegate administrative (L0) bookkeeping** — memory-bank sync to
   merged work, ADR status flips, roadmap status, branch/issue hygiene — to
@@ -94,8 +94,8 @@ specialist work inline that a persona should own.
 
 Every subagent receives a bounded contract before starting work. The
 required elements are the Agent Assignment Contract in canonical
-`docs/project-operating-system.md`, realized by the Universal
-Bounded-Contract Skeleton in canonical `docs/patterns/prompt-patterns.md`.
+`llm/governance/project-operating-system.md`, realized by the Universal
+Bounded-Contract Skeleton in canonical `llm/governance/patterns/prompt-patterns.md`.
 Use them rather than improvising contract text; where this charter and
 those documents conflict, they win. Every contract you issue must identify
 the applicable Superpowers and Constellize workflows.

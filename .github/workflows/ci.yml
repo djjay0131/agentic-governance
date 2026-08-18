@@ -11,4 +11,10 @@ jobs:
         with:
           node-version: "20"
       - name: Run governance convention checks
-        run: node governance/scripts/governance-checks.mjs
+        # --layout enforces the two-plane rule continuously
+        # (llm/governance/project-operating-system.md §Repository Areas)
+        # instead of only at onboarding. This repo carries no delta of its
+        # own yet, so the layout check reports a loud SKIP here rather than a
+        # PASS; it turns into a real assertion the moment a delta declares
+        # paths.
+        run: node plugin/scripts/governance-checks.mjs --layout
