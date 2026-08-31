@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.3.1 — 2026-08-31
+
+Two fixes found while testing `agentic-governance` composed with
+`agentic-research` on repos with no remote.
+
+### `governance-checks.mjs` no longer crashes without a remote
+`adr-status` and the other diff-based checks ran `git diff --name-only
+origin/main` with no guard. On a repo with no remote that emitted git's raw
+`fatal: ambiguous argument 'origin/main'` to stderr and FAILed — a configuration
+`governance:establish` itself records as a legitimate Platform Enforcement
+Reality ("no remote — branch protection unavailable"). The plugin was failing a
+setup it had just finished documenting.
+
+The base ref now resolves through `origin/main` → `origin/master` → `main` →
+`master` → the git empty tree, warning which one it settled on. An explicit
+`--base` that does not resolve warns and falls back rather than crashing. A repo
+that does have `origin/main` is unaffected and prints no warning.
+
+### `establish` creates the memory bank it declares
+Step 10 wrote a `<memory-bank path>` into the delta but only *recommended*
+creating the directory, so a repo with no prior memory bank ended up with a
+delta pointing at nothing. Every check, agent and adopting plugin that reads
+that path inherited the error — and in practice a second plugin was backfilling
+it, which puts the fix in the wrong repo.
+
+`establish` now creates and seeds the directory when it is absent, and states
+the rule plainly: do not declare a path you did not create. The Constellize
+`memory:establish` recommendation stays, as the next step rather than a
+precondition.
+
 ## 0.3.0 — 2026-08-18
 
 Corrects the repository architecture: `llm/` is the control plane, `docs/`

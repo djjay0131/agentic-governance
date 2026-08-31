@@ -233,11 +233,23 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
    outcome in the report. Note that `--l0` mode stays dormant until the
    repo ever activates the steward.
 
-10. **Memory bank.** If the repo has a memory bank at the declared
-    `<memory-bank path>`, append an adoption note to `activeContext.md`
-    and `progress.md` (governance adopted, version, date, delta path). If
-    it has none, recommend the Constellize `memory:establish` workflow
-    before proceeding.
+10. **Memory bank.** The delta declares a `<memory-bank path>`, so that path
+    must exist by the time this skill finishes. A delta pointing at a
+    directory that was never created makes the delta false, and every check,
+    agent and adopting plugin that reads it inherits the error.
+
+    - **If the repo has a memory bank there**, append an adoption note to
+      `activeContext.md` and `progress.md` (governance adopted, version,
+      date, delta path).
+    - **If it has none**, create the declared directory and seed it with at
+      least `activeContext.md`, `projectbrief.md` and `progress.md`, each
+      carrying the adoption note and a one-line statement of what belongs in
+      it. Say plainly that these are stubs, then recommend the Constellize
+      `memory:establish` workflow to populate them properly — as the next
+      step, not as a precondition. Never leave the declared path empty on
+      the grounds that some other plugin may fill it later.
+
+    Do not declare a path you did not create.
 
 11. **Report.** Summarize what was created — including the declared
     layout and the `CLAUDE.md` / `AGENTS.md` routing rule, noting whether

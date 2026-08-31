@@ -32,7 +32,35 @@ function argValue(flag, fallback) {
   return i >= 0 ? args[i + 1] : fallback;
 }
 const certFile = argValue('--cert-file', null);
-const BASE = argValue('--base', 'origin/main');
+// Resolve the diff base. `origin/main` is right in CI but does not exist in a
+// repo with no remote — and governance:establish itself records "no remote" as a
+// legitimate configuration, so crashing on it means the plugin fails a repo it
+// just finished setting up. Fall back through plausible bases and say which one
+// was used, rather than emitting a raw `fatal: ambiguous argument`.
+const BASE = (() => {
+  const explicit = argValue('--base', null);
+  const refExists = (ref) => {
+    try {
+      execFileSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], { stdio: 'pipe' });
+      return true;
+    } catch { return false; }
+  };
+  if (explicit) {
+    if (refExists(explicit)) return explicit;
+    console.warn(`WARN: --base ${explicit} does not resolve; falling back.`);
+  }
+  for (const ref of ['origin/main', 'origin/master', 'main', 'master']) {
+    if (refExists(ref)) {
+      if (ref !== 'origin/main') console.warn(`WARN: origin/main not found; diffing against ${ref}.`);
+      return ref;
+    }
+  }
+  // No branch to compare against at all. Use the empty tree, so every tracked
+  // file reads as added — the honest answer to "changed vs nothing".
+  console.warn('WARN: no comparable base ref found (no remote, no main/master). ' +
+    'Diffing against the empty tree — every tracked file counts as changed.');
+  return '4b825dc642cb6eb9a060e54bf8d69288fbee4904'; // git empty tree
+})();
 
 // The target repo is the one the caller stands in, not the one holding this file.
 const ROOT = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
