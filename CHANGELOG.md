@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0 — 2026-08-31
+
+### Sprints get a canonical slot
+The layout slot table had no home for sprint plans, so `/governance:migrate`
+classified `construction/sprints/` as "control plane by nature, but with no
+canonical slot" and left it where it was. That was the wrong conclusion from the
+right observation: sprint plans record how work was executed and are control
+plane by any reading. The gap was in the slot table, not in the content.
+
+`Sprints directory` (default `llm/sprints/`) is now a declarable slot in the
+delta template, `establish`'s layout interview, `migrate`'s move plan, and the
+`--layout` check.
+
+Ordering note: the slot matcher tests `sprints` **before** `plans`, so a label
+like "Sprint plans directory" binds to sprints rather than being swallowed by
+the `/plan/i` matcher.
+
+Existing repos are unaffected — an undeclared slot is not a violation. A repo
+adopts it by declaring the path and moving the content, which `migrate` now
+proposes as a normal row rather than an exception.
+
 ## 0.4.0 — 2026-08-31
 
 ### New: `/governance:migrate`

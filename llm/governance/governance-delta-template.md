@@ -47,6 +47,7 @@ canonical defaults.
 - Governance directory: [`llm/governance/`]
 - ADR directory: [`llm/governance/adr/`]
 - Spec directory: [`llm/specs/`]
+- Sprints directory: [`llm/sprints/`]
 - Plans directory: [`llm/plans/`]
 - Features directory: [`llm/features/`]
 - Memory-bank path: [`llm/memory_bank/` | `llm/memory-bank/` | other]

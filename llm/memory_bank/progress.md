@@ -4,6 +4,7 @@
 |---|---|
 | 0.2.0 | Levels, steward, workflows; four executive personas; establish/audit |
 | 0.3.0 | Repo restructured `governance/` → `plugin/`; `llm/` control plane; AGENTS.md |
+| 0.5.0 | `Sprints directory` slot (`llm/sprints/`) — sprint plans had no canonical home, so migrate was leaving them behind |
 | 0.4.0 | `/governance:migrate`: pre-v0.3 → current layout, history-preserving, branch + PR, `--plan` by default |
 | 0.3.1 | Base-ref fallback so checks survive a repo with no remote; `establish` creates the memory bank it declares |
 

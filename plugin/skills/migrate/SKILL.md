@@ -52,6 +52,7 @@ is a declared path. Canonical defaults:
 | ADR directory | `llm/governance/adr/` |
 | Constitution | `llm/constitution/` |
 | Specs | `llm/specs/` |
+| Sprints | `llm/sprints/` |
 | Plans | `llm/plans/` |
 | Features | `llm/features/` |
 | Memory bank | `llm/memory_bank/` |
@@ -80,6 +81,7 @@ path is listed individually so the user can veto any line.
 | `docs/superpowers/plans/*` | `<plans dir>/` | vendor default → declared path |
 | `memory-bank/`, `docs/memory-bank/` | `<memory-bank>/` | control plane |
 | roadmap document | declared roadmap path | control plane |
+| `construction/sprints/`, `sprints/` | `<sprints dir>/` | control plane — sprint plans are how work was executed, not an artifact |
 
 **Stays in `docs/`:** externally-sourced material, published site content (a
 Jekyll `_config.yml`, `docs/index.md`, a Pages source), and derived views. If
