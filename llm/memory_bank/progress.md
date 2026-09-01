@@ -4,6 +4,7 @@
 |---|---|
 | 0.2.0 | Levels, steward, workflows; four executive personas; establish/audit |
 | 0.3.0 | Repo restructured `governance/` → `plugin/`; `llm/` control plane; AGENTS.md |
+| 0.4.0 | `/governance:migrate`: pre-v0.3 → current layout, history-preserving, branch + PR, `--plan` by default |
 | 0.3.1 | Base-ref fallback so checks survive a repo with no remote; `establish` creates the memory bank it declares |
 
 ## Verified 0.3.1

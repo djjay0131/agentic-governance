@@ -15,6 +15,17 @@ Two fixes, both found while testing composition with `agentic-research`:
    directory, leaving the delta false. In practice a second plugin was
    backfilling it — the fix living in the wrong repo.
 
+## Added 0.4.0
+
+`/governance:migrate` — the missing half of the pre-v0.3 story. `establish`
+detected the old layout and stopped; nothing finished the job, so repos stayed
+on it. Migration now happens on a branch, with `git mv` so history follows,
+merging rather than overwriting an existing memory bank, and archiving rather
+than deleting.
+
+Untested: it has never been run against a real pre-v0.3 repo. Candidates in the
+portfolio are the ones still holding `docs/adr/` or `docs/superpowers/`.
+
 ## Open
 
 - **v0.3.1 was pushed directly to `main`, bypassing this repo's own "changes must

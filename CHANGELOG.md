@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.4.0 — 2026-08-31
+
+### New: `/governance:migrate`
+`establish` has always *detected* a pre-v0.3 repo and stopped, correctly —
+moving control-plane content is L1+ work needing its own issue, branch and PR.
+But nothing then did the work, so every repo left on the old layout stayed there.
+
+`migrate` does it under the same rules rather than around them:
+
+- **History follows.** Every relocation is `git mv`, never copy-then-delete. The
+  history of an old memory bank is usually the most valuable thing in it.
+- **Content is preserved.** Existing entries are moved, never regenerated. Where
+  an old file and a canonical file both exist they are merged under dated
+  headings; a canonical file with no counterpart becomes a labelled stub rather
+  than invented content.
+- **Superseded material is archived**, with a dated note on what replaced it.
+  Only `docs/superpowers/` is deleted, and only after relocation, per ADR-0001.
+- **Branch and PR, never `main`.** The moves and the version pin land together.
+- **`--plan` is the default** — it prints the full per-file move list and
+  changes nothing until `--execute`.
+
+It installs the routing rule *before* moving anything, so `obra/superpowers`
+cannot recreate `docs/superpowers/` mid-migration, and it verifies reference
+rewrites with `grep` rather than the link check — `governance-links` strips
+inline code spans, so a stale backticked path survives a green CI run.
+
+`establish` and `audit` now point at it instead of dead-ending.
+
 ## 0.3.1 — 2026-08-31
 
 Two fixes found while testing `agentic-governance` composed with

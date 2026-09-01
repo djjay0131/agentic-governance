@@ -48,6 +48,12 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
      (`~/code/agentic-governance/llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`).
      **Stop and say so.** This skill does not migrate a repo; migration
      is an L1+ change that needs its own issue, branch, and PR.
+     **Point the user at `/governance:migrate`**, which does that work
+     under those rules: on a branch, with `git mv` so history follows,
+     merging rather than overwriting an existing memory bank, archiving
+     superseded content rather than deleting it, and landing the moves
+     and the version pin in one PR. Run it with `--plan` first; it
+     prints the full move list and changes nothing.
 
    On a migration, tell the user what it entails before they choose:
 
@@ -67,8 +73,9 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
 
    The safe subset this skill can do today for such a repo is steps 2
    and 5 — declare the layout, install the routing rule — both of which
-   are additive and stop the drift from continuing. Offer that, and
-   leave the moves to the migration PR. Never move files silently.
+   are additive and stop the drift from continuing. Offer that as the
+   minimum, and `/governance:migrate` as the complete path. Never move
+   files silently.
 
 2. **Declare the repository layout.** Settle the paths before anything
    is created; every later step writes to them, and the routing rule in

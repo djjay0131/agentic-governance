@@ -136,3 +136,12 @@ semantic. Route link repair and path corrections that follow an
 already-approved relocation to the Repository Steward
 (`plugin/agents/repository-steward.md`); route the relocation decision
 itself to the human owner.
+
+## Pre-v0.3 layout
+
+If control-plane content still sits under `docs/` — a delta at
+`docs/governance-delta.md`, an ADR directory at `docs/adr/`, or a
+`docs/superpowers/` tree — this repo is on the pre-v0.3 layout that ADR-0001
+reverses. Report it, and point at `/governance:migrate --plan`.
+
+Do not attempt the moves from an audit. An audit reports; it does not restructure.
