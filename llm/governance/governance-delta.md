@@ -149,23 +149,29 @@ Verified against the GitHub API on 2026-09-10, not assumed:
   are required, force pushes and deletions are blocked, stale reviews
   dismiss, and conversation resolution is required. But
   `required_approving_review_count` is **0** and `enforce_admins` is
-  **off** — so the owner can merge unreviewed and can bypass the rules.
-- **Required status checks: not enabled** (`404 — Required status checks
-  not enabled`). `ci.yml` runs on every PR and its result is visible, but
-  nothing *blocks* a merge on it. Governance checks are advisory at the
-  platform level and mandatory only by convention.
+  **off** — so the owner can merge unreviewed, and an admin can still
+  bypass the required check. The gate binds agents and ordinary flow; it
+  does not bind the owner.
+- **Required status checks: enabled** (2026-09-10). The `ci.yml`
+  `governance-checks` job is a required context on `main`, non-strict
+  (a PR need not be rebased onto the newest `main` to merge). A PR whose
+  governance checks fail can no longer be merged. This is the one gate
+  that is genuinely enforced by the platform rather than by convention.
 - **Token/identity model:** all agent sessions authenticate with the
   owner's token. Chief Architect, Chief Reviewer, Chief Product Officer
   and Repository Steward are procedural roles, not distinct identities,
   and the platform cannot tell them apart.
-- **Hardening path:** set `required_status_checks` to the `ci.yml`
-  governance-checks job and raise
-  `required_approving_review_count` to 1. What blocks it: a
-  single-maintainer repo cannot supply a second approver, so a required
-  review would deadlock every PR until either a second human or a
-  distinct steward machine account exists. This is the same constraint
-  recorded for the L0 fast track, and it is why the fast track stays
-  inert here.
+- **Hardening path — what remains.** Two steps, both deliberately not
+  taken:
+  - `enforce_admins` → on. This would make the required check bind the
+    owner too. Not taken yet because it also blocks the owner's own
+    emergency path on a single-maintainer repo; it is the smaller of the
+    two remaining gaps and the likelier next step.
+  - `required_approving_review_count` → 1. **Blocked, not deferred.** A
+    single-maintainer repo cannot supply a second approver, so a required
+    review would deadlock every PR until either a second human or a
+    distinct steward machine account exists. This is the same constraint
+    recorded for the L0 fast track.
 
 ## Steward Activation Status
 
@@ -174,9 +180,16 @@ Status: INACTIVE
 Steward merge authority ships inert
 (`llm/governance/l0-fast-track.md` §Per-Repo Activation) and has not been
 activated here. Activating it would require an activation ADR and a
-human-approved, human-merged activation PR. Neither exists, and neither
-should until required status checks are enforced — an AI merge lane on a
-repo where checks do not block merges has nothing to certify against.
+human-approved, human-merged activation PR. Neither exists.
+
+The original blocker is now gone: required status checks *are* enforced as
+of 2026-09-10, so there is finally something for a fast-track merge to
+certify against. What remains is the identity model — all agent sessions
+authenticate with the owner's token, so the platform cannot distinguish a
+steward merge from an owner merge, and a certified lane whose operator is
+indistinguishable from the person it reports to certifies nothing. The
+fast track stays inert until that is solved, not merely until the checks
+turn on.
 
 - Activation ADR: none
 - Activation PR: none

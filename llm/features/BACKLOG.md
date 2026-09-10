@@ -1,7 +1,7 @@
 # Feature Catalog — Master Index
 
 Status: Active
-Last updated: 2026-08-21
+Last updated: 2026-09-10
 Owner: Project owner (canonical governance)
 
 Single source of truth for every capability spec'd or proposed for this
@@ -24,6 +24,7 @@ follow-up section, not here.
 | # | Feature | Status | One-liner |
 |---|---------|--------|-----------|
 | G-1 | Model selection for delegated agents | BACKLOG | Govern *which model* a subagent runs on, the way Modes 1–3 already govern how many agents and what shape. |
+| G-2 | `establish` should make governance checks a *required* status check | BACKLOG | The skill wires the check, then leaves it advisory — so no adopted repo actually blocks a merge on it. |
 
 ---
 
@@ -93,3 +94,60 @@ expensive careful one and leave no trace of which.
 Policy and §Agent Assignment Contract; `llm/governance/patterns/prompt-patterns.md`
 (UBC skeleton); `llm/governance/governance-levels.md` (the level this would
 key against).
+
+---
+
+## G-2 · `establish` should make governance checks a required status check
+
+**Problem.** `establish` step 8 configures branch protection (PRs
+required, no force pushes or deletions, conversation resolution) and
+step 9 wires the governance check command into CI. It never connects the
+two: the `governance-checks` job is created but is not added as a
+**required status check**. The result is a repo where governance checks
+run, report, and are visible — and where a red PR merges anyway.
+
+This was found by hand on this repository on 2026-09-10. Its own delta
+recorded "required status checks: not enabled" as verified fact; the gap
+was closed here with a direct `gh api` call. Every other adopted repo
+still has it.
+
+**Why it matters.** It is the same shape as the drift ADR-0001 corrected:
+canon states a rule (`llm/governance/branch-protection.md` §Required
+Status Checks — "add the project's CI checks as required once they
+exist"), the tool does not implement it, and the audit does not detect the
+difference. So the gate exists on paper for every adopter and binds none
+of them. A governance package whose own enforcement is advisory is
+recommending a practice it does not install.
+
+**Sketch.** After step 9 has run the check once, add the resolved context
+name to `required_status_checks` on the default branch. The context name
+is not knowable in advance — it comes from the workflow's job name —
+which is why this belongs after step 9 rather than inside step 8's
+protection call.
+
+**Open questions for the spec.**
+
+- Does `establish` set this itself, or report it as a step the user must
+  approve? Step 8 already asks before remote mutations; this is another
+  one, and silently tightening merge rules on someone's repo is worse than
+  asking twice.
+- `strict` (require the branch be up to date before merging) — on or
+  off? Non-strict was chosen here so stacked PRs do not force a rebase on
+  every intervening merge. Is that the right default for adopters, or a
+  local preference that belongs in the delta?
+- Should `enforce_admins` be part of this, or stay separate? Without it an
+  admin can bypass the required check, so the gate binds agents and
+  ordinary flow but not the repo owner. That may be the correct trade for
+  a single-maintainer repo and the wrong one for a team.
+- What should `/governance:audit` do when it finds the check wired but not
+  required — report it as a finding, or is a repo entitled to run its
+  checks advisory-only by declared choice?
+- Does the delta need a slot recording which checks are *required* versus
+  merely present, so the Platform Enforcement Reality section stops being
+  hand-written prose?
+
+**Related.** `llm/governance/branch-protection.md` §Required Status
+Checks; `plugin/skills/establish/SKILL.md` steps 8–9;
+`llm/governance/l0-fast-track.md` (condition 9 cites the check command,
+and a fast track over a non-blocking check certifies nothing);
+`llm/governance/governance-delta.md` §Platform Enforcement Reality.

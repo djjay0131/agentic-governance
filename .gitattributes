@@ -1,0 +1,12 @@
+# This repository is routinely checked out on /mnt/c under WSL, where
+# Windows-side tools can rewrite files with CRLF endings between a commit
+# and the next `git add`. On 2026-09-10 that silently turned seven
+# untouched files into whole-file rewrites in a branch diff; the commit was
+# rebuilt before it reached main. Normalizing here means git stores LF and
+# checks out LF regardless of what rewrote the working tree, so a stray CRLF
+# pass produces no diff instead of a 500-line one.
+* text=auto eol=lf
+
+# Keep the checker's own fixtures byte-exact if any are ever added.
+*.png binary
+*.pdf binary
