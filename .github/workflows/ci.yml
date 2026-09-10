@@ -18,3 +18,8 @@ jobs:
         # assertion here and not a SKIP: the canon is verified against the
         # rule it publishes.
         run: node plugin/scripts/governance-checks.mjs --layout
+      - name: Checker regression tests
+        # The checker is the enforcement mechanism and had no tests until
+        # v0.6.0, when it was found to be silently mis-binding the artifacts
+        # slot and passing adr-index/adr-status on a nonexistent directory.
+        run: node plugin/scripts/governance-checks.test.mjs
