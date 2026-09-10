@@ -217,13 +217,31 @@ Adopters, in migration order. Authority flows one way — canon here,
 facts there. No adopter's delta may override policy, and this repo never
 depends on an adopter.
 
-| Repo | Pinned | Layout |
-|---|---|---|
-| `agentic-kgcs` | v0.3 | migrated |
-| `agentic-kg` | v0.5 | migrated (ADR-0002 there) |
-| `agentic-kgis` | v0.2 | pre-v0.3, migration pending |
-| `home-network` | v0.2 | pre-v0.3, no `llm/` tree yet |
-| `baseball-ai` | none | never onboarded |
+| Repo | Pinned | Layout | Canon fetched by |
+|---|---|---|---|
+| `agentic-kg` | v0.5 | migrated (its ADR-0002) | no pin — floats on default branch |
+| `agentic-kgcs` | v0.5 | migrated | SHA pin |
+| `agentic-kgis` | v0.5 | migrated (its PR #27) | SHA pin |
+| `home-network` | v0.5 | migrated (its PR #17) | no CI |
+| `mats-12-application` | v0.5 | migrated (its PR #7) | no CI |
+| `fantasy-sports` | v0.5 | migrated | no pin — floats on default branch |
+| `ai-empirical-se-chapter` | v0.5 | migrated | no pin — floats on default branch |
+| `baseball-ai` | none | never onboarded | — |
+
+Verified against each repo's delta on 2026-09-10, not carried forward from a
+previous edit of this table. The earlier version of this section listed five
+repos and missed three (`fantasy-sports`, `ai-empirical-se-chapter`,
+`mats-12-application`) — it had been written from memory of the migration
+order rather than from a scan, which is exactly the kind of unverified claim a
+delta must not contain.
+
+**The pin model is only half real.** Three adopters fetch canon with no `ref:`,
+so they track this repo's default branch and receive canon changes
+immediately — the opposite of the deliberate-upgrade contract this table
+describes. Two carry no CI at all, so nothing enforces their declared pin
+either. Only `agentic-kgcs` and `agentic-kgis` actually pin by SHA. A pin that
+only some adopters honor is a weaker guarantee than the versioning section of
+`README.md` implies, and worth closing before the next breaking change.
 
 Adopters pin a version and upgrade deliberately. A change here reaches
 them only when they bump their pin, which is what makes a breaking layout
