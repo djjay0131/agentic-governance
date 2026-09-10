@@ -1,6 +1,6 @@
 ---
 name: establish
-description: Onboard the current repo onto agentic-governance - declare the repository layout, create the governance delta (including L0 allowlist, platform-enforcement reality, steward activation status), install the two-plane routing rule into CLAUDE.md and AGENTS.md, and create the ADR system, GitHub templates, gov-level labels, branch protection, governance-checks wiring, and memory-bank note. Never activates steward merge authority.
+description: Onboard the current repo onto agentic-governance - declare the repository layout, create the governance delta (including L0 allowlist, platform-enforcement reality, steward activation status), install the two-plane routing rule into CLAUDE.md and AGENTS.md, and create the ADR system, the execution-lessons file, GitHub templates, gov-level labels, branch protection, governance-checks wiring, and memory-bank note. Never activates steward merge authority.
 argument-hint: "[repo-path (default: cwd)]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -27,8 +27,9 @@ canon prescribes the shape
 (`~/code/agentic-governance/llm/governance/project-operating-system.md`
 §Repository Areas); the repo's delta binds the paths. Angle-bracketed
 names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
-`<spec dir>`, `<plans dir>`, `<features dir>`, `<memory-bank path>`,
-`<artifacts dir>` — always mean the value declared in step 2.
+`<spec dir>`, `<sprints dir>`, `<plans dir>`, `<features dir>`,
+`<memory-bank path>`, `<artifacts dir>` — always mean the value declared in
+step 2.
 
 ## Steps
 
@@ -126,7 +127,7 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
      `node ~/code/agentic-governance/plugin/scripts/governance-checks.mjs --layout`;
      "none" if the user declines — note that this blocks any future fast
      track). `--layout` belongs in the recorded command, not just in the
-     one-off run of step 9: without it the two-plane rule is documented
+     one-off run of step 10: without it the two-plane rule is documented
      and never enforced. It is additive to the default checks and
      composes with `--base`, `--delta`, and `--adr-dir`. If any declared
      path differs from the checker's defaults, the command must pass
@@ -199,7 +200,18 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
    only in specs or memory banks, list them as ADR back-fill candidates and
    offer to draft them.
 
-7. **GitHub surface.** Create `.github/pull_request_template.md` from the
+7. **Execution-lessons file.** Copy
+   `llm/governance/patterns/execution-patterns-template.md` from the
+   canonical repo to `<governance dir>/patterns/execution-patterns.md` if
+   that file does not already exist. Never overwrite an existing one — it
+   holds evidence this repo accumulated. Canon states each repo keeps its
+   own lessons file "seeded from" the template
+   (`llm/governance/project-operating-system.md` §Workflow-Selection Policy;
+   `llm/governance/patterns/prompt-patterns.md`), and the CONTRIBUTING
+   template points contributors at it — but until v0.6.0 nothing created it,
+   so every adopting repo cited a file that did not exist.
+
+8. **GitHub surface.** Create `.github/pull_request_template.md` from the
    canonical `llm/governance/templates/pr-template-template.md` — the
    governance-level declaration must be the first section. Create
    `.github/ISSUE_TEMPLATE/{feature,architecture-proposal,adr,research,documentation}.md`
@@ -210,7 +222,7 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
    `llm/governance/templates/contributing-template.md` (pointer-first; no
    local policy).
 
-8. **Remote + protection (with user approval).** If no remote exists:
+9. **Remote + protection (with user approval).** If no remote exists:
    `gh repo create <owner>/<name> --private --source . --push`. Then apply
    `llm/governance/branch-protection.md` rules to `main` via
    `gh api repos/{owner}/{repo}/branches/main/protection` (PRs required,
@@ -223,7 +235,7 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
    (suggested colors: gray, blue, orange, red; descriptions from
    `llm/governance/labels.md`).
 
-9. **Governance checks wiring.** Run the delta's governance check command
+10. **Governance checks wiring.** Run the delta's governance check command
    in the target repo exactly as recorded in step 3 — including
    `--layout`, which confirms every path declared in step 2 exists and
    that nothing source-of-truth sits under `<artifacts dir>`. Fix broken
@@ -241,7 +253,7 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
    outcome in the report. Note that `--l0` mode stays dormant until the
    repo ever activates the steward.
 
-10. **Memory bank.** The delta declares a `<memory-bank path>`, so that path
+11. **Memory bank.** The delta declares a `<memory-bank path>`, so that path
     must exist by the time this skill finishes. A delta pointing at a
     directory that was never created makes the delta false, and every check,
     agent and adopting plugin that reads it inherits the error.
@@ -259,7 +271,7 @@ names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
 
     Do not declare a path you did not create.
 
-11. **Report.** Summarize what was created — including the declared
+12. **Report.** Summarize what was created — including the declared
     layout and the `CLAUDE.md` / `AGENTS.md` routing rule, noting whether
     each was created or merged into existing instructions — what needs the
     user (e.g. branch protection requires the remote or a paid plan), the
@@ -354,6 +366,7 @@ exists to prevent; the reverse is cheap to correct.
 | Governance policy, the delta, patterns | `<governance dir>` |
 | Architecture Decision Records | `<adr dir>` |
 | Design specs, the design-authority document | `<spec dir>` |
+| Sprint plans and sprint history | `<sprints dir>` |
 | Implementation plans | `<plans dir>` |
 | Feature specs and backlog | `<features dir>` |
 | Memory bank | `<memory-bank path>` |

@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.6.0 — 2026-09-10
+
+### Two silent defects in the checker itself
+Both found by upgrading real repos, not by reading the code. Both meant the
+checker printed `PASS` while verifying nothing — the failure mode the whole
+package exists to prevent.
+
+**The artifacts slot was never declarable.** `LAYOUT_SLOTS` matched labels by
+unanchored substring, and `/plan/i` matched the delta template's own label
+`Artifacts directory (the data plane)` — **"plane" contains "plan"**. Because
+`readLayout` keeps the first declaration per slot and the template lists
+`Plans directory` above `Artifacts directory`, the artifacts line was swallowed
+and artifacts fell back to its default. Any repo declaring a non-default
+artifacts directory had **the drift scan pointed at the wrong tree** and was
+told PASS. In a delta with no plans line, the reverse happened: `plans` bound
+silently to the artifacts path. Every pattern is now `\b`-anchored.
+
+**`adr-index` and `adr-status` passed on a nonexistent ADR directory.**
+`adrFiles()` returned `[]` and the empty set satisfied every assertion. Both
+`agentic-kgis` and `mats-12-application` ran for weeks with both checks green
+while the checker resolved its ADR directory to a path that did not exist —
+`agentic-kgis` was hiding two broken ADR links and fifteen malformed index
+rows behind it. Both checks now report a graded `SKIP` naming what was not
+verified, matching how `--layout` already handled a missing delta.
+
+### First tests for the checker
+`plugin/scripts/governance-checks.test.mjs`, run in CI. Nine end-to-end
+regression tests over throwaway git fixtures — the script has no main guard and
+resolves its root from `git rev-parse`, so they invoke the real checker rather
+than importing pieces of it. Each defect above is pinned, including the
+`"Sprint plans directory"` → `sprints` ordering that the anchoring change could
+otherwise have undone, and a positive case so the new guards cannot degrade into
+a permanent SKIP.
+
+### Closes three gaps v0.5.0 left behind
+v0.5.0 added the Sprints slot to the delta template, `establish`'s layout
+interview, `migrate`'s move plan and the `--layout` check — but not everywhere it
+needed to go. Found while upgrading `fantasy-sports` from v0.3.
+
+- **`<sprints dir>` was missing from `establish`'s placeholder list.** The
+  skill's preamble enumerates every angle-bracketed name it substitutes;
+  `<sprints dir>` was never added, so the one name the interview could newly
+  collect was not declared substitutable.
+- **The Sprints row was missing from §Canonical destinations.** That table lives
+  *inside the `CLAUDE.md` routing block written into every adopting repo*. A repo
+  that adopted the Sprints slot therefore got a routing rule that never named
+  where sprint content goes — the slot existed in the delta and was invisible to
+  the agent reading `CLAUDE.md`.
+
+### New in `establish`: the execution-lessons file is actually created
+Canon states in two places that each repo keeps its own evidence-backed lessons
+in a local `<governance dir>/patterns/execution-patterns.md` **"seeded from"**
+`execution-patterns-template.md`, and the CONTRIBUTING template points
+contributors at it. Nothing ever created it. Every adopted repo has been citing
+a file that does not exist.
+
+`establish` now has step 7 for it, and **never overwrites an existing one** — that
+file holds evidence a repo accumulated, which is exactly the content a
+regenerating tool must not clobber. Steps 7–11 renumber to 8–12; internal
+cross-references and the skill's frontmatter description were updated with them.
+
+This is the same defect class as G-2 and as the drift ADR-0001 corrected: canon
+prescribes, the tool does not install, and the audit cannot tell the difference.
+Prescribing a file into existence is not the same as creating it.
+
 ## 0.5.2 — 2026-09-10
 
 ### PR responsibilities, the PR-before-review invariant, and a normative lifecycle

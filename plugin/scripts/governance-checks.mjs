@@ -68,16 +68,28 @@ const ROOT = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: '
 // Slot -> label matcher for the delta's `## Repository Layout` bullet list
 // (llm/governance/governance-delta-template.md §Repository Layout). Declared
 // before use: `readLayout` runs while this module's constants initialize.
+// Matched against the LABEL half of a "- <label>: <path>" line, in order;
+// first match wins, and readLayout keeps the first declaration per slot.
+//
+// Every pattern is \b-anchored. Unanchored /plan/i matched the template's own
+// "Artifacts directory (the data plane)" label — "plane" contains "plan" — so
+// the artifacts declaration was swallowed by the plans slot and artifacts
+// silently fell back to its default, pointing the drift scan at the wrong
+// tree. Substring matching on prose labels is not safe; keep the anchors.
+//
+// Order still matters where one label legitimately contains another word:
+// "Sprint plans directory" must bind sprints, not plans, so sprints is tested
+// first (agentic-governance v0.5.0).
 const LAYOUT_SLOTS = [
   ['adr', /\badrs?\b/i],
-  ['constitution', /constitution/i],
-  ['governance', /governance/i],
-  ['spec', /spec/i],
-  ['sprints', /sprints?/i],
-  ['plans', /plan/i],
-  ['features', /feature/i],
-  ['memoryBank', /memory[\s_-]*bank/i],
-  ['artifacts', /artifact/i],
+  ['constitution', /\bconstitution\b/i],
+  ['governance', /\bgovernance\b/i],
+  ['spec', /\bspecs?\b/i],
+  ['sprints', /\bsprints?\b/i],
+  ['plans', /\bplans?\b/i],
+  ['features', /\bfeatures?\b/i],
+  ['memoryBank', /\bmemory[\s_-]*bank\b/i],
+  ['artifacts', /\bartifacts?\b/i],
 ];
 
 // Canonical default paths (llm/governance/project-operating-system.md
@@ -325,8 +337,18 @@ function checkLinks() {
 
 function checkAdrIndex() {
   const indexPath = path.join(ADR_DIR, 'README.md');
+  // A nonexistent ADR directory used to PASS here: adrFiles() returned [] and
+  // the empty set satisfied every assertion. Two repos ran for weeks with
+  // adr-index and adr-status green while the checker was resolving ADR_REL to a
+  // directory that did not exist. A check that verifies nothing must say so.
+  if (!fs.existsSync(ADR_DIR)) {
+    return { skipped: `no ADR directory at "${ADR_REL}": no ADR was checked. Declare the ADR directory in the delta's §Repository Layout, or pass --adr-dir <path>.` };
+  }
+  if (adrFiles().length === 0) {
+    return { skipped: `"${ADR_REL}" contains no ADR files (NNNN-*.md): no ADR was checked.` };
+  }
   if (!fs.existsSync(indexPath)) {
-    return adrFiles().length === 0 ? [] : [`${ADR_REL}/README.md: missing, but ADR files exist`];
+    return [`${ADR_REL}/README.md: missing, but ADR files exist`];
   }
   const failures = [];
   const rows = new Map(); // filename -> status cell
@@ -357,6 +379,12 @@ function checkAdrIndex() {
 const ADR_FILE_RE = new RegExp(`^${ADR_REL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/\\d{4}-.*\\.md$`);
 
 function checkAdrStatus() {
+  if (!fs.existsSync(ADR_DIR)) {
+    return { skipped: `no ADR directory at "${ADR_REL}": no ADR status was checked. Declare the ADR directory in the delta's §Repository Layout, or pass --adr-dir <path>.` };
+  }
+  if (adrFiles().length === 0) {
+    return { skipped: `"${ADR_REL}" contains no ADR files (NNNN-*.md): no ADR status was checked.` };
+  }
   const failures = [];
   for (const f of adrFiles()) {
     const st = statusOf(path.join(ADR_DIR, f));
