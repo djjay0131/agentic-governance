@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.5.2 — 2026-09-10
+
+### PR responsibilities, the PR-before-review invariant, and a normative lifecycle
+A governance correction that has been sitting unmerged since 2026-07-16 as
+draft PR #3. It was opened against the pre-v0.3 `docs/` layout, so the v0.3
+migration left it unrebasable, and the defects it fixes are still in canon
+two months later: `### Project Owner / Chief Architect (human)` conflated the
+human owner with the AI Chief Architect, and §Git Workflow still described the
+PR flow as an actor-less nine-step list. Together those implied the repository
+owner opens semantic PRs.
+
+This forward-ports the original work to the current layout, unchanged in
+substance:
+
+- **Role de-conflation.** `Project Owner (human)` is now distinct from the AI
+  Chief Architect, with merging, branch protection and repository
+  administration named as owner responsibilities, and an explicit note that
+  ownership does not make the owner the author of the PRs they merge.
+- **Governance invariant.** Every semantic (L1–L3) change MUST exist as a PR
+  before review can occur; therefore opening a draft PR is an *author*
+  responsibility. Review is an act performed *on* a pull request.
+- **PR Responsibilities.** Author / Reviewer / Repository Owner, each with its
+  own list. In a solo project one person may wear several hats, but for L1–L3
+  the author↔reviewer and reviewer↔merge separations are never collapsed.
+- **PR Lifecycle (normative).** Task → Branch → Draft PR → Review → Fix loop →
+  Approval → Merge, as a table attributing every stage to an actor. Replaces
+  the actor-less list.
+- Aligned wording in `project-operating-system.md` §5 and
+  `templates/contributing-template.md` step 4, so the attribution propagates
+  into every adopter's CONTRIBUTING by reference.
+
+Framed as a patch, following the original PR's reasoning: the responsibility
+split is made **explicit**, not newly introduced. The `v0.5` pin is unchanged,
+so adopters inherit the correction by reference with no delta churn.
+
 ## 0.5.1 — 2026-09-10
 
 ### The canon now governs itself

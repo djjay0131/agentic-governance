@@ -74,8 +74,11 @@ after design approval.
 
 ### 5. Draft PR
 
-Open a draft PR early, declaring the governance level (L0–L3). The PR
-becomes the collaboration space.
+The author opens a draft PR early, declaring the governance level (L0–L3).
+Opening the PR is an author responsibility — a semantic change must exist
+as a PR before it can be reviewed
+(`llm/governance/architecture-governance.md` §Git Workflow → Governance
+invariant). The PR becomes the collaboration space.
 
 ### 6. Review
 
