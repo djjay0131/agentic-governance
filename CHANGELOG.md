@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.6.0 — 2026-09-10
+
+### Closes three gaps v0.5.0 left behind
+v0.5.0 added the Sprints slot to the delta template, `establish`'s layout
+interview, `migrate`'s move plan and the `--layout` check — but not everywhere it
+needed to go. Found while upgrading `fantasy-sports` from v0.3.
+
+- **`<sprints dir>` was missing from `establish`'s placeholder list.** The
+  skill's preamble enumerates every angle-bracketed name it substitutes;
+  `<sprints dir>` was never added, so the one name the interview could newly
+  collect was not declared substitutable.
+- **The Sprints row was missing from §Canonical destinations.** That table lives
+  *inside the `CLAUDE.md` routing block written into every adopting repo*. A repo
+  that adopted the Sprints slot therefore got a routing rule that never named
+  where sprint content goes — the slot existed in the delta and was invisible to
+  the agent reading `CLAUDE.md`.
+
+### New in `establish`: the execution-lessons file is actually created
+Canon states in two places that each repo keeps its own evidence-backed lessons
+in a local `<governance dir>/patterns/execution-patterns.md` **"seeded from"**
+`execution-patterns-template.md`, and the CONTRIBUTING template points
+contributors at it. Nothing ever created it. Every adopted repo has been citing
+a file that does not exist.
+
+`establish` now has step 7 for it, and **never overwrites an existing one** — that
+file holds evidence a repo accumulated, which is exactly the content a
+regenerating tool must not clobber. Steps 7–11 renumber to 8–12; internal
+cross-references and the skill's frontmatter description were updated with them.
+
+This is the same defect class as G-2 and as the drift ADR-0001 corrected: canon
+prescribes, the tool does not install, and the audit cannot tell the difference.
+Prescribing a file into existence is not the same as creating it.
+
 ## 0.5.2 — 2026-09-10
 
 ### PR responsibilities, the PR-before-review invariant, and a normative lifecycle
