@@ -226,10 +226,11 @@ depends on an adopter.
 | `mats-12-application` | v0.5 | migrated (its PR #7) | no CI |
 | `fantasy-sports` | v0.5 | migrated | no pin — floats on default branch |
 | `ai-empirical-se-chapter` | v0.5 | migrated | no pin — floats on default branch |
-| `baseball-ai` | none | never onboarded | — |
+| `baseball-ai` | v0.5 | onboarded 2026-09-10 (its PR #45) | SHA pin |
 
 Verified against each repo's delta on 2026-09-10, not carried forward from a
-previous edit of this table. The earlier version of this section listed five
+previous edit of this table. All eight adopters are on the two-plane layout;
+`baseball-ai` was onboarded last and is the only one that had never adopted. The earlier version of this section listed five
 repos and missed three (`fantasy-sports`, `ai-empirical-se-chapter`,
 `mats-12-application`) — it had been written from memory of the migration
 order rather than from a scan, which is exactly the kind of unverified claim a
