@@ -2,7 +2,7 @@
 
 Status: Draft
 Last updated: YYYY-MM-DD
-Governance: agentic-governance v0.2
+Governance: agentic-governance v0.5
 
 This file localizes the canonical governance in
 [`agentic-governance`](https://github.com/djjay0131/agentic-governance) for

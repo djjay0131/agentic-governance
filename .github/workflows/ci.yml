@@ -13,8 +13,8 @@ jobs:
       - name: Run governance convention checks
         # --layout enforces the two-plane rule continuously
         # (llm/governance/project-operating-system.md §Repository Areas)
-        # instead of only at onboarding. This repo carries no delta of its
-        # own yet, so the layout check reports a loud SKIP here rather than a
-        # PASS; it turns into a real assertion the moment a delta declares
-        # paths.
+        # instead of only at onboarding. This repo carries its own delta
+        # (llm/governance/governance-delta.md), so the layout check is a real
+        # assertion here and not a SKIP: the canon is verified against the
+        # rule it publishes.
         run: node plugin/scripts/governance-checks.mjs --layout
