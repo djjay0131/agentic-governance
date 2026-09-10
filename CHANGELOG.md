@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.1 — 2026-09-10
+
+### The canon now governs itself
+This package published the two-plane rule, shipped a `--layout` check to
+enforce it, and then ran that check against itself as a permanent `SKIP` — it
+had no delta of its own, so there was nothing to verify. ADR-0001 decided the
+rule applies to this repository too; that decision was stated but never
+mechanically closed.
+
+`llm/governance/governance-delta.md` closes it. This repo now declares its own
+layout and `--layout` is a real assertion here: **4 of 4 checks pass** where it
+previously reported 3 of 4 with one verifying nothing.
+
+Two paths are documented as deliberately outside the slot table rather than
+quietly ignored: `llm/session_notes/` (a dated journal, not a governed artifact
+class) and `plugin/` (a tool-contract path whose shape the plugin loader owns).
+The Plans and Sprints slots are declared absent, with the reason.
+
+The delta's Platform Enforcement Reality section is verified against the GitHub
+API, not assumed, and it records an uncomfortable fact: required status checks
+are **not enabled**, so governance checks are advisory at the platform level and
+mandatory only by convention.
+
+### Fixed: new adopters were handed a three-version-stale pin
+`governance-delta-template.md` still read `Governance: agentic-governance v0.2`.
+Every repo onboarded since v0.3 copied that line, so a fresh adopter declared a
+pin predating the layout rule it was being onboarded to. Now `v0.5`.
+
+### Fixed: `/governance:migrate` was invisible
+The whole of v0.4.0 appeared nowhere outside this changelog — not in the README,
+not in `marketplace.json`, not in `plugin.json`. Anyone browsing the plugin could
+not discover the skill that migrates their repo, and the README's advice on
+pre-v0.3 repos still implied the move was purely manual. All four now name it.
+
 ## 0.5.0 — 2026-08-31
 
 ### Sprints get a canonical slot

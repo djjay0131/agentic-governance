@@ -1,7 +1,7 @@
 # agentic-governance
 
 Status: Active
-Last updated: 2026-08-18
+Last updated: 2026-09-10
 
 The AI Engineering Operating System for this portfolio: how work is
 planned, classified, executed, reviewed, decided, merged, and remembered —
@@ -33,8 +33,8 @@ Three layers:
 3. **Execution layer.** This repo doubles as a Claude Code plugin providing
    the four executive personas (chief-architect, chief-reviewer — also the
    L0 Governance Auditor, chief-product-officer, repository-steward), the
-   `/governance:establish` and `/governance:audit` skills, and the
-   governance-checks script. Specialist analysis is delegated to the
+   `/governance:establish`, `/governance:audit` and `/governance:migrate`
+   skills, and the governance-checks script. Specialist analysis is delegated to the
    Constellize plugin personas (system-architects, qa-engineers,
    product-managers, ...) — this repo deliberately does not duplicate them.
 
@@ -66,7 +66,11 @@ executable procedure drifts, and this package treats that as a defect
 (`llm/governance/architecture-governance.md` §Documentation Standards).
 
 Repos adopted before v0.3 carry the pre-v0.3 layout (`docs/governance-delta.md`,
-`docs/adr/`). Moving them is a semantic change that needs its own PR; see
+`docs/adr/`). Run `/governance:migrate` there: it relocates control-plane
+content with `git mv` so history follows, merges rather than regenerates
+existing entries, and archives superseded material. Moving that content is a
+semantic change, so `migrate` works through its own issue, branch and PR
+rather than around them; see
 `llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`.
 
 ## Contents
@@ -82,12 +86,14 @@ Repos adopted before v0.3 carry the pre-v0.3 layout (`docs/governance-delta.md`,
 | `llm/governance/branch-protection.md` | Recommended GitHub branch rules |
 | `llm/governance/labels.md` | Label taxonomy incl. `gov-L0`…`gov-L3` (milestones come from each project's delta) |
 | `llm/governance/governance-delta-template.md` | Template for a project's local governance delta, incl. its repository-layout declaration |
+| `llm/governance/governance-delta.md` | **This package's own delta** — it adopts its own rule, so `--layout` verifies this repo too (ADR-0001) |
 | `llm/governance/adr/` | This package's own decision records |
 | `llm/governance/patterns/prompt-patterns.md` | Universal Bounded-Contract Skeleton + reusable agent prompt patterns |
 | `llm/governance/patterns/execution-patterns-template.md` | Seeded execution-lessons template repos instantiate and evidence locally |
 | `llm/governance/templates/` | ADR, design-doc, feature-spec, research, contributing, PR-template templates |
 | `llm/constitution/` | Shared executive AI principles (four roles, merge rule, direction-is-not-authority) |
 | `llm/specs/` | Design specs for this package's own capabilities |
-| `plugin/agents/`, `plugin/skills/` | Claude Code plugin surface (four personas + establish/audit) |
+| `llm/features/BACKLOG.md` | Feature catalog: everything spec'd or proposed for this package, one line each |
+| `plugin/agents/`, `plugin/skills/` | Claude Code plugin surface (four personas + establish/audit/migrate) |
 | `plugin/scripts/` | `governance-checks.mjs` — the canonical L0/convention/layout check script |
 | `docs/` | Artifacts tree: external material and derived views. Holds only a README stating what belongs here. |
