@@ -161,8 +161,16 @@ const SHAPES = ['path-only', 'status-line-only', 'index-table-rows', 'checkbox-o
 
 // ---------- helpers ----------
 
+// stdio stderr:'pipe' is deliberate. execFileSync both captures stderr on the
+// thrown error AND inherits it to the parent, so existsInBase's
+// expected-negative `cat-file -e` probe printed a bare
+// "fatal: Not a valid object name <base>:<file>" line into the log for every
+// file absent from the base — around twenty lines on a passing run in one
+// adopting repo. Piping keeps the text on e.stderr for real diagnostics while
+// keeping predictable, handled probes out of CI output. A check that cries
+// "fatal" while passing teaches people to stop reading its output.
 function git(...a) {
-  return execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' });
+  return execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
 function read(p) {
   return fs.readFileSync(p, 'utf8');

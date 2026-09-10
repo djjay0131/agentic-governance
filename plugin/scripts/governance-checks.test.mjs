@@ -230,5 +230,43 @@ allow llm/** link-target-only
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// A passing run must not print git's own error text. existsInBase probes the
+// base with `cat-file -e` and handles the miss, but execFileSync inherits
+// stderr as well as capturing it, so every absent file leaked a bare
+// "fatal: Not a valid object name" into CI logs on an otherwise green run.
+// ---------------------------------------------------------------------------
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta(
+      '- Governance directory: `llm/governance/`\n' +
+      '- ADR directory: `llm/governance/adr/`'
+    ),
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'docs/README.md': '# artifacts\n',
+  });
+  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe' });
+  git('checkout', '-q', '-b', 'feature');
+  // files absent from the base: each one drives an expected-negative probe
+  for (let i = 0; i < 4; i++) fs.writeFileSync(path.join(dir, `llm/governance/new-${i}.md`), `# new ${i}\n`);
+  git('add', '-A');
+  git('-c', 'user.email=t@e.invalid', '-c', 'user.name=t', 'commit', '-qm', 'add files absent from base');
+
+  let stderr = '';
+  try {
+    execFileSync('node', [CHECKER, '--base', 'main', '--layout'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (e) {
+    stderr = e.stderr ?? '';
+  }
+  check(
+    "git's own error text never reaches stderr",
+    !/fatal:/.test(stderr),
+    `stderr was:\n${stderr}`
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(failed === 0 ? '\nall regression tests passed' : `\n${failed} regression test(s) failed`);
 process.exit(failed === 0 ? 0 : 1);

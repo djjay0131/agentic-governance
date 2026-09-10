@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.1 — 2026-09-10
+
+### The checker printed "fatal:" on passing runs
+`existsInBase` probes the base with `git cat-file -e` and handles the miss —
+that is how it asks "did this file exist before?". But `execFileSync` both
+captures stderr on the thrown error *and* inherits it to the parent, so every
+file absent from the base leaked a bare
+`fatal: Not a valid object name <base>:<file>` into the log. One adopting repo
+was emitting roughly twenty of them on a **green** run.
+
+The helper now pipes stderr. The text is still on `e.stderr` for real
+diagnostics; it simply stops printing for predictable, handled probes. A check
+that cries "fatal" while passing teaches people to stop reading its output,
+which is a slower version of the same failure as passing while verifying
+nothing.
+
+Found by the agent onboarding `baseball-ai`, which had silenced it in that
+repo's hand-rolled checker copy and could not fix it upstream from there.
+
+### §Related Repos: `baseball-ai` is no longer un-onboarded
+It adopted governance the same day the table was rebuilt, so the row was stale
+within hours of being written. All eight adopters are now on the two-plane
+layout.
+
 ## 0.6.0 — 2026-09-10
 
 ### Two silent defects in the checker itself
