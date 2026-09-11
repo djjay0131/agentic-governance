@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.7.2 — 2026-09-10
+
+### `establish` step 8 could register the plugin for nobody
+v0.7.0 added step 8 so the `/governance:*` skills would actually be reachable in
+an adopting repo. It wrote `.claude/settings.json` without checking whether
+`.claude/` is tracked — and `baseball-ai` ignored it outright as "local
+workspace artifacts". Writing there registers the plugin **for one machine and
+nobody else**, while the step reports success: a per-machine file masquerading
+as repository configuration.
+
+Step 8 now runs `git check-ignore -v .claude/settings.json` first and refuses to
+write an ignored file. Either the ignore rule is narrowed so the settings file
+is tracked, or registration moves to user level and the choice is recorded in
+§Canon Location.
+
+The narrowing is less obvious than it looks, so the skill spells it out: a bare
+`.claude/` makes git refuse to *descend into the directory*, so `!.claude/…`
+alone cannot rescue it — the pattern must be `.claude/*` plus
+`!.claude/settings.json`.
+
+Found by the agent deploying v0.7.0 to `baseball-ai`, which hit this and fixed
+it there. Three releases in a row have now been triggered by deployment rather
+than review — v0.6.0, v0.7.1 and this one.
+
 ## 0.7.1 — 2026-09-10
 
 ### `.claude/` joins the tool-contract exemption class
