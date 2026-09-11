@@ -252,6 +252,24 @@ value declared in step 2.
    }
    ```
 
+   **First check that the file can be tracked at all:**
+   `git check-ignore -v .claude/settings.json`. If `.claude/` is ignored — and
+   at least one repo in this portfolio ignored it as "local workspace
+   artifacts" — then writing the file there registers the plugin **for one
+   machine and nobody else**, while reporting success. Either narrow the ignore
+   rule so the settings file is tracked:
+
+   ```gitignore
+   .claude/*
+   !.claude/settings.json
+   ```
+
+   (a bare `.claude/` makes git refuse to descend into the directory, so a
+   negation alone cannot rescue it — the pattern must end in `/*`), or, if the
+   user wants `.claude/` genuinely untracked, register at user level
+   (`~/.claude/settings.json`) instead and record that in §Canon Location.
+   **Never write an ignored file and report the plugin as registered.**
+
    Registered **by git URL, never by local path**, so the registration is
    valid on every machine. If the user prefers it once at user level
    (`~/.claude/settings.json`) rather than per repo, do that instead and
