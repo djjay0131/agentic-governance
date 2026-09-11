@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.7.1 — 2026-09-10
+
+### `.claude/` joins the tool-contract exemption class
+The class is declared **closed** in three places — `project-operating-system.md`
+§Repository Areas, this repo's `CLAUDE.md`, and the routing rule `establish`
+writes into every adopting repo — and `.claude/` was in none of them, though
+`.claude-plugin/` was. Every adopting repo already had a `.claude/` tree, and
+v0.7.0 made it worse: step 8 now *writes* `.claude/settings.json`, so the
+package's own tool wrote into a directory its own closed class excluded.
+
+Two agents flagged it independently while deploying v0.7.0, from different
+repos. Added to all three statements at once, because a closed class stated
+three times is three things to keep in sync.
+
+### The check command must not expand the canon path
+v0.7.0 gave the delta a single `Canon checkout` declaration so the
+machine-specific path appears in **one** place per repo. The template then
+described the plain-shell fallback as
+`node <canon checkout>/plugin/scripts/...` — ambiguous enough that a deploying
+agent reasonably wrote the *expanded* literal, putting the machine path in a
+second place twenty lines below the first. Being nearby does not make a copy one
+place.
+
+The template now says to reference the declaration and not to expand it, with
+the reason and a `grep -c` check that the count is 1. The two repos deployed
+before this correction (`agentic-kgcs`, `agentic-kgis`) carry the expanded form
+and are swept separately.
+
 ## 0.7.0 — 2026-09-10
 
 ### The package stopped hardcoding its own location

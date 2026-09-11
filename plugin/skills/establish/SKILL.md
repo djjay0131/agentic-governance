@@ -440,6 +440,8 @@ this project. They sit outside both planes and are exempt. The class
 is closed:
 
 - `.github/` — workflows, issue templates, PR templates.
+- `.claude/` — Claude Code's own configuration: `settings.json`,
+  `skills/`, `agents/`, `commands/`.
 - `.claude-plugin/` — the marketplace manifest.
 - The plugin payload root — whatever directory a marketplace
   `source` field points at.
