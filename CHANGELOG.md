@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.1 — 2026-09-10
+
+### The README told you to run a skill it never told you to install
+§Adopting a Project opened with *"Run `/governance:establish` in the target
+repo"* and said nothing about registering the plugin — so for a first-time
+adopter the very first instruction refers to a command that does not exist yet.
+The first adoption is a chicken-and-egg: the skill that installs the plugin
+registration is the one the registration makes available.
+
+The section now leads with the marketplace JSON, by git URL, and carries the two
+traps found while deploying v0.7: merge into an existing settings file rather
+than replacing it, and check `.gitignore` first — a repo that ignores `.claude/`
+gets a registration valid on one machine and nobody else.
+
+Still pointer-first. The procedure is not restated; `establish` remains the only
+copy.
+
 ## 0.8.0 — 2026-09-10
 
 ### `--layout` now checks the direction that catches drift

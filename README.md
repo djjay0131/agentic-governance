@@ -54,7 +54,35 @@ not implicitly.
 
 ## Adopting a Project
 
-Run `/governance:establish` in the target repo. It declares the repository
+**First, install the plugin** — otherwise `/governance:establish` does not
+exist to run. Register this repo as a marketplace and enable the plugin, either
+for one repo (`.claude/settings.json`) or for yourself
+(`~/.claude/settings.json`):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "agentic-governance": {
+      "source": { "source": "git", "url": "https://github.com/djjay0131/agentic-governance.git" },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": { "governance@agentic-governance": true }
+}
+```
+
+Register **by git URL, never by a local path** — a path is valid on one machine
+only. Merge into an existing settings file rather than replacing it; those files
+normally carry other marketplaces and a populated `enabledPlugins`. And if
+`.claude/` is in the repo's `.gitignore`, narrow the rule (`.claude/*` plus
+`!.claude/settings.json`) or register at user level instead — writing an ignored
+settings file registers the plugin for one machine and nobody else.
+
+`/governance:establish` does this itself at step 8 for a repo it onboards. It is
+stated here because the first adoption is a chicken-and-egg: the skill that
+installs the registration is the one the registration makes available.
+
+Then run `/governance:establish` in the target repo. It declares the repository
 layout, writes the governance delta and ADR system at the declared paths,
 installs the `.github/` templates, label taxonomy and branch protection,
 wires the governance checks, and installs the artifact-routing rule into
