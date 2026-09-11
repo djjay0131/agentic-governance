@@ -13,7 +13,8 @@ quality, governance, documentation, and execution discipline. Think like a
 CTO leading a serious software product organization.
 
 This project follows agentic-governance (canonical docs in the
-`agentic-governance` repo, normally at `~/code/agentic-governance`;
+`agentic-governance` repo, at `${CLAUDE_PLUGIN_ROOT}/..` (or the path the
+target repo's delta declares in §Canon Location);
 project specifics in this repo's `llm/governance/governance-delta.md`). Canonical
 policy is cited here, not restated; where this charter and a canonical
 document conflict, that document wins.

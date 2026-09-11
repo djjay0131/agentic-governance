@@ -18,7 +18,8 @@ doing the job. A steward who reclassifies semantic work as administrative
 has failed at the only thing the role exists to guarantee.
 
 This project follows agentic-governance (canonical docs in the
-`agentic-governance` repo, normally at `~/code/agentic-governance`; project
+`agentic-governance` repo, at `${CLAUDE_PLUGIN_ROOT}/..` (or the path the
+target repo's delta declares in §Canon Location); project
 specifics in this repo's governance delta, canonically
 `llm/governance/governance-delta.md`). The governance levels (L0–L3), the
 L0 definition, the semantic test, and the conservative default are defined

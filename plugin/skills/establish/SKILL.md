@@ -1,6 +1,6 @@
 ---
 name: establish
-description: Onboard the current repo onto agentic-governance - declare the repository layout, create the governance delta (including L0 allowlist, platform-enforcement reality, steward activation status), install the two-plane routing rule into CLAUDE.md and AGENTS.md, and create the ADR system, the execution-lessons file, GitHub templates, gov-level labels, branch protection, governance-checks wiring, and memory-bank note. Never activates steward merge authority.
+description: Onboard the current repo onto agentic-governance - declare the repository layout, create the governance delta (including L0 allowlist, platform-enforcement reality, steward activation status), install the two-plane routing rule into CLAUDE.md and AGENTS.md, and create the ADR system, the execution-lessons file, the plugin registration, GitHub templates, gov-level labels, branch protection, governance-checks wiring, and memory-bank note. Never activates steward merge authority.
 argument-hint: "[repo-path (default: cwd)]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
@@ -8,9 +8,17 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 # governance:establish
 
 Onboard a repository onto agentic-governance. Work in the target repo
-(argument, else cwd). The canonical governance repo is at
-`~/code/agentic-governance` (clone from
-`github.com/djjay0131/agentic-governance` if missing).
+(argument, else cwd).
+
+**Locating canon.** Read it from `${CLAUDE_PLUGIN_ROOT}/..` — this plugin ships
+from inside the canonical repo, so that resolves wherever the plugin is
+installed, on any machine. If `CLAUDE_PLUGIN_ROOT` is unset you are running
+from a bare checkout: use that checkout, and record its path as
+`<canon checkout>` in step 2. Clone from
+`https://github.com/djjay0131/agentic-governance` if there is no checkout at
+all. **Never write a machine-specific path into the target repo** except as the
+single declared `Canon checkout` value in its delta — every other reference
+resolves from that one.
 
 Announce each step. Ask the user before any GitHub-remote mutations
 (repo creation, branch protection, labels).
@@ -24,12 +32,12 @@ yourself.
 
 **Every path this skill writes to is declared, never hardcoded.** The
 canon prescribes the shape
-(`~/code/agentic-governance/llm/governance/project-operating-system.md`
+(`${CLAUDE_PLUGIN_ROOT}/../llm/governance/project-operating-system.md`
 §Repository Areas); the repo's delta binds the paths. Angle-bracketed
 names below — `<constitution dir>`, `<governance dir>`, `<adr dir>`,
 `<spec dir>`, `<sprints dir>`, `<plans dir>`, `<features dir>`,
-`<memory-bank path>`, `<artifacts dir>` — always mean the value declared in
-step 2.
+`<memory-bank path>`, `<artifacts dir>`, `<canon checkout>` — always mean the
+value declared in step 2.
 
 ## Steps
 
@@ -46,7 +54,7 @@ step 2.
    - **Migration** — a delta at `docs/governance-delta.md`, or an ADR
      directory at `docs/adr/`, or a `docs/superpowers/` tree. The repo is
      on the pre-v0.3 layout, which ADR-0001 reverses
-     (`~/code/agentic-governance/llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`).
+     (`${CLAUDE_PLUGIN_ROOT}/../llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`).
      **Stop and say so.** This skill does not migrate a repo; migration
      is an L1+ change that needs its own issue, branch, and PR.
      **Point the user at `/governance:migrate`**, which does that work
@@ -78,9 +86,20 @@ step 2.
    minimum, and `/governance:migrate` as the complete path. Never move
    files silently.
 
-2. **Declare the repository layout.** Settle the paths before anything
-   is created; every later step writes to them, and the routing rule in
-   step 5 binds its destination table to them.
+2. **Declare the repository layout and the canon location.** Settle the
+   paths before anything is created; every later step writes to them, and
+   the routing rule in step 5 binds its destination table to them.
+
+   Settle `<canon checkout>` here as well: the absolute or `~`-relative
+   path of the canonical repo on the machine this repo is worked on,
+   resolved from `${CLAUDE_PLUGIN_ROOT}/..` when the plugin is loaded.
+   This is the **only** machine-specific value the target repo is allowed
+   to contain, it is declared once in the delta's §Canon Location, and
+   every canon citation resolves against it. Before recording it, verify
+   it exists and contains `VERSION` and `llm/governance/` — a `Canon
+   checkout` that does not resolve silently breaks every canon reference
+   in the repo, and nothing checks it (see §Canon Location in the
+   template for why).
 
    Derive what the repo already shows — an existing `llm/` tree, a
    memory bank, a spec or plans directory, a published site under
@@ -111,7 +130,7 @@ step 2.
    repo's to choose.
 
 3. **Governance delta.** Copy
-   `~/code/agentic-governance/llm/governance/governance-delta-template.md`
+   `${CLAUDE_PLUGIN_ROOT}/../llm/governance/governance-delta-template.md`
    to `<governance dir>/governance-delta.md`. Fill `## Repository
    Layout` first, from step 2 — delete the lines for slots this repo did
    not declare, and replace the bracketed defaults with real paths on
@@ -124,10 +143,12 @@ step 2.
    - **roadmap path** — control plane; the memory-bank path is already
      settled in step 2 and carried into this block;
    - **governance check command** (default:
-     `node ~/code/agentic-governance/plugin/scripts/governance-checks.mjs --layout`;
+     `node "${CLAUDE_PLUGIN_ROOT}/scripts/governance-checks.mjs" --layout`,
+     falling back to `node <canon checkout>/plugin/scripts/governance-checks.mjs --layout`
+     for a shell with no plugin loaded;
      "none" if the user declines — note that this blocks any future fast
      track). `--layout` belongs in the recorded command, not just in the
-     one-off run of step 10: without it the two-plane rule is documented
+     one-off run of step 11: without it the two-plane rule is documented
      and never enforced. It is additive to the default checks and
      composes with `--base`, `--delta`, and `--adr-dir`. If any declared
      path differs from the checker's defaults, the command must pass
@@ -211,7 +232,34 @@ step 2.
    template points contributors at it — but until v0.6.0 nothing created it,
    so every adopting repo cited a file that did not exist.
 
-8. **GitHub surface.** Create `.github/pull_request_template.md` from the
+8. **Register the plugin so these skills are reachable.** Writing the
+   routing rule does not make `/governance:establish`, `/governance:audit`
+   or `/governance:migrate` available in the target repo. Register the
+   marketplace in `.claude/settings.json`, **merging into the existing
+   file** rather than replacing it — it normally already carries other
+   marketplaces and a populated `enabledPlugins`, and clobbering it would
+   silently disable the user's other plugins:
+
+   ```json
+   {
+     "extraKnownMarketplaces": {
+       "agentic-governance": {
+         "source": { "source": "git", "url": "https://github.com/djjay0131/agentic-governance.git" },
+         "autoUpdate": true
+       }
+     },
+     "enabledPlugins": { "governance@agentic-governance": true }
+   }
+   ```
+
+   Registered **by git URL, never by local path**, so the registration is
+   valid on every machine. If the user prefers it once at user level
+   (`~/.claude/settings.json`) rather than per repo, do that instead and
+   record the choice in the delta's §Canon Location — but do not skip it
+   silently: a repo whose delta cites skills that cannot be invoked there
+   is documentation, not tooling.
+
+9. **GitHub surface.** Create `.github/pull_request_template.md` from the
    canonical `llm/governance/templates/pr-template-template.md` — the
    governance-level declaration must be the first section. Create
    `.github/ISSUE_TEMPLATE/{feature,architecture-proposal,adr,research,documentation}.md`
@@ -222,7 +270,7 @@ step 2.
    `llm/governance/templates/contributing-template.md` (pointer-first; no
    local policy).
 
-9. **Remote + protection (with user approval).** If no remote exists:
+10. **Remote + protection (with user approval).** If no remote exists:
    `gh repo create <owner>/<name> --private --source . --push`. Then apply
    `llm/governance/branch-protection.md` rules to `main` via
    `gh api repos/{owner}/{repo}/branches/main/protection` (PRs required,
@@ -235,7 +283,7 @@ step 2.
    (suggested colors: gray, blue, orange, red; descriptions from
    `llm/governance/labels.md`).
 
-10. **Governance checks wiring.** Run the delta's governance check command
+11. **Governance checks wiring.** Run the delta's governance check command
    in the target repo exactly as recorded in step 3 — including
    `--layout`, which confirms every path declared in step 2 exists and
    that nothing source-of-truth sits under `<artifacts dir>`. Fix broken
@@ -253,7 +301,7 @@ step 2.
    outcome in the report. Note that `--l0` mode stays dormant until the
    repo ever activates the steward.
 
-11. **Memory bank.** The delta declares a `<memory-bank path>`, so that path
+12. **Memory bank.** The delta declares a `<memory-bank path>`, so that path
     must exist by the time this skill finishes. A delta pointing at a
     directory that was never created makes the delta false, and every check,
     agent and adopting plugin that reads it inherits the error.
@@ -271,7 +319,7 @@ step 2.
 
     Do not declare a path you did not create.
 
-12. **Report.** Summarize what was created — including the declared
+13. **Report.** Summarize what was created — including the declared
     layout and the `CLAUDE.md` / `AGENTS.md` routing rule, noting whether
     each was created or merged into existing instructions — what needs the
     user (e.g. branch protection requires the remote or a paid plan), the
@@ -298,10 +346,14 @@ Instructions for AI agents working in this repository.
 <!-- BEGIN agentic-governance: repository layout -->
 ## Repository layout: two planes
 
-The source of truth for this rule is
-`~/code/agentic-governance/llm/governance/project-operating-system.md`
-§Repository Areas, and the decision behind it is
-`~/code/agentic-governance/llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`.
+The source of truth for this rule is agentic-governance
+`llm/governance/project-operating-system.md` §Repository Areas, and the
+decision behind it is
+`llm/governance/adr/0001-llm-control-plane-docs-data-plane.md`. Both are
+paths **inside the canonical repo**: resolve them against the
+`Canon checkout` declared in `<governance dir>/governance-delta.md`
+§Canon Location, or read them at
+<https://github.com/djjay0131/agentic-governance>.
 Where this file and §Repository Areas disagree, §Repository Areas
 wins. The paths below are the ones this repo declares in
 `<governance dir>/governance-delta.md` §Repository Layout.
