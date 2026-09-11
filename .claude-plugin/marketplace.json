@@ -10,7 +10,7 @@
       "name": "governance",
       "source": "./plugin",
       "description": "Executive personas (chief-architect, chief-reviewer, chief-product-officer, repository-steward) and the /governance:establish, /governance:audit and /governance:migrate skills",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "author": {
         "name": "djjay0131"
       }
