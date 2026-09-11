@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.8.0 — 2026-09-10
+
+### `--layout` now checks the direction that catches drift
+From the day it shipped, `--layout` verified **declared → exists**: every path a
+delta binds must be present. It never verified the inverse. So a repo could hold
+control-plane content in a canonical slot directory it had never declared and be
+told `PASS` — the exact drift ADR-0001 exists to catch, invisible to the check
+written to catch it.
+
+`agentic-kg` was doing it. `llm/plans/` held a file, while its delta asserted:
+
+> Not declared: constitution, spec and plans directories — this repo has no such
+> content
+
+A false statement in a governance delta, and 4 of 4 passing over it.
+
+`--layout` now also verifies **exists → declared**: if a canonical slot's default
+path exists and holds Markdown, that slot must be declared.
+
+Two exclusions, both deliberate:
+
+- **`artifacts`.** Its default (`docs/`) exists in nearly every repo for
+  unrelated reasons — a published site, a Jekyll build — and the slot already has
+  a safe canonical default the drift scan uses. The violation worth failing on is
+  control-plane content in an undeclared *control-plane* slot.
+- **A repo with no delta at all.** That is already a graded SKIP (v0.6.0);
+  listing eight per-slot failures instead would undo that design. A repo that
+  declares nothing has one problem, not eight.
+
+A directory with no canonical slot is never flagged — canon documents such paths
+(`llm/session_notes/`, `llm/construction/`) as deliberately outside the slot
+table, and they remain legitimate.
+
+Verified against all nine repos before shipping: it fails `agentic-kg` on the real
+violation and produces **zero** findings in the other eight. Three regression
+tests pin it, including both exclusions — the first draft of this check broke two
+existing tests by flagging undeclared `artifacts` and by turning the no-delta SKIP
+into a hard failure, which is how the exclusions were found.
+
 ## 0.7.2 — 2026-09-10
 
 ### `establish` step 8 could register the plugin for nobody

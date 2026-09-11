@@ -455,6 +455,41 @@ function checkLayout() {
       failures.push(`${DELTA} §Repository Layout: ${slot} declared as "${p}", which does not exist`);
     }
   }
+  // The inverse direction. Above verifies declared -> exists; this verifies
+  // exists -> declared. Without it a repo can hold control-plane content in a
+  // canonical slot directory it never declared and still be told PASS, which is
+  // exactly the drift ADR-0001 exists to catch. agentic-kg carried
+  // llm/plans/ with a file in it while its delta asserted "this repo has no
+  // such content", and every check passed.
+  //
+  // Only the canonical DEFAULT path of an undeclared slot is flagged. A
+  // directory with no canonical slot at all (llm/session_notes/,
+  // llm/construction/) is legitimate and documented as outside the slot table,
+  // so it must not false-positive here.
+  //
+  // Two exclusions, both deliberate:
+  //
+  // - `artifacts`. Its default (`docs/`) exists in nearly every repo for
+  //   unrelated reasons — a published site, a Jekyll build — and the slot has a
+  //   safe canonical default the drift scan above already uses. The violation
+  //   worth failing on is control-plane content in an undeclared CONTROL-plane
+  //   slot, not the presence of a docs directory.
+  // - A repo with no delta at all. That is already reported as a graded SKIP
+  //   (v0.6.0), and turning it into a list of per-slot failures would undo that
+  //   deliberate design: a repo that declares nothing has one problem, not eight.
+  if (LAYOUT.hasDelta && Object.keys(LAYOUT.declared).length > 0) {
+    for (const [slot, def] of Object.entries(LAYOUT_DEFAULTS)) {
+      if (slot === 'artifacts') continue;
+      if (slot in LAYOUT.declared) continue;
+      const abs = path.join(ROOT, def);
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) continue;
+      if (listMd(abs).length === 0) continue; // empty: nothing to govern yet
+      failures.push(
+        `${DELTA} §Repository Layout: "${def}" exists and holds content, but the ${slot} slot is not declared — an undeclared path in use is a violation. Declare it, or move the content.`
+      );
+    }
+  }
+
   const artifacts = LAYOUT.declared.artifacts || LAYOUT_DEFAULTS.artifacts;
   const declaredNothing = Object.keys(LAYOUT.declared).length === 0;
   if (declaredNothing && LAYOUT.hasDelta) {
