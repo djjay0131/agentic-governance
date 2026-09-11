@@ -58,11 +58,38 @@ canonical defaults.
 Path: [e.g. `llm/master-roadmap.md`; "none" if the project has no roadmap
 document yet.]
 
+## Canon Location
+
+Where the canonical `agentic-governance` repo lives, declared once. **This is
+the only machine-specific path this repo is permitted to contain** — every
+canon citation in `CLAUDE.md`, `AGENTS.md` and the check command below resolves
+against it, so it changes in one place instead of a dozen.
+
+- Canon checkout: [absolute or `~`-relative path, e.g. `~/code/agentic-governance`]
+- Canon repository: `https://github.com/djjay0131/agentic-governance`
+- Plugin registered: [`repo` (`.claude/settings.json`) | `user`
+  (`~/.claude/settings.json`) | `no` — and if `no`, the
+  `/governance:*` skills cannot be invoked here]
+
+Skills and agents running as the installed plugin resolve canon from
+`${CLAUDE_PLUGIN_ROOT}/..` and need none of this; the declaration exists for
+everything that is read *without* the plugin loaded — static instructions in
+`CLAUDE.md`, and a check command run from a plain shell.
+
+**Deliberately not verified by `--layout`.** A canon checkout is
+environment-specific: CI fetches canon into a runner temp directory and has no
+such path, so asserting it would fail every CI run for a repo whose local
+declaration is perfectly correct. Verify it yourself when you change it —
+`ls <canon checkout>/VERSION`.
+
 ## Governance Check Command
 
 [The exact command that runs the canonical governance checks against this
 repo — e.g.
-`node ~/code/agentic-governance/plugin/scripts/governance-checks.mjs --layout`.
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/governance-checks.mjs" --layout` when
+the plugin is loaded, otherwise
+`node <canon checkout>/plugin/scripts/governance-checks.mjs --layout` using the
+path declared in §Canon Location above. Never a bare machine path.
 Include `--layout` so the two-plane rule and the paths declared above are
 enforced on every run, not only at onboarding; it is additive to the default
 checks and composes with `--base`, `--delta`, and `--adr-dir`. Cited by L0

@@ -29,7 +29,11 @@ repo, or vendor a copy — either way, the delta's Governance Check Command
 field records the exact invocation, e.g.:
 
 ```text
-node ~/code/agentic-governance/plugin/scripts/governance-checks.mjs --layout
+# as an installed plugin (portable — prefer this):
+node "${CLAUDE_PLUGIN_ROOT}/scripts/governance-checks.mjs" --layout
+
+# from a local checkout of this repo:
+node <canon checkout>/plugin/scripts/governance-checks.mjs --layout
 ```
 
 `--layout` belongs in the recorded command and in CI, not only in a one-off

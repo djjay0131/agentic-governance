@@ -101,6 +101,22 @@ Path: none. Direction is tracked as a feature catalog
 (`llm/features/BACKLOG.md`) rather than a dated roadmap, because this
 package ships on adopter demand rather than on a schedule.
 
+## Canon Location
+
+This repository **is** canon, so there is nothing external to locate.
+
+- Canon checkout: `.` — this repo
+- Canon repository: `https://github.com/djjay0131/agentic-governance`
+- Plugin registered: `no` — and deliberately. Registering the marketplace here
+  would install this package's own skills over the working tree that defines
+  them, so a skill edit would not take effect until a plugin refresh, and a
+  half-finished edit would be live. Canon is exercised from the checkout
+  (`node plugin/scripts/governance-checks.mjs`), which is also why
+  `plugin/**` is in the checker's `HARD_DENY`.
+
+Adopters declare a real path here; the section exists because every canon
+citation in an adopting repo resolves against it (v0.7.0).
+
 ## Governance Check Command
 
 `node plugin/scripts/governance-checks.mjs --layout`

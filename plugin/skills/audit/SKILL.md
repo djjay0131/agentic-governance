@@ -8,7 +8,11 @@ allowed-tools: Read, Glob, Grep, Bash
 # governance:audit
 
 Audit a repository's governance compliance. Work in the target repo
-(argument, else cwd). Canonical governance repo: `~/code/agentic-governance`.
+(argument, else cwd). Canonical governance repo: `${CLAUDE_PLUGIN_ROOT}/..`
+— the plugin ships from inside it, so that resolves wherever the plugin is
+installed. Fall back to the target repo's delta §Canon Location only when
+`CLAUDE_PLUGIN_ROOT` is unset (running from a bare checkout rather than as an
+installed plugin). Never hardcode a local path.
 This skill reports; it does not fix unless the user asks afterward.
 
 Read the delta's `## Repository Layout` block first: every path below is

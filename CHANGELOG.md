@@ -1,5 +1,58 @@
 # Changelog
 
+## 0.7.0 — 2026-09-10
+
+### The package stopped hardcoding its own location
+This package's second principle is **declared, not hardcoded**: canon prescribes
+the shape, each repo binds paths in its delta, nothing downstream hardcodes a
+path. It then hardcoded `~/code/agentic-governance` into thirteen places across
+seven files, and `establish` wrote that literal into every repo it onboarded —
+the routing rule in `CLAUDE.md`, and the delta's own check command.
+
+On the machine this portfolio lives on, that path resolved **only because of a
+symlink** (`~/code -> /mnt/c/code`) created by hand on 2026-08-21. Remove the
+symlink and every canon citation in all eight adopting repos goes dead at once.
+
+Two mechanisms replace it, because the two audiences differ:
+
+- **Inside the plugin** — skills, agent charters, `scripts/README.md` — canon is
+  now `${CLAUDE_PLUGIN_ROOT}/..`. The plugin ships from inside the canonical
+  repo, so that resolves wherever it is installed, on any machine, with no
+  declaration at all. `migrate` already did this for `VERSION`; nothing else had
+  adopted it.
+- **Written into an adopting repo** — `CLAUDE.md`, `AGENTS.md`, the recorded
+  check command — cannot use an environment variable: they are static prose read
+  when the plugin may not be loaded. These now cite canon by **repo-relative
+  path**, resolved against a single declared `Canon checkout`, with the GitHub
+  URL alongside so a human can always follow the reference.
+
+### New: `## Canon Location` in the delta
+Declares the canon checkout, the canon repository URL, and where the plugin is
+registered. One machine-specific value per repo, in one place, instead of a
+literal repeated through the routing rule and the check command.
+
+**Deliberately not verified by `--layout`.** A canon checkout is
+environment-specific — CI fetches canon into a runner temp directory and has no
+such path, so asserting it would fail every CI run for a repo whose local
+declaration is perfectly correct. Stated in the template rather than left as an
+unexplained gap, since v0.6.0 was about checks that claim more than they verify.
+
+### New in `establish`: register the plugin (step 8)
+Writing the routing rule never made the skills reachable. A survey of the nine
+repos found the marketplace registered in **one**; another had a
+`.claude/settings.json` that registered other marketplaces and omitted this one;
+seven had no file at all, and there was no user-level registration either. So
+`/governance:establish`, `/governance:audit` and `/governance:migrate` were
+uninvokable almost everywhere — this session's own agents reached them by
+reading the SKILL.md files directly by path.
+
+Registration is **by git URL, never by local path**, and **merges** into an
+existing `.claude/settings.json` rather than replacing it: those files normally
+carry other marketplaces and a populated `enabledPlugins`, and clobbering one
+would silently disable the user's other plugins.
+
+Steps 8–12 renumber to 9–13.
+
 ## 0.6.1 — 2026-09-10
 
 ### The checker printed "fatal:" on passing runs
