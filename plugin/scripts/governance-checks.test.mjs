@@ -268,5 +268,61 @@ allow llm/** link-target-only
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// ---------------------------------------------------------------------------
+// exists -> declared. --layout verified declared->exists from the start, but
+// never the inverse, so a repo could hold control-plane content in a canonical
+// slot directory it never declared and still be told PASS. agentic-kg carried
+// llm/plans/ with a file in it while its delta asserted "this repo has no such
+// content", and all four checks passed.
+// ---------------------------------------------------------------------------
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta('- Governance directory: `llm/governance/`'),
+    'llm/plans/a-real-plan.md': '# a plan nobody declared\n',
+    'docs/README.md': '# artifacts\n',
+  });
+  const { out } = runChecker(dir);
+  check(
+    'content in an undeclared canonical slot fails',
+    /FAIL {2}layout/.test(out) && /"llm\/plans" exists and holds content.*plans slot is not declared/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// A directory with NO canonical slot is legitimate — canon documents such paths
+// as deliberately outside the slot table (llm/session_notes/, llm/construction/).
+// It must not false-positive.
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta('- Governance directory: `llm/governance/`'),
+    'llm/session_notes/2026-09-10-a-note.md': '# journal\n',
+    'docs/README.md': '# artifacts\n',
+  });
+  const { out } = runChecker(dir);
+  check(
+    'a directory with no canonical slot is not flagged',
+    /PASS {2}layout/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// An undeclared artifacts slot must NOT be flagged: docs/ exists in nearly every
+// repo for unrelated reasons, and the slot has a safe canonical default.
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta('- Governance directory: `llm/governance/`'),
+    'docs/index.md': '# a published site\n',
+  });
+  const { out } = runChecker(dir);
+  check(
+    'an undeclared artifacts slot is not flagged',
+    /PASS {2}layout/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(failed === 0 ? '\nall regression tests passed' : `\n${failed} regression test(s) failed`);
 process.exit(failed === 0 ? 0 : 1);
