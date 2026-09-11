@@ -86,10 +86,15 @@ declaration is perfectly correct. Verify it yourself when you change it —
 
 [The exact command that runs the canonical governance checks against this
 repo — e.g.
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/governance-checks.mjs" --layout` when
-the plugin is loaded, otherwise
-`node <canon checkout>/plugin/scripts/governance-checks.mjs --layout` using the
-path declared in §Canon Location above. Never a bare machine path.
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/governance-checks.mjs" --layout` when the
+plugin is loaded; from a plain shell, the same script under the
+`Canon checkout` declared in §Canon Location above.
+
+**Do not expand the checkout path here.** Reference the declaration instead.
+Writing the literal path a second time re-creates exactly the duplication
+§Canon Location exists to remove — the machine-specific value must appear in
+**one** place per repo, and being twenty lines below the declaration does not
+make a second copy one place. `grep -c` for it: the count should be 1.
 Include `--layout` so the two-plane rule and the paths declared above are
 enforced on every run, not only at onboarding; it is additive to the default
 checks and composes with `--base`, `--delta`, and `--adr-dir`. Cited by L0
