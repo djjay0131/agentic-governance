@@ -2,7 +2,7 @@
 
 Status: Draft
 Last updated: YYYY-MM-DD
-Governance: agentic-governance v0.5
+Governance: agentic-governance v[canon's current minor — read it from canon's `VERSION`, do not copy a number from this template]
 
 This file localizes the canonical governance in
 [`agentic-governance`](https://github.com/djjay0131/agentic-governance) for

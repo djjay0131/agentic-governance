@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.8.3 — 2026-09-10
+
+### Two version pins that could not stop going stale
+v0.5.1 fixed the delta template's pin line, which read `v0.2` and had been
+handing every new adopter a three-version-stale pin. Eight releases later it read
+`v0.5` and was stale again — because the fix was to **bump a hardcoded number**,
+which guarantees a repeat.
+
+It is now a placeholder that cannot rot: `v[canon's current minor — read it from
+canon's VERSION, do not copy a number from this template]`. `establish` already
+reads `VERSION` at step 1, so it can fill it correctly; nothing parses this line
+mechanically (`audit` compares it to `VERSION` by reading), so the shape is free
+to change.
+
+This repository's **own** delta had the same defect from the other direction: it
+pinned itself at `v0.5` while `VERSION` said `0.8.2`. A repo that is canon has no
+external version to pin, so the line now points at `VERSION` instead of copying
+it. Same principle as §Canon Location in v0.7.0 — the value lives in one place or
+it drifts.
+
+Found during the final portfolio verification sweep, where canon was the only
+repo whose declared pin disagreed with reality.
+
 ## 0.8.2 — 2026-09-10
 
 ### Declaring a marketplace is not installing it
