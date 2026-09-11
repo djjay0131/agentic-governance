@@ -78,9 +78,19 @@ normally carry other marketplaces and a populated `enabledPlugins`. And if
 `!.claude/settings.json`) or register at user level instead — writing an ignored
 settings file registers the plugin for one machine and nobody else.
 
-`/governance:establish` does this itself at step 8 for a repo it onboards. It is
-stated here because the first adoption is a chicken-and-egg: the skill that
-installs the registration is the one the registration makes available.
+**Declaring the marketplace is not installing it.** Claude Code fetches and
+trusts a newly declared marketplace on a later session, and that requires you to
+accept it — there is no non-interactive path (`claude plugin` manages
+*already-installed* plugins only). Until then the declaration is inert:
+`agentic-governance` will not appear in
+`~/.claude/plugins/known_marketplaces.json`, there will be no cache directory
+under `~/.claude/plugins/marketplaces/`, and `/governance:*` will not exist.
+Check those two paths if the skills seem missing.
+
+`/governance:establish` writes this registration itself at step 8 for a repo it
+onboards, and reports the accept step as a human follow-up — it cannot complete
+the install on your behalf. The first adoption is a chicken-and-egg: the skill
+that writes the registration is the one the registration makes available.
 
 Then run `/governance:establish` in the target repo. It declares the repository
 layout, writes the governance delta and ADR system at the declared paths,

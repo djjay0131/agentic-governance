@@ -271,7 +271,21 @@ value declared in step 2.
    **Never write an ignored file and report the plugin as registered.**
 
    Registered **by git URL, never by local path**, so the registration is
-   valid on every machine. If the user prefers it once at user level
+   valid on every machine.
+   **Writing this file declares the marketplace; it does not install it.**
+   Claude Code fetches and trusts a newly declared marketplace on a later
+   session, and that requires the human to accept it — there is no
+   non-interactive path (`claude plugin` offers `enable`, `disable` and
+   `details` for *already-installed* plugins only). Until that happens the
+   declaration is inert: `~/.claude/plugins/known_marketplaces.json` will not
+   list `agentic-governance`, no cache directory exists under
+   `~/.claude/plugins/marketplaces/`, and `/governance:*` is unavailable.
+
+   So **report this as a required human follow-up**. Do not tell the user the
+   skills are now available — say the registration is written and name the
+   step only they can complete. Verified in this portfolio: eight repos carried
+   the declaration while the marketplace had never been fetched.
+ If the user prefers it once at user level
    (`~/.claude/settings.json`) rather than per repo, do that instead and
    record the choice in the delta's §Canon Location — but do not skip it
    silently: a repo whose delta cites skills that cannot be invoked there

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.8.2 — 2026-09-10
+
+### Declaring a marketplace is not installing it
+v0.7.0 added `establish` step 8 to fix the `/governance:*` skills being
+unreachable in eight of nine repos, and v0.8.1 documented the same registration
+in the README. Both treated **writing `.claude/settings.json` as completing the
+install.** It does not.
+
+Claude Code fetches and trusts a newly declared marketplace on a later session,
+and that requires the human to accept it — there is no non-interactive path
+(`claude plugin` offers `enable`, `disable` and `details` for *already-installed*
+plugins only). Until the accept happens the declaration is inert:
+
+    ~/.claude/plugins/known_marketplaces.json      → ["claude-plugins-official"]
+    ~/.claude/plugins/marketplaces/agentic-governance → does not exist
+
+Measured across this portfolio **after** all eight repos had been deployed:
+every one carried the declaration, and the marketplace had never been fetched.
+So the headline fix of v0.7.0 was necessary and not sufficient, and the release
+notes overstated it.
+
+Step 8 now says so, and instructs the skill to **report the accept step as a
+required human follow-up rather than claim the skills are available.** The README
+names the two paths to check when the skills seem missing.
+
+Found by an agent that was told to delete six vendored canon copies in
+`mats-12-application` because they "shadow the installed plugin". It verified
+first, found the plugin was not installed at all, and **refused** — deleting them
+would have removed the repo's only governance capability. It also disproved the
+shadowing mechanism outright: plugin skills are namespaced (`governance:establish`)
+and the vendored copies are not (`governance-establish`), so the two coexist and
+neither is suppressed. The real hazard is narrower and still worth fixing — an
+*unqualified* reference resolves to the stale vendored copy, and unqualified is
+exactly how that repo's own prose names them.
+
 ## 0.8.1 — 2026-09-10
 
 ### The README told you to run a skill it never told you to install
