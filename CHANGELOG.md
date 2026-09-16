@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.9.0 — 2026-09-16
+
+### Branch cleanup was asserted three times and implemented nowhere
+The PR lifecycle table has always ended with *"Branch deleted post-merge"*,
+`governance-levels.md` classifies branch cleanup as L0 category 13, and the
+fast track tells the steward to pass `--delete-branch`. Nothing set
+`delete_branch_on_merge`, nothing checked it, and **all ten repos in this
+portfolio had it off** — so the lifecycle's closing clause depended entirely on
+whoever merged remembering a flag. Fifteen merged branches had accumulated.
+
+- **`branch-protection.md` gains §Branch Cleanup.** `delete_branch_on_merge:
+  true` is now the stated default, with the reasoning: a rule enforced by memory
+  is a rule that decays.
+- **`establish` sets it** at the protection step. It is a *repository* setting
+  rather than branch protection, so it works on every plan — including the
+  private-repo-on-a-free-plan case where the protection call 403s. That case is
+  real here, so the distinction matters.
+- **`audit` gains check 8, stale branches.** Report only; deletion stays the
+  owner's call, and a skill that audits is not a skill that mutates.
+
+### The squash trap, written down
+A squash-merged branch **always looks unmerged**: the squash commit on the
+default branch is none of the branch's commits, so `git branch --merged` omits
+it and the compare API reports `diverged, ahead=N`. Reading `ahead=N` as "holds
+unique work" is what makes a cleanup look risky and stalls it — I nearly
+reported a dozen safe branches as unsafe on exactly that mistake.
+
+The discriminator is the pull request, and the policy table says so: merged PR →
+delete; open PR → keep; **PR closed unmerged → keep, the branch is the only
+copy**; **no PR at all → never delete**, because that destroys the only copy of
+work no review ever saw. Those last two rows are why this cannot be a blind
+sweep, and why the check reports instead of acting.
+
+### Why the checker does not enforce it
+`governance-checks.mjs` reads the working tree and local git only. Branch, PR and
+repository-settings state are remote facts behind the API, and a check that
+silently passed when it could not reach them would be the v0.6.0 defect again.
+Stated in canon rather than left as an unexplained gap.
+
 ## 0.8.3 — 2026-09-10
 
 ### Two version pins that could not stop going stale

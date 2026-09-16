@@ -20,7 +20,7 @@ the one **this repo declares**, not a hardcoded one. Where a slot is
 undeclared, fall back to the canonical default
 (`llm/governance/`, `llm/governance/adr/`, `llm/specs/`, `llm/plans/`,
 `llm/features/`, `llm/memory_bank/`, `docs/`) and record the missing
-declaration as a finding (check 10). A repo declares only the slots it
+declaration as a finding (check 11). A repo declares only the slots it
 uses: an absent slot is not a violation, an undeclared path is.
 
 ## Checks
@@ -81,12 +81,41 @@ uses: an absent slot is not a violation, an undeclared path is.
    instantiated (`gh label list` vs canonical `llm/governance/labels.md` +
    delta milestones + the four `gov-L*` labels).
 
-8. **Memory-bank currency.** Memory bank exists at the delta's declared
+   **`delete_branch_on_merge`** is on
+   (`gh api repos/{owner}/{repo} -q .delete_branch_on_merge`). This is a
+   repository setting, not branch protection, so it is available on every
+   plan — a 403 on protection is not an excuse for this being off.
+
+8. **Stale branches.** Report branches whose PR is **merged** but which still
+   exist. Classify by PR, never by commits: a squash-merged branch always
+   looks unmerged, because the squash commit is none of the branch's commits,
+   so `git branch --merged` omits it and compare reports `diverged, ahead=N`
+   (`llm/governance/branch-protection.md` §Branch Cleanup).
+
+   For each branch that is not the default branch and not a declared
+   long-lived role:
+
+   ```
+   gh pr list --head <branch> --state all --json number,state
+   ```
+
+   - **merged PR** → report as deletable
+   - **open PR** → live, say nothing
+   - **PR closed unmerged** → report separately as *abandoned work*, not as
+     cleanup: the branch is the only copy
+   - **no PR at all** → report separately as *never reviewed*. **Never
+     recommend deleting these.** Deleting one destroys the only copy of work
+     no review ever saw, which is the single outcome cleanup must not produce.
+
+   **Report; do not delete.** Deletion is the owner's call even at L0, and a
+   skill that audits is not a skill that mutates.
+
+9. **Memory-bank currency.** Memory bank exists at the delta's declared
    path; `activeContext.md`/`progress.md` last-modified dates are not
    stale relative to recent merges (flag if the bank predates the last 5
    merged PRs).
 
-9. **Control-plane content under the artifacts directory.** The two-plane
+10. **Control-plane content under the artifacts directory.** The two-plane
    rule (canonical `llm/governance/project-operating-system.md`
    §Repository Areas): the artifacts directory holds project and domain
    deliverables, external material, and derived views — and **nothing that
@@ -110,7 +139,7 @@ uses: an absent slot is not a violation, an undeclared path is.
    generated project documentation?) is the auditor's, not the checker's —
    `--layout` catches only the name shapes.
 
-10. **Undeclared layout paths.** Every control-plane path in use is
+11. **Undeclared layout paths.** Every control-plane path in use is
     declared in the delta's `## Repository Layout` block. Compare the
     directories actually holding governance docs, ADRs, specs, plans,
     feature specs and the memory bank against the block; a path in use that
@@ -122,7 +151,7 @@ uses: an absent slot is not a violation, an undeclared path is.
     `.claude-plugin/`, the plugin payload root, root-convention files) are
     exempt and are not findings.
 
-11. **Documentation standards.** Major docs carry Status, Last-updated, and
+12. **Documentation standards.** Major docs carry Status, Last-updated, and
     Owner headers; statuses are from the canonical vocabulary; no repo doc
     restates canonical policy instead of citing it (consolidation
     principle).

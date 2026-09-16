@@ -308,7 +308,16 @@ value declared in step 2.
    `gh api repos/{owner}/{repo}/branches/main/protection` (PRs required,
    approvals required, no force pushes/deletions, conversation resolution)
    — if the API returns 403, record that in the delta's Platform
-   Enforcement Reality instead of failing. Instantiate the label taxonomy
+   Enforcement Reality instead of failing.
+
+   Also set **`delete_branch_on_merge: true`**
+   (`gh api -X PATCH repos/{owner}/{repo} -f delete_branch_on_merge=true`).
+   This is a *repository* setting, not branch protection, so it works on
+   every plan — including the private-repo-on-free-plan case where the
+   protection call above 403s. The PR lifecycle already ends with "Branch
+   deleted post-merge"; without this, that clause depends on whoever merges
+   remembering `--delete-branch`, and every repo in this portfolio had it off
+   (`llm/governance/branch-protection.md` §Branch Cleanup). Instantiate the label taxonomy
    via `gh label create`: the canonical set
    (`llm/governance/labels.md`), the delta's milestones, **and the four
    governance-level labels `gov-L0`, `gov-L1`, `gov-L2`, `gov-L3`**
