@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.9.1 — 2026-09-18
+
+### `audit` check 6 passed repos that ran no checks at all
+It asked whether the declared governance check command *worked* — and the
+auditor satisfied that by running the command itself during the audit. Whether
+**anything ran it automatically** was never asked. So a repo with no
+`.github/workflows/` directory passed a check about its governance checks.
+
+Found by running `/governance:audit` end to end for the first time since it
+gained checks 8 and 11. `mats-12-application` passed check 6 with zero CI, and
+its own history showed the cost: **9 of its last 15 commits went directly to
+`main`**, bypassing the Issue → branch → PR flow its delta declares. A rule
+nothing enforced was duly ignored — not carelessness, just the absence of a
+mechanism.
+
+Check 6 now asks three questions and names the middle one as the one that
+matters: is a command declared, **does anything run it automatically**, and
+does it pass. (b) is reported as **blocking** where the delta claims the flow
+is enforced, since that claim is false without automation. The check must read
+the workflow and confirm it invokes the declared command, not infer enforcement
+from the existence of a `.github/` directory.
+
+It also now reports separately whether the check is a *required status check* —
+running is not blocking, which is the next gap up (backlog G-2) — and records
+the ordering trap: requiring a context before its workflow has ever reported
+makes GitHub treat it as permanently pending and blocks every merge, including
+the one that would fix it. Workflow first, required-check second, always.
+
+**`home-network` is the remaining live instance**: no CI, so nothing runs its
+declared command.
+
 ## 0.9.0 — 2026-09-16
 
 ### Branch cleanup was asserted three times and implemented nowhere

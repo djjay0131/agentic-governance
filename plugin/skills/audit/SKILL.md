@@ -67,10 +67,36 @@ uses: an absent slot is not a violation, an undeclared path is.
      merged by the human owner). ACTIVE without both references is a
      **blocking** finding.
 
-6. **Governance checks.** If the delta declares a governance check
-   command, run it (default mode, and again with `--layout`) and report
-   failures. Flag a declared command that does not run, and a missing
-   declaration on a repo that has ADRs (should-fix).
+6. **Governance checks.** Three questions. The second is the one that
+   matters, and this check used to omit it.
+
+   a. **Is a command declared?** A missing declaration on a repo that has
+      ADRs is a should-fix.
+
+   b. **Does anything run it automatically?** Look for a CI workflow that
+      actually invokes the declared command — read the workflow, do not infer
+      from the presence of a `.github/` directory. **A declared command that
+      only a human ever runs is documentation, not enforcement.**
+
+      Until v0.9.1 this check asked only whether the command *worked*, which
+      the auditor satisfied by running it during the audit. So a repo with no
+      `.github/workflows/` at all passed a check about its governance checks.
+      `mats-12-application` did exactly that, and the cost was visible in its
+      own history: **9 of its last 15 commits went straight to `main`**,
+      bypassing the flow its delta declares. A rule nothing enforced was duly
+      ignored.
+
+   c. **Does it pass?** Run it (default mode, and again with `--layout`) and
+      report failures. Flag a declared command that errors.
+
+   Report (b) as **blocking** where the repo's delta claims the Issue → branch
+   → PR flow is enforced — that claim is false without automation — and as
+   should-fix otherwise. Then report separately whether the check is a
+   **required status check**: running is not the same as blocking, and a
+   visible-but-advisory check is the next gap up (backlog G-2). Note that
+   requiring a context before its workflow has ever reported makes GitHub
+   treat it as permanently pending and blocks every merge, so the correct
+   order is always workflow first, required-check second.
 
 7. **GitHub surface.** PR template (with the governance-level declaration
    as the first section), issue templates, CODEOWNERS, CONTRIBUTING
