@@ -2,6 +2,7 @@
 
 Status: Draft
 Date: 2026-09-18
+Amended: 2026-09-19 — §3.5, §5.5, §4.1 provenance fields, open questions 5–6
 Owner: AI Chief Architect
 Governance: agentic-governance v0.9.1
 Supersedes: nothing
@@ -305,6 +306,50 @@ No free prose in the parenthetical, same as `status-line-only`. Evidence is
 referenced by locator in the projection, not inlined here — the existing
 hand-written prose annotations migrate into handoffs and checkpoint records.
 
+### 3.5 The marker block is append-only
+
+§3.3 chose a marker on the claim line and no new file, and the Steward charter
+forbids a parallel log. That collides with the brief's Activity 11, which
+requires an **append-only** verification record and says plainly: *do not
+silently mutate historical verification records.* A marker that is rewritten in
+place is the opposite of append-only.
+
+**Resolution: the marker block accumulates. Nothing in it is ever replaced or
+removed.**
+
+```markdown
+- [x] `P3-AC-04` A gate test asserts that no `/p/**` response carries
+  `public` or `s-maxage` in `Cache-Control` (ADR-0004)
+  — AGENT VERIFIED (PR #22, 2026-09-16)
+  — HUMAN VERIFIED (PR #25, 2026-09-17)
+```
+
+- **Current state is the last line.** One rule, no ambiguity, and the cheap read
+  stays cheap — a reader or a checker takes the final marker.
+- **History is the lines above it.** The chain *is* the record. There is no
+  parallel log, no new file, and the Steward's ruling stands exactly as §3.3
+  left it.
+- **A reset appends, it does not erase.** Claim-text drift (§5.4) and artifact
+  invalidation (§5.5) append `— NOT VERIFIED (<reason>, YYYY-MM-DD)`. The prior
+  `HUMAN VERIFIED` line remains visible, which is the point: a reader must be
+  able to see that something *was* verified and then stopped being so. Deleting
+  it would hide exactly the event that matters most.
+- **Removal is a violation, and it is mechanically checkable.** A diff that
+  deletes or edits an existing marker line is malformed. This is a *shape*
+  rule, so it belongs in the sixth L0 diff shape (A2) alongside the grammar:
+  `verification-marker` permits appending a marker line and permits nothing
+  else. Append-only then has an enforcer rather than being an aspiration —
+  which is the distinction v0.9.1 added to `audit` check 6.
+
+The cost is honest: claims that are verified, invalidated and re-verified grow a
+few lines. That is the correct trade. A one-line marker is cheaper to read and
+loses the only history anyone would ever want.
+
+**What this does not claim.** Git history is not the append-only guarantee here
+— history can be rewritten, and reconstructing state from diffs is not
+inspection. The guarantee is that the *current tree* carries the chain, so
+inspection needs no archaeology.
+
 ---
 
 ## 4. PDataset specification
@@ -322,6 +367,8 @@ at, with working view and download links.
 | `sha256` | yes | of the file, or of the manifest of files for a directory |
 | `bytes` | yes | |
 | `produced_by` | yes | pipeline step id (§15) or `manual` |
+| `derived_from` | yes* | id(s) of the source PDataset(s); `none` for a root dataset. *Required — this field **is** the provenance chain the brief asks for, and `none` must be stated rather than omitted, so a root dataset is distinguishable from an unrecorded one.* |
+| `transformation` | yes* | the executable artifact that produced this from `derived_from`, or `manual` with a reason. *A `manual` transformation is a Level 3 operation by §14 regardless of how deterministic it looks.* |
 | `produced_at` | yes | ISO date |
 | `schema` | no | column names/types when tabular |
 | `rows` | no | |
@@ -448,6 +495,47 @@ has to wonder whether the tick predates the sentence.
 
 Drift is reported by `--surface`, in the same mechanism and the same breath as
 Design Surface narrative drift. One definition of stale.
+
+### 5.5 Artifact invalidation — tamper evidence beyond the claim text
+
+§5.4 binds verification to the exact claim *wording*. The brief's Activity 8
+asks for more: verification must identify exactly **what was verified**, and if
+an artifact changes afterwards the system must not keep presenting it as
+`HUMAN VERIFIED`.
+
+Claim-text drift is one input to invalidation, not invalidation itself. A claim
+sentence can sit untouched while the code, dataset, configuration or model it
+refers to is replaced underneath it.
+
+**Generalise §5.4's mechanism rather than adding a second one.** At the moment a
+marker is written, the manifest records the identity of every artifact the
+verification rested on:
+
+| Bound identifier | Applies to |
+|---|---|
+| `commit_sha` | the repository state the claim was verified against |
+| `artifact_sha256` | each cited file — verification code, config, fixture |
+| `dataset_sha256` | each cited PDataset (§4.1 already records `sha256`) |
+| `model_id` + `model_version` | Level 3 operations (§14) |
+| `execution_id` | the run whose output was the evidence |
+| `text_sha256` | the claim sentence (§5.4, unchanged) |
+
+**If any bound identifier changes, `--surface` appends an invalidation marker**
+— `— NOT VERIFIED (artifact changed: <identifier>, YYYY-MM-DD)` — per §3.5. One
+definition of stale, one mechanism, one report, exactly as §5.4 intended.
+
+Two deliberate limits, stated so nobody over-reads this:
+
+- **Tamper-evident, not tamper-proof.** Hashes detect change; they do not
+  prevent it, and anyone who can edit the tree can edit the manifest. The claim
+  is that a silent substitution becomes a visible one, which is all a
+  git-hosted system can honestly offer.
+- **Level 3 cannot bind an output.** For nondeterministic operations the
+  manifest binds the *inputs* — prompt, model id, parameters, seed where one
+  exists — and not the output, because re-running produces a different one
+  legitimately. §14's distinction between reproducing the *procedure* and
+  reproducing the *output* is what makes this coherent; pretending otherwise
+  would make every LLM claim permanently invalid.
 
 ---
 
@@ -797,6 +885,18 @@ as ADR candidate where it is a decision.
    a merged system; blocking may be right, or may just cause under-reporting.
 4. Whether canon's `docs/` should gain a Pages mechanism so the published
    surface has somewhere to go.
+5. **A3 depends on a capability that does not exist yet, and this is the
+   critical path.** A3 "Surface engine generalisation" amends
+   `2026-07-21-design-surface-capability-design.md` (§2.2), and Design Surface
+   is issues #7 and #9 — **unstarted**. So A3 either builds that engine first or
+   blocks on it, and A4, A5, A7 and A9 all depend on A3. Settle this before A1
+   starts: is Design Surface a prerequisite, or does A3 build the minimum engine
+   this capability needs and leave the published narrative to #7?
+6. **Who holds Verifier on the activities that define verification itself?**
+   The plan assigns AI roles throughout. For A1 (claim identity — everything
+   keys off it), A6 (the determinism model) and A8 (which defines the Verifier
+   role), an agent verifying an agent is the recursion this capability exists to
+   break. Recommend the human owner as Verifier on those three.
 
 ## 18. Related documents
 

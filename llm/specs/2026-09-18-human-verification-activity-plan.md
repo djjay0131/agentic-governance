@@ -4,6 +4,8 @@ Status: Draft
 Date: 2026-09-18
 Owner: AI Chief Architect
 Governance: agentic-governance v0.9.1
+Amended: 2026-09-19 — A2 gains append-only enforcement, A5 gains artifact
+invalidation, and A1/A6/A8 move Verifier to the human owner (design §3.5, §5.5)
 Architecture: `llm/specs/2026-09-18-human-verification-capability-design.md`
 
 > Deliverables 10–13 of the design brief: activity-by-activity decomposition,
@@ -58,10 +60,10 @@ downstream depends either on the claim grammar or on the manifest shape.
 | ID | Activity | Level | Depends on | Deliverable |
 |---|---|---|---|---|
 | **A1** | Claim identity and marker grammar | L2 | — | ADR-0003; `llm/governance/verification.md` §claims; ID grammar; marker grammar; state table |
-| **A2** | Sixth L0 diff shape `verification-marker` | L1 | A1 | `governance-checks.mjs` `SHAPES` + branch; `l0-fast-track.md` shape-table row; tests |
+| **A2** | Sixth L0 diff shape `verification-marker` | L1 | A1 | `governance-checks.mjs` `SHAPES` + branch; `l0-fast-track.md` shape-table row; tests | **Amended 2026-09-19: the shape must also enforce append-only — a diff that deletes or edits an existing marker line is malformed (design §3.5). Without this, append-only is an aspiration, not a rule.**
 | **A3** | Surface engine generalisation | L2 | — | ADR-0002; `plugin/scripts/surface.mjs` skeleton; `surface-manifest.json` schema; Design Surface spec amended |
 | **A4** | Verification projection | L1 | A1, A3 | Claim discovery, state parsing, evidence binding by cited ID, projected view |
-| **A5** | `--surface` drift mode | L1 | A3, A4 | Drift audit incl. the claim-text-hash reset rule (§5.4) |
+| **A5** | `--surface` drift mode | L1 | A3, A4 | Drift audit incl. the claim-text-hash reset rule (§5.4) **and artifact invalidation across all bound identifiers — commit SHA, artifact/dataset hashes, model id, execution id (§5.5, amended 2026-09-19)** |
 | **A6** | Determinism model and replay executor | L2 | — | Level classifier; REPLAY / MODIFIED REPLAY / INDEPENDENT VERIFICATION; the unfalsified report |
 | **A7** | PDataset record and link resolution | L1 | A3 | Record schema; derived links; `published`/`local`/`missing` resolution; gap markers |
 | **A8** | Verifier role and Builder/Verifier separation | L2 | — | `plugin/agents/verifier.md`; tool-separation frontmatter; `verify-claim` skill |
@@ -113,14 +115,14 @@ enforcement system; it is an application of the existing one.
 
 | Activity | Builder | Verifier | Why this pairing |
 |---|---|---|---|
-| A1 | chief-architect | chief-reviewer | Policy change; the reviewer is canon's standing skeptic for decision integrity |
+| A1 | chief-architect | **human owner** (was chief-reviewer) | Policy change; the reviewer is canon's standing skeptic for decision integrity |
 | A2 | implementation specialist | chief-reviewer | The shape must be adversarially probed — see A2's acceptance criteria |
 | A3 | implementation specialist | chief-architect | Amends an approved spec; architecture ownership verifies |
 | A4 | implementation specialist | **a second implementation specialist** | Pure code; independence is what matters, not seniority |
 | A5 | implementation specialist | second implementation specialist | as A4 |
-| A6 | chief-architect | chief-reviewer | The determinism model is the conceptual core |
+| A6 | chief-architect | **human owner** (was chief-reviewer) | The determinism model is the conceptual core |
 | A7 | implementation specialist | second implementation specialist | as A4 |
-| A8 | chief-architect | chief-reviewer | Defines the Verifier role itself — see note below |
+| A8 | chief-architect | **human owner** (was chief-reviewer) | Defines the Verifier role itself — see note below |
 | A9 | chief-architect | chief-reviewer | Eleven-surface sweep; completeness is the risk |
 | A10 | second implementation specialist | implementation specialist (the A4 builder) | Deliberate inversion: the A4 builder verifies the fixture that tests A4 — *and cannot mark it* |
 | A11 | second implementation specialist | implementation specialist | as A10 |
@@ -130,6 +132,28 @@ enforcement system; it is an application of the existing one.
 a Verifier that does not yet exist. Its verification is performed by the human
 owner directly. This is stated rather than hidden; a bootstrap that pretends to
 be self-verifying is precisely the failure this capability exists to prevent.
+
+### Amendment 2026-09-19 — the human holds Verifier on A1, A6 and A8
+
+The assignments above originally named `chief-reviewer` as Verifier throughout.
+For three activities that is the recursion this capability exists to break:
+
+- **A1 — claim identity and marker grammar.** Every other activity keys off it.
+  An error here is invisible downstream and expensive to unwind.
+- **A6 — determinism model and replay executor.** It decides what counts as
+  reproduced, which is the conceptual core of the whole capability.
+- **A8 — the Verifier role itself.** An agent specifying the role that checks
+  agents, and then verifying that specification, is precisely the loop the brief
+  opens by rejecting: *"an agent must never automatically promote its own work."*
+
+`chief-reviewer` still reviews all three — the change is to who **marks** them.
+The remaining nine keep their AI Verifiers, including A10 and A11's deliberate
+inversion, where the A4 builder verifies the fixture testing A4 and cannot mark
+it.
+
+This is a one-line-per-activity change with a large effect on whether the
+capability's own claims are trustworthy, and it is the amendment most likely to
+slow delivery. That is the trade.
 
 ### Reporting
 
