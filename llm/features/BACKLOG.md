@@ -25,6 +25,7 @@ follow-up section, not here.
 |---|---------|--------|-----------|
 | G-1 | Model selection for delegated agents | BACKLOG | Govern *which model* a subagent runs on, the way Modes 1–3 already govern how many agents and what shape. |
 | G-2 | `establish` should make governance checks a *required* status check | BACKLOG | The skill wires the check, then leaves it advisory — so no adopted repo actually blocks a merge on it. |
+| G-3 | Human verification of claims | SPECIFIED | The package governs *process* exhaustively and *outcome* nowhere — an agent's own say-so is what marks work complete. |
 
 ---
 
@@ -151,3 +152,93 @@ Checks; `plugin/skills/establish/SKILL.md` steps 8–9;
 `llm/governance/l0-fast-track.md` (condition 9 cites the check command,
 and a fast track over a non-blocking check certifies nothing);
 `llm/governance/governance-delta.md` §Platform Enforcement Reality.
+
+---
+
+## G-3 · Human verification of claims
+
+**Problem.** The package governs *process* exhaustively and *outcome*
+nowhere. It can establish that a change was classified L1, branched,
+drafted, reviewed by the right role and merged. It cannot establish
+whether the thing the change was supposed to achieve is *true*.
+
+There is no requirement object anywhere in the package or in any
+adopter — `find llm -type f ! -name "*.md"` returns nothing in either
+control plane. An acceptance criterion is an anonymous Markdown
+checkbox with no identity; its only address is its prose sentence, and
+that sentence gets edited in place. Completion is asserted by an agent
+flipping `[ ]` to `[x]`. So **an agent marks its own work complete, on
+its own evidence, against a requirement that has no name.**
+
+**Why it matters.**
+
+1. **It is the same failure shape this package has already had twice,
+   and G-1 says so.** ADR-0001 exists because the package governed
+   *process* exhaustively and *placement* nowhere. G-1 exists because
+   it governs *execution mode* exhaustively and *model choice* nowhere
+   — "the identical gap one level over." This is the third instance:
+   *workflow* exhaustively, *verification of outcome* nowhere.
+2. **Coverage is un-computable today.** Requirement → test takes a
+   careful human about ten minutes per criterion. Test → requirement is
+   impossible. Nothing can report that a criterion has zero tests.
+3. **A test can exist and not run.** An adopting repo's own CI file
+   records, verbatim, that a whole contract suite "ran NOWHERE until
+   now" — after its criteria had been ticked.
+4. **The practice already exists by hand.** Adopters hand-write
+   verification levels, evidence and tick conditions *inside the
+   checkbox prose*, and one commit is titled "Test 4 half proven; tick
+   only what is actually verified." The need is demonstrated, not
+   hypothesised; what is missing is identity, vocabulary and a checker.
+5. **Vacuous checks pass silently.** Three were found in one adopter in
+   a single week — a leak check with nothing to find, a link check over
+   one page, and a logging layer whose tests passed only because the
+   test harness supplied the handler production was missing. None was
+   caught by a suite going red.
+
+**Shape of the solution.** Specified in
+`llm/specs/2026-09-18-human-verification-capability-design.md`, with the
+activity decomposition in
+`llm/specs/2026-09-18-human-verification-activity-plan.md`. In outline:
+
+- **Claim identity on the claim line** — `P2-AC-04`, greppable from
+  code, tests, handoffs and PR bodies exactly as `ADR-0007` and
+  `SEAM-1` already are. No registry file; the Steward's
+  one-source-of-truth rule stays intact.
+- **Six states** with a marker in the ADR `Status:` grammar, an absent
+  marker meaning `NOT VERIFIED`, and a **sixth canonical L0 diff
+  shape** so a state transition stays bookkeeping while a claim-text
+  edit stays semantic.
+- **Verification bound to exact wording** — editing a claim changes its
+  hash and resets its state.
+- **A determinism hierarchy** (deterministic / executable / attested)
+  where evidence that is only an agent's assertion **cannot** reach
+  HUMAN VERIFIED. Agent verification is evidence for human
+  verification, never a substitute for it.
+- **MODIFIED REPLAY** — re-run with a deliberate perturbation that
+  *should* break the check, and require it to break. This is the part
+  that catches vacuous guards, and all three found above would have
+  been caught by it.
+- **Extends the Design Surface capability** (G-4 candidate / issues #7,
+  #9) rather than duplicating its manifest, hashing and drift audit.
+
+**Open questions for the spec.**
+
+- Does canon adopt the capability itself? It has a backlog with
+  `VERIFIED`/`IMPLEMENTED` statuses but no acceptance criteria to
+  verify. Dogfooding is valuable and is not free.
+- Do adopters retrofit IDs to existing criteria, or only to new ones?
+  One adopter has ~145 checkboxes; retrofit is mechanical but a large
+  L1 diff.
+- Should `VERIFICATION FAILED` block a merge? It is a true statement
+  about a merged system; blocking may be right, or may simply cause
+  under-reporting.
+- Should `llm/plans/` exist in this package? `CLAUDE.md` points plans
+  there; the delta deliberately refuses the slot. The conflict is
+  currently resolved in favour of the delta and should be settled once.
+
+**Related.** `llm/specs/2026-07-21-design-surface-capability-design.md`
+(extended, not duplicated); `llm/governance/l0-fast-track.md` §Block
+Format (the shape table, and condition 10's definition of independence
+as temporal and artifactual); `llm/governance/definition-of-done.md`;
+`llm/memory_bank/systemPatterns.md` §5 (canon must not learn about
+adopters).
