@@ -885,18 +885,52 @@ as ADR candidate where it is a decision.
    a merged system; blocking may be right, or may just cause under-reporting.
 4. Whether canon's `docs/` should gain a Pages mechanism so the published
    surface has somewhere to go.
-5. **A3 depends on a capability that does not exist yet, and this is the
-   critical path.** A3 "Surface engine generalisation" amends
-   `2026-07-21-design-surface-capability-design.md` (§2.2), and Design Surface
-   is issues #7 and #9 — **unstarted**. So A3 either builds that engine first or
-   blocks on it, and A4, A5, A7 and A9 all depend on A3. Settle this before A1
-   starts: is Design Surface a prerequisite, or does A3 build the minimum engine
-   this capability needs and leave the published narrative to #7?
-6. **Who holds Verifier on the activities that define verification itself?**
-   The plan assigns AI roles throughout. For A1 (claim identity — everything
-   keys off it), A6 (the determinism model) and A8 (which defines the Verifier
-   role), an agent verifying an agent is the recursion this capability exists to
-   break. Recommend the human owner as Verifier on those three.
+
+## 17a. Decisions on the blocking questions (2026-09-21)
+
+Questions 5 and 6 above blocked A1 from starting. Both are settled here by the
+repository owner; questions 1–4 remain genuinely open and block nothing.
+
+### D-1 — A3 builds the minimum engine. Design Surface is a consumer, not a prerequisite.
+
+**Decision.** A3 delivers the surface engine and the `surface-manifest` schema
+scoped to what verification needs, and nothing more. Issues #7 and #9
+(Published Design Surface) become a **second consumer** of that engine rather
+than a dependency of it.
+
+**Why.** Verification addresses a live governance gap — the package governs
+process exhaustively and outcome nowhere, and `audit` check 6 demonstrated the
+cost of that inside canon itself. Design Surface is a publishing capability and
+is unstarted. Blocking the urgent capability behind the optional one would put
+A4, A5, A7 and A9 behind work nobody has begun.
+
+**The risk this creates, stated.** Two consumers of one engine means the
+engine's interface has to be approximately right on the first attempt, and the
+second consumer is not available to pressure-test it. The mitigation is
+narrowness: A3 ships the manifest schema and the projection seam, and resists
+generalising for a consumer that does not exist. A thin engine that #7 later
+extends is recoverable; a speculative one built for an imagined second consumer
+is not.
+
+**What this does not decide.** §2.2's amendments to the Design Surface spec
+stand — they describe how the two projections relate when both exist. This
+decides only the build order.
+
+### D-2 — the human owner holds Verifier on A1, A6 and A8.
+
+**Decision.** Confirmed as amended on 2026-09-19. `chief-reviewer` still
+reviews all three; the change is who **marks** them.
+
+**Why.** These are the three activities where an agent verifying an agent is
+the recursion this capability exists to break: A1 defines claim identity, which
+every other activity keys off; A6 defines what counts as reproduced; A8 defines
+the Verifier role itself. The plan had already reached for this in `A8-AC-05`,
+recording a bootstrap exception naming the human owner "because the Verifier
+role does not yet exist." That instinct was correct and is now general.
+
+**The cost, stated.** This is the change most likely to slow delivery — three
+activities now wait on human availability rather than agent throughput. That is
+the trade, accepted deliberately rather than discovered later.
 
 ## 18. Related documents
 
