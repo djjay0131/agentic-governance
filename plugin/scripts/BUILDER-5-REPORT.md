@@ -35,7 +35,7 @@ are now 40-hex commit SHAs resolved from the GitHub API.
 
 ## 1. What shipped
 
-### `plugin/scripts/surface.test.mjs` — 44 assertions, 804 lines
+### `plugin/scripts/surface.test.mjs` — 44 assertions, 814 lines
 
 Conventions taken from `governance-checks.test.mjs` and matched deliberately:
 plain Node, zero dependencies, temp dirs created and removed, one `check()`
@@ -533,14 +533,18 @@ Positively:
 
 ## 4. The determinism scale is not inverted, and the suite can tell
 
-`L3` deterministic (strongest) → `L2` → `L1` attested (weakest). The pair in §C
-runs in **one invocation**: `P1-AC-02`, whose only evidence is the agent's prose
+`L3` deterministic (strongest) → `L2` → `L1` attested (weakest). The brief was
+explicit about not inverting it, so the assertion is written as a **pair that
+runs in one invocation**: `P1-AC-02`, whose only evidence is the agent's prose
 attestation, is refused at `AGENT VERIFIED` with `best_determinism: "L1"`, while
 in the same manifest `P1-AC-01` reaches `HUMAN VERIFIED` with
-`best_determinism: "L3"`. Invert the implementation (mutant M13,
-`e.determinism === 'L1'` → `'L3'`) and seven assertions go red, C2 among them,
-while the naive "L1 is capped" assertion on its own would have survived. That is
-why the assertion is written as a pair rather than as two independent checks.
+`best_determinism: "L3"`.
+
+Invert the implementation (`e.determinism === 'L1'` → `'L3'`) and seven
+assertions go red — including C2, `the gate OPENS`, and both control assertions.
+A naive "L1 is capped" check written on its own would have survived that
+inversion, because under it an L1 attestation is no longer the thing being
+capped. That is the whole reason the assertion names both sides.
 
 ---
 
@@ -709,15 +713,16 @@ work now rather than the ones that worked first.
 
 **Not touched:** `surface.mjs`, `replay.mjs`, `surface-html.mjs`,
 `governance-checks*.mjs`, `plugin/scripts/fixtures/**`, `docs/**`, `llm/**`. No
-`git commit`, no `git push`, no `gh` mutation; the only network calls were two
-read-only GitHub API tag lookups.
+`git commit`, no `git push`, no `gh` mutation; the only network calls were four
+read-only GitHub API requests (two tag refs, two tag listings) to resolve and
+cross-check the action SHAs.
 
 Named weak points, so a Verifier does not have to find them first:
 
 - **The suite asserts behaviour, not the absence of the defects' causes.** It
   proves `HUMAN VERIFIED` is refused in the eight situations the report found.
-  It does not prove there is no ninth. Mutant M12 is the closest thing to a
-  general argument and it is not a proof.
+  It does not prove there is no ninth. The *runner refuses everything* mutant is
+  the closest thing to a general argument here and it is not a proof.
 - **The `--out`-relative page invocation is embedded in the rendered HTML**, so
   `surface-html.mjs` is byte-identical only for a fixed `--out`. §K compares two
   renders to the *same* path. Rendering to two different paths differs on one

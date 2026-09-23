@@ -25,7 +25,7 @@ follow-up section, not here.
 |---|---------|--------|-----------|
 | G-1 | Model selection for delegated agents | BACKLOG | Govern *which model* a subagent runs on, the way Modes 1–3 already govern how many agents and what shape. |
 | G-2 | `establish` should make governance checks a *required* status check | BACKLOG | The skill wires the check, then leaves it advisory — so no adopted repo actually blocks a merge on it. |
-| G-3 | Human verification of claims | SPECIFIED | The package governs *process* exhaustively and *outcome* nowhere — an agent's own say-so is what marks work complete. |
+| G-3 | Human verification of claims | SPECIFIED | The package governs *process* exhaustively and *outcome* nowhere — an agent's own say-so is what marks work complete. **A vertical slice is implemented** (`feat/g3-verification-slice`, 2026-09-23) and is `AGENT VERIFIED`; it stays SPECIFIED until a human verifies it — G-3's own rule, applied to G-3. |
 
 ---
 
