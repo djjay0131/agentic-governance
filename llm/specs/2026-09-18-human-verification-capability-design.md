@@ -368,7 +368,7 @@ at, with working view and download links.
 | `bytes` | yes | |
 | `produced_by` | yes | pipeline step id (§15) or `manual` |
 | `derived_from` | yes* | id(s) of the source PDataset(s); `none` for a root dataset. *Required — this field **is** the provenance chain the brief asks for, and `none` must be stated rather than omitted, so a root dataset is distinguishable from an unrecorded one.* |
-| `transformation` | yes* | the executable artifact that produced this from `derived_from`, or `manual` with a reason. *A `manual` transformation is a Level 3 operation by §14 regardless of how deterministic it looks.* |
+| `transformation` | yes* | the executable artifact that produced this from `derived_from`, or `manual` with a reason. *A `manual` transformation is an **`L1`** (attested) operation by §14 regardless of how deterministic it looks.* |
 | `produced_at` | yes | ISO date |
 | `schema` | no | column names/types when tabular |
 | `rows` | no | |
@@ -516,7 +516,7 @@ verification rested on:
 | `commit_sha` | the repository state the claim was verified against |
 | `artifact_sha256` | each cited file — verification code, config, fixture |
 | `dataset_sha256` | each cited PDataset (§4.1 already records `sha256`) |
-| `model_id` + `model_version` | Level 3 operations (§14) |
+| `model_id` + `model_version` | **`L1`** (attested) operations (§14) |
 | `execution_id` | the run whose output was the evidence |
 | `text_sha256` | the claim sentence (§5.4, unchanged) |
 
@@ -530,7 +530,7 @@ Two deliberate limits, stated so nobody over-reads this:
   prevent it, and anyone who can edit the tree can edit the manifest. The claim
   is that a silent substitution becomes a visible one, which is all a
   git-hosted system can honestly offer.
-- **Level 3 cannot bind an output.** For nondeterministic operations the
+- **`L1` cannot bind an output.** For nondeterministic operations the
   manifest binds the *inputs* — prompt, model id, parameters, seed where one
   exists — and not the output, because re-running produces a different one
   legitimately. §14's distinction between reproducing the *procedure* and
@@ -626,10 +626,29 @@ Renderer: none          # none | quarto
   container without a host install. Recorded as an available option, not a
   requirement.
 
-**Executable UI is deferred entirely.** An interactive verification console is a
-genuinely attractive idea and a genuinely large one; it belongs in the backlog
-after the data model has shipped and been used. Building it now would be
-designing a UI for data that does not yet exist.
+**An interactive verification console is deferred entirely.** It is a genuinely
+attractive idea and a genuinely large one; it belongs in the backlog after the
+data model has shipped and been used. Building it now would be designing a UI
+for data that does not yet exist.
+
+> **Amended 2026-09-23 (slice reconciliation A-2).** As first written this
+> paragraph deferred "executable UI" as a whole, which reads as deferring any
+> way for a human to re-run a check. That is more than was intended and more
+> than the capability can afford: a human who cannot re-execute the evidence is
+> back to trusting an agent's summary, which is the gap G-3 exists to close.
+>
+> The distinction the section actually needs:
+>
+> - **Deferred** — an interactive console that executes code *in the page*.
+> - **Required, and in scope under `Renderer: none`** — the generated page
+>   emits the exact REPLAY and MODIFIED REPLAY commands, with their inputs,
+>   expected results and working directory, for the human to run in their own
+>   shell.
+>
+> The second costs zero dependencies, because emitting a string is not
+> executing it. It also keeps the **execution boundary explicit**: the page
+> states plainly that it renders commands and does not run them. A page that
+> animated a fake result would be worse than one that runs nothing.
 
 ---
 
@@ -771,6 +790,14 @@ Every evidence record **must** declare its level. There is no default — an
 undeclared level is a gap marker, not an assumption, because the safe-looking
 default (`L1`) would quietly cap claims and the useful-looking default (`L3`)
 would quietly launder assertions.
+
+> **Amended 2026-09-23 (slice reconciliation A-1).** §4.1 and §5.5 previously
+> said "Level 3" where they meant **`L1`** — the *weakest* level — while this
+> table defines `L3` as the *strongest*. The scale was inverted in two places.
+> An implementer following those sections literally would have classified
+> manual, attested and LLM work as **deterministic**, inverting the one cap in
+> §5.3 mechanism 4 that stops an agent's own say-so reaching `HUMAN VERIFIED`.
+> This table is canonical; those citations now read `L1`.
 
 ### 14.2 Three verification modes
 
