@@ -129,6 +129,24 @@ const mono = (s) => `<span class="mono">${esc(s)}</span>`;
 const orNull = (v, label = 'null') =>
   v === null || v === undefined || v === '' ? `<span class="null">${esc(label)}</span>` : esc(v);
 
+// Finding messages and ceiling reasons are authored upstream as Markdown
+// fragments. Escaping them and stopping there leaks literal `**` and backticks
+// into the one panel a reader scans first. This escapes FIRST and then converts
+// only the two inline forms the engine actually emits. It is a two-form
+// converter, not a Markdown parser: nothing else is interpreted, so no manifest
+// string can become markup.
+const mdInline = (s) => esc(s)
+  .replace(/`([^`]+)`/g, '<code>$1</code>')
+  .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+// A list of ids rendered as a count plus its members. `[]` is a result, not an
+// absence: it is the check passing, and it must not read as "not performed".
+const idList = (a) => !Array.isArray(a)
+  ? orNull(a)
+  : a.length === 0
+    ? '<code>0</code>'
+    : `<code>${a.length}</code> ${a.map((v) => `<code>${esc(typeof v === 'string' ? v : JSON.stringify(v))}</code>`).join(' ')}`;
+
 // ---------------------------------------------------------------------------
 // Links. Derived, never stored (design §4.2).
 //
@@ -187,13 +205,51 @@ function detBadge(level) {
 
 /**
  * A command block. This is the whole execution path under `Renderer: none`:
- * the exact string, its working directory, and what the manifest recorded when
- * somebody else ran it. The page does not run it.
+ * the exact string, its working directory, the full `replay-record/v1` the
+ * runner produced when it executed the command, and — separately, never merged
+ * into it — what the artifact itself attests. The page does not run anything.
  */
 function commandBlock(title, spec, { kindClass = '' } = {}) {
   if (!spec) return '';
   const outcomeClass = spec.as_expected === false ? 'outcome-bad'
     : spec.as_expected === true ? 'outcome-ok' : 'outcome-none';
+  const x = spec.execution ?? {};
+  const R = manifest.replay ?? {};
+  const runner = R.runner ?? null;
+  const executed = x.executed === true;
+  const attested = spec.attested_outcome ?? null;
+  const recorded = spec.recorded_outcome ?? null;
+  const disagrees = attested !== null && recorded !== null && attested !== recorded;
+
+  // WHO OBSERVED THIS, AND WHEN. Not "its producer": the producer wrote the
+  // artifact and the `// replay-outcome:` comment in it. The outcome below was
+  // obtained by the engine's runner, which executed this exact command while
+  // this manifest was being generated. Attributing an observed result to the
+  // actor whose work it examines is the laundering that `attested_outcome` vs
+  // `recorded_outcome` exists to prevent, and restating it here would undo the
+  // whole mechanism at the last step (design §14.2).
+  const provenance = executed
+    ? `<span class="hint">observed by <code>${esc(runner ?? 'the manifest generator')}</code>, which executed this command when the manifest was generated (<code>${esc(manifest.generated_at)}</code>). Not by this page, and not by the artifact's producer.</span>`
+    : `<span class="hint"><strong>NOT OBSERVED.</strong> ${mdInline(x.unexecuted_reason ?? 'no execution record is present')} &mdash; nobody ran this command. Any value beside it is the artifact's own claim about itself, not a result.</span>`;
+
+  // An attested outcome that disagrees with the observed one is the single most
+  // important fact this block can carry: it is a claim the machine contradicted.
+  const mismatch = disagrees
+    ? `<p class="cmd-mismatch"><strong>ATTESTED &ne; OBSERVED.</strong> The artifact attests <code>${esc(attested)}</code>.
+        Running it produced <code>${esc(recorded)}</code>. <strong>The observed value governs</strong> &mdash; a verdict must
+        not be a function of a comment (design §14.2). Everything this page says about this command is derived from
+        <code>${esc(recorded)}</code>, and the disagreement itself is evidence about the artifact.</p>`
+    : '';
+
+  const execRows = executed
+    ? `
+        <tr><th><code>exit_status</code></th><td><code>${esc(x.exit_status)}</code>${x.signal ? ` <span class="hint">signal <code>${esc(x.signal)}</code></span>` : ''}${x.timed_out ? ' <span class="outcome-bad">TIMED OUT</span>' : ''} <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">${esc(x.stdout_first_line ?? '(no output)')}</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">${esc(x.stdout_sha256)}</code> <span class="hint">over ${esc(x.stdout_bytes)} bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">${esc(x.execution_id)}</code> <span class="hint">identifies this one execution inside the <code>${esc(R.schema ?? 'replay-record/v1')}</code> record</span></td></tr>`
+    : `
+        <tr><th><code>execution.executed</code></th><td><code>false</code> <span class="hint">${mdInline(x.unexecuted_reason ?? 'no execution record is present')}. There is no exit status, no output and no <code>execution_id</code>, because nothing ran.</span></td></tr>`;
+
   return `
     <div class="cmd ${kindClass}">
       <div class="cmd-head"><span class="cmd-title">${esc(title)}</span>${
@@ -203,10 +259,13 @@ function commandBlock(title, spec, { kindClass = '' } = {}) {
     spec.cwd ? ` &nbsp;&rarr;&nbsp; ${link(fromSurfaceRoot('').replace(/\/$/, '') || '.', { label: SURFACE_ROOT })}` : ''
   }</div>
       <pre class="shell"><span class="prompt">$ </span>${esc(spec.command)}</pre>
+      ${mismatch}
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td>${code(spec.expect ?? 'not recorded')}</td></tr>
-        <tr><th>outcome recorded in the manifest</th><td>${code(spec.recorded_outcome ?? 'not recorded')} <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="${outcomeClass}">${esc(String(spec.as_expected))}</span></td></tr>
+        <tr><th>expected result</th><td>${code(spec.expect ?? 'not recorded')} <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td>${code(attested ?? 'not attested')} <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="${outcomeClass}">${code(recorded ?? 'not recorded')}</span> ${provenance}</td></tr>
+        <tr><th><code>outcome_source</code></th><td>${code(spec.outcome_source ?? 'not recorded')} <span class="hint">${spec.outcome_source === 'executed' ? 'the outcome above was observed, not copied from the artifact' : 'the outcome above was not observed by a runner'}</span></td></tr>
+        <tr><th>as expected</th><td><span class="${outcomeClass}">${esc(String(spec.as_expected))}</span> <span class="hint">${spec.as_expected === null || spec.as_expected === undefined ? 'unknown: nothing was observed, so nothing can be compared against the expectation' : 'compares the observed outcome against the expectation above'}</span></td></tr>${execRows}
       </table>
     </div>`;
 }
@@ -223,6 +282,10 @@ function commandBlock(title, spec, { kindClass = '' } = {}) {
 function scopeOfTest(claim, ev) {
   const yes = [];
   const no = [];
+  // Items that must lead the `does NOT establish` column whatever else is
+  // added after them: a replay that failed or never ran outranks every other
+  // caveat on the record.
+  const noLead = [];
   const actor = ev.produced_by ? `${ev.produced_by.actor} (${ev.produced_by.class})` : 'unrecorded';
 
   if (!ev.replay) {
@@ -235,7 +298,24 @@ function scopeOfTest(claim, ev) {
     return { yes, no };
   }
 
-  yes.push(`<strong>REPLAY.</strong> Running <code>${esc(ev.replay.command)}</code> from <code>${esc(ev.replay.cwd)}</code> is expected to <code>${esc(ev.replay.expect)}</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).`);
+  // The expectation is not the result. Whether a command reproduces is a fact
+  // about what happened when it was run, so this sentence is derived from
+  // `as_expected` and `recorded_outcome` and never from `expect` alone. A
+  // failing replay and an unexecuted one each establish nothing, and saying so
+  // belongs in the `does NOT establish` column, not this one (design §14.2).
+  const rCmd = `<code>${esc(ev.replay.command)}</code>`;
+  const rCwd = `<code>${esc(ev.replay.cwd)}</code>`;
+  const rRunner = manifest.replay?.runner ?? 'the manifest generator';
+  const rWhy = ev.replay.execution?.unexecuted_reason
+    ? ` (${mdInline(ev.replay.execution.unexecuted_reason)})`
+    : '';
+  if (ev.replay.as_expected === true) {
+    yes.push(`<strong>REPLAY.</strong> ${rCmd} was executed from ${rCwd} by <code>${esc(rRunner)}</code> when this manifest was generated, and it <code>${esc(ev.replay.recorded_outcome)}</code>ed &mdash; which is what was expected (<code>${esc(ev.replay.expect)}</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).`);
+  } else if (ev.replay.as_expected === false) {
+    noLead.push(`<strong>That the artifact reproduces.</strong> REPLAY ${rCmd} was expected to <code>${esc(ev.replay.expect)}</code> and, when it was run, it <code>${esc(ev.replay.recorded_outcome ?? 'produced no recorded outcome')}</code>ed instead. <em>The replay did not reproduce.</em> Nothing downstream of this command can be relied on until that is explained &mdash; a failing replay is a result to investigate, not evidence to stand on (design §14.2).`);
+  } else {
+    noLead.push(`<strong>That the artifact reproduces.</strong> REPLAY ${rCmd} was <strong>never executed</strong>${rWhy}. Its outcome is <code>${esc(ev.replay.recorded_outcome ?? 'not recorded')}</code> and nothing about it has been observed by anyone. The command is printed so that you can be the first to run it; until somebody does, reproduction is an open question, not a property (design §14.2).`);
+  }
   if (ev.determinism === 'L3') {
     yes.push(`<strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).`);
   } else if (ev.determinism === 'L2') {
@@ -250,17 +330,28 @@ function scopeOfTest(claim, ev) {
     no.unshift(`<strong>Nothing about the claim &mdash; the check may be vacuous.</strong> MODIFIED REPLAY ran <code>${esc(ev.modified_replay.command)}</code>, which perturbs the code by &ldquo;${esc(ev.modified_replay.perturbation)}&rdquo;. It was expected to <code>${esc(ev.modified_replay.expect)}</code> and the manifest records that it <code>${esc(ev.modified_replay.recorded_outcome)}</code>ed. <em>The modified replay failed to fail.</em> The check passes while the behaviour it asserts is broken, so a passing REPLAY above tells you the script runs &mdash; and nothing more (design §14.3, §14.4).`);
   } else if (!ev.modified_replay) {
     no.unshift(`<strong>That the check would notice if the claim were false.</strong> No MODIFIED REPLAY is recorded for this evidence, so nothing here demonstrates the check is non-vacuous. MODIFIED REPLAY is <em>required</em> for <code>HUMAN VERIFIED</code> on <code>L3</code>/<code>L2</code> evidence (design §14.4).`);
+  } else if (ev.modified_replay.as_expected !== true) {
+    // `as_expected` is neither true nor false: a MODIFIED REPLAY is recorded
+    // but its outcome was never observed. Saying nothing here would be the
+    // worst option available, because silence in this column reads as "fine"
+    // (design §14.3, §14.4).
+    no.unshift(`<strong>Whether the check is vacuous &mdash; <em>unknown</em>.</strong> A MODIFIED REPLAY is recorded (<code>${esc(ev.modified_replay.command)}</code>, perturbing the code by &ldquo;${esc(ev.modified_replay.perturbation ?? 'unrecorded perturbation')}&rdquo;) but it was <strong>never executed</strong>${ev.modified_replay.execution?.unexecuted_reason ? ` (${mdInline(ev.modified_replay.execution.unexecuted_reason)})` : ''}, so its outcome was not observed. Nothing here shows the check would notice if the claim were false. Unknown is not the same as fine, and it is not the same as non-vacuous (design §14.3, §14.4).`);
   }
 
   no.push(`<strong>That the claim is true.</strong> A deterministic script can be consistently wrong. REPLAY proves the script reproduces; it does not prove the script asserts the right thing, and a green result is not proof of correctness.`);
-  no.push(`<strong>That the check catches anything beyond the one perturbation recorded here.</strong> MODIFIED REPLAY falsifies a check against a single, chosen way of breaking it. Other defects may pass unnoticed.`);
+  if (ev.modified_replay && (ev.modified_replay.as_expected === true || ev.modified_replay.as_expected === false)) {
+    // Only meaningful once a perturbation was actually observed. Asserting it
+    // over an unexecuted MODIFIED REPLAY would presuppose the very observation
+    // that did not happen.
+    no.push(`<strong>That the check catches anything beyond the one perturbation recorded here.</strong> MODIFIED REPLAY falsifies a check against a single, chosen way of breaking it. Other defects may pass unnoticed.`);
+  }
   no.push(`<strong>That the claim's wording is the requirement anyone cares about.</strong> A check binds to the sentence above, verbatim and by <code>text_sha256</code>. Whether that sentence is the right sentence is a human judgement, and it is exactly why re-running something can never by itself produce <code>HUMAN VERIFIED</code>.`);
   if (ev.produced_by?.class === 'agent') {
     no.push(`<strong>Independence.</strong> <code>produced_by</code> is <code>${esc(actor)}</code>. INDEPENDENT VERIFICATION requires a distinct actor, in a distinct session, with no access to the builder's reasoning (design §14.2). That has not happened for this record.`);
   } else if (ev.produced_by?.class === 'human') {
     yes.push(`<strong>Actor class.</strong> <code>produced_by</code> is <code>${esc(actor)}</code> &mdash; this check was authored by a human, not by the agent whose work it examines.`);
   }
-  return { yes, no };
+  return { yes, no: [...noLead, ...no] };
 }
 
 // ---------------------------------------------------------------------------
@@ -312,7 +403,11 @@ function renderBoundary() {
     </p>
     <ul class="boundary-list">
       <li>Nothing on this page executes. There is no script on this page at all &mdash; no JavaScript, no network request at view time, no embedded runtime.</li>
-      <li>Every <code>expect</code> and <code>outcome</code> shown below was <em>read out of the manifest</em>, where it was recorded by whoever last ran the command. <strong>No result on this page was obtained by this page.</strong></li>
+      <li>Every <code>expect</code> and <code>outcome</code> shown below was <em>read out of the manifest</em>. <strong>No result on this page was obtained by this page.</strong>
+        The manifest distinguishes two of them and so does every command block below: <code>attested_outcome</code> is what the artifact's own comment claims, and
+        <code>recorded_outcome</code> is what happened when <code>${esc(manifest.replay?.runner ?? 'the manifest generator')}</code> actually executed the command while the manifest was being generated
+        (<code>${esc(manifest.generated_at)}</code>, <code>${esc(manifest.replay?.commands_executed ?? 0)}</code> commands executed).
+        An asserted outcome and an observed one are never shown as the same thing &mdash; that conflation is the defect this record exists to prevent (design §14.2).</li>
       <li>There is no spinner, no simulated output and no <code>PASS</code> this page produced. A page that animated a result would be worse than one that runs nothing (design §7.3, as amended 2026-09-23).</li>
       <li><strong>To verify anything here, you run the command yourself</strong>, in your own shell, from the working directory the command block names. That is the required execution path under <code>Renderer: none</code>; an interactive in-page console remains deferred, deliberately.</li>
     </ul>
@@ -399,7 +494,7 @@ function renderFindings() {
         <span class="finding-code">${esc(f.code)}</span>
         <a class="chip" href="#claim-${encodeURIComponent(f.subject)}">${esc(f.subject)}</a>
       </div>
-      <p class="finding-msg">${esc(f.message)}</p>
+      <p class="finding-msg">${mdInline(f.message)}</p>
       ${explain(f)}
       <p class="fine">locator: ${(() => {
         const [p, ln] = String(f.locator ?? '').split(':');
@@ -482,8 +577,8 @@ function renderEvidence(claim) {
         <div class="det-explain">
           <strong>${esc(ev.determinism)} &mdash; ${esc(d ? d.name : 'undeclared')}.</strong>
           ${d ? esc(d.definition) : 'No level declared. An undeclared level is a gap marker, not an assumption (design §14.1).'}
-          <span class="det-verify">Verified by: ${d ? esc(d.verified_by) : '&mdash;'}</span>
-          <span class="det-ceiling ${ev.determinism === 'L1' ? 'det-ceiling-cap' : ''}">${d ? esc(d.ceiling) : ''}</span>
+          <span class="det-verify">Verified by: ${d ? mdInline(d.verified_by) : '&mdash;'}</span>
+          <span class="det-ceiling ${ev.determinism === 'L1' ? 'det-ceiling-cap' : ''}">${d ? mdInline(d.ceiling) : ''}</span>
         </div>
         <table class="kv">
           <tr><th>locator</th><td>${link(repoRel)} <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
@@ -561,7 +656,7 @@ function renderDecision(claim) {
         ${replays.length ? `<p class="fine"><strong>Before you may write <code>HUMAN VERIFIED</code> on ${esc(claim.id)}</strong>, run both of these yourself from <code>${esc(replays[0].replay.cwd)}</code> and check the outcomes with your own eyes &mdash; the second one must <em>fail</em> (design §14.4):</p>
         <pre class="shell">${replays.map((e) => `<span class="prompt">$ </span>${esc(e.replay.command)}   <span class="cmt"># expect ${esc(e.replay.expect)}</span>${e.modified_replay ? `\n<span class="prompt">$ </span>${esc(e.modified_replay.command)}   <span class="cmt"># expect ${esc(e.modified_replay.expect)}</span>` : ''}`).join('\n')}</pre>` : ''}
         ${ceilingBlocked ? `<p class="warnline"><strong><code>HUMAN VERIFIED</code> is not available for this claim.</strong>
-          Its evidence ceiling is <code>${esc(claim.ceiling)}</code>: ${esc(claim.ceiling_reason)}.
+          Its evidence ceiling is <code>${esc(claim.ceiling)}</code>: ${mdInline(claim.ceiling_reason)}.
           Appending <code>HUMAN VERIFIED</code> here would assert more than the evidence can carry. Fix the evidence first.</p>` : ''}
         <p class="fine"><strong>An absent marker already means <code>NOT VERIFIED</code></strong> (design §3.4), so you never write that line to mean
           &ldquo;nobody has looked yet&rdquo;. The only reason to append it is to record that something <em>stopped</em> being verified (design §5.4, §5.5).
@@ -601,7 +696,7 @@ function renderClaim(claim) {
       <tr><th>source</th><td>${link(fromSurfaceRoot(claim.source.path), { label: `${fromSurfaceRoot(claim.source.path)}:${claim.source.line}` })}</td></tr>
       <tr><th>checkbox</th><td><code>[${esc(claim.checkbox)}]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td>${stateBadge(claim.state)} <span class="hint">from <code>${esc(claim.state_source)}</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td>${stateBadge(claim.ceiling)} <span class="hint">${esc(claim.ceiling_reason)}</span></td></tr>
+      <tr><th>evidence ceiling</th><td>${stateBadge(claim.ceiling)} <span class="hint">${mdInline(claim.ceiling_reason)}</span></td></tr>
       <tr><th>unfalsified</th><td><code>${esc(String(claim.unfalsified))}</code>${claim.unfalsified_reason ? ` <span class="hint">${esc(claim.unfalsified_reason)}</span>` : ''}</td></tr>
     </table>
 
@@ -651,17 +746,19 @@ function renderPDatasets() {
       </header>
       <table class="kv">
         <tr><th>path</th><td>${link(ds.view_url, { label: ds.view_url })}</td></tr>
-        <tr><th>rows</th><td><code>${esc(ds.rows)}</code></td></tr>
+        <tr><th>rows</th><td><code>${esc(ds.rows)}</code> <span class="hint"><strong>data rows, excluding the header line.</strong> A plain <code>wc -l</code> over this file returns one more than this number; the command below skips the header so that it reproduces exactly the figure printed here.</span></td></tr>
         <tr><th>bytes</th><td><code>${esc(ds.bytes)}</code></td></tr>
         <tr><th><code>sha256</code></th><td><code class="hash">${esc(ds.sha256)}</code></td></tr>
-        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum ${esc(ds.view_url)} &amp;&amp; wc -lc ${esc(ds.view_url)}</pre></td></tr>
+        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum ${esc(ds.view_url)}
+<span class="prompt">$ </span>tail -n +2 ${esc(ds.view_url)} | wc -l   <span class="cmt"># ${esc(ds.rows)} &mdash; data rows, header skipped</span>
+<span class="prompt">$ </span>wc -c ${esc(ds.view_url)}   <span class="cmt"># ${esc(ds.bytes)} bytes</span></pre><span class="hint">Run these from the repository root. Each one reproduces exactly the value printed above it &mdash; a confirmation command that disagrees with the page would be worse than none.</span></td></tr>
         <tr><th><code>produced_by</code></th><td><code>${esc(ds.produced_by)}</code></td></tr>
         <tr><th><code>produced_at</code></th><td><code>${esc(ds.produced_at)}</code></td></tr>
         <tr><th><code>derived_from</code></th><td>${ds.derived_from && ds.derived_from.length
       ? ds.derived_from.map((id) => `<a class="chip" href="#pds-${encodeURIComponent(id)}">${esc(id)}</a>`).join(' ')
       : `<code>${esc(ds.derived_from_declared)}</code> <span class="hint">stated, not omitted &mdash; a root dataset must be distinguishable from one whose provenance was never recorded (design §4.1)</span>`}</td></tr>
         <tr><th><code>transformation</code></th><td><code>${esc(ds.transformation)}</code> ${detBadge(ds.transformation_determinism)}</td></tr>
-        <tr><th>why that level</th><td>${esc(ds.transformation_determinism_source)}${det ? ` <span class="hint">${esc(det.definition)}</span>` : ''}</td></tr>
+        <tr><th>why that level</th><td>${mdInline(ds.transformation_determinism_source)}${det ? ` <span class="hint">${esc(det.definition)}</span>` : ''}</td></tr>
         <tr><th>provenance chain</th><td class="chain">${(ds.provenance_chain ?? []).map((id) => `<a class="chip" href="#pds-${encodeURIComponent(id)}">${esc(id)}</a>`).join(' <span class="arrow">&rarr;</span> ')} ${ds.provenance_root ? '<span class="hint">this one is the root</span>' : ''}</td></tr>
         <tr><th><code>link_resolution</code></th><td><code>${esc(ds.link_resolution)}</code> <span class="hint">repo-relative paths only; no absolute URL is emitted anywhere on this page</span></td></tr>
         <tr><th>license</th><td><code>${esc(ds.license)}</code></td></tr>
@@ -719,7 +816,7 @@ function renderStatesReference() {
     <table class="states-table">
       <thead><tr><th>level</th><th>name</th><th>definition</th><th>verified by</th></tr></thead>
       <tbody>
-        ${['L3', 'L2', 'L1'].map((l) => `<tr><td>${detBadge(l)}</td><td>${esc(DETERMINISM[l].name)}</td><td>${esc(DETERMINISM[l].definition)}</td><td>${esc(DETERMINISM[l].verified_by)}</td></tr>`).join('')}
+        ${['L3', 'L2', 'L1'].map((l) => `<tr><td>${detBadge(l)}</td><td>${esc(DETERMINISM[l].name)}</td><td>${mdInline(DETERMINISM[l].definition)}</td><td>${mdInline(DETERMINISM[l].verified_by)}</td></tr>`).join('')}
       </tbody>
     </table>
     <p class="fine">Determinism and verification are <strong>two axes, never one boolean.</strong> A deterministic check can be
@@ -731,6 +828,23 @@ function renderStatesReference() {
 function renderBinding() {
   const b = manifest.bound ?? {};
   const p = manifest.projections ?? {};
+  const R = manifest.replay ?? {};
+  const prev = manifest.previous ?? null;
+  // The baseline comparison is the mechanical half of §3.5. `markers_mutated`
+  // is the enforcement result: an empty list means every marker present in the
+  // baseline is still present and unaltered. Stringifying the object threw that
+  // away and printed a sentence the manifest contradicts, which is the exact
+  // failure mode this page exists to refuse.
+  const previousCell = prev
+    ? `${link(fromSurfaceRoot(prev.path), { label: prev.path })} <span class="hint">${esc(prev.source ?? 'baseline')}</span>
+        <table class="kv kv-tight">
+          <tr><th><code>claims_compared</code></th><td><code>${esc(prev.claims_compared)}</code> <span class="hint">claims matched against the baseline by id</span></td></tr>
+          <tr><th><code>drifted</code></th><td>${idList(prev.drifted)} <span class="hint">claims whose text changed since the baseline. <code>0</code> is a comparison that ran and found none, not a comparison that was skipped (design §5.4)</span></td></tr>
+          <tr><th><code>invalidated</code></th><td>${idList(prev.invalidated)} <span class="hint">claims whose evidence artifact changed since the baseline. <code>0</code> is a comparison that ran and found none (design §5.5)</span></td></tr>
+          <tr><th><strong><code>markers_mutated</code></strong></th><td>${idList(prev.markers_mutated)} <span class="hint"><strong>the append-only enforcement result.</strong> A marker block may only be appended to. Any marker present in the baseline that is now missing, reordered or rewritten appears here. An empty list is the guarantee holding &mdash; mechanically checked against the baseline, not asserted (design §3.5).</span></td></tr>${prev.content_sha256_source ? `
+          <tr><th><code>content_sha256</code></th><td>${orNull(prev.content_sha256)} <span class="hint">${mdInline(prev.content_sha256_source)}</span></td></tr>` : ''}
+        </table>`
+    : `<span class="null">null</span> <span class="hint">no prior manifest to diff against</span>`;
   return `
   <section id="binding" class="panel panel-quiet">
     <h2>Binding and generator provenance</h2>
@@ -748,7 +862,9 @@ function renderBinding() {
       <tr><th><code>bound.delta_sha256</code></th><td><code class="hash">${esc(b.delta_sha256)}</code></td></tr>
       <tr><th>design projection</th><td><code>${esc(p.design?.status)}</code>, sha256 ${orNull(p.design?.sha256)}</td></tr>
       <tr><th>verification projection</th><td><code>${esc(p.verification?.status)}</code>, sha256 <code class="hash">${esc(p.verification?.sha256)}</code></td></tr>
-      <tr><th><code>previous</code></th><td>${orNull(manifest.previous)} <span class="hint">no prior manifest to diff against</span></td></tr>
+      <tr><th>replay runner</th><td>${R.runner ? link(R.runner) : '<span class="null">none</span>'} <span class="hint">execution <code>${esc(R.execution ?? 'unrecorded')}</code> &middot; <code>${esc(R.commands_executed ?? 0)}</code> commands executed, <code>${esc(R.commands_unexecuted ?? 0)}</code> unexecuted &middot; timeout <code>${esc(R.timeout_ms)}</code> ms &middot; record schema <code>${esc(R.schema ?? 'replay-record/v1')}</code>. Every <code>recorded_outcome</code> on this page was observed by this runner at <code>${esc(manifest.generated_at)}</code>.</span></td></tr>${R.timing_excluded ? `
+      <tr><th>timing fields</th><td><span class="hint">${mdInline(R.timing_excluded)}</span></td></tr>` : ''}
+      <tr><th><code>previous</code> <span class="hint">the baseline this manifest was compared against</span></th><td>${previousCell}</td></tr>
       <tr><th><code>gaps</code></th><td>${(manifest.gaps ?? []).length === 0 ? '<span class="null">none</span>' : esc(JSON.stringify(manifest.gaps))}</td></tr>
       <tr><th>delta declarations</th><td><code>Renderer: ${esc(manifest.delta?.renderer)}</code> &middot;
         <code>Pages mechanism: ${esc(manifest.delta?.pages_mechanism)}</code> &middot;
@@ -941,10 +1057,14 @@ li.marker-current::before{background:var(--ink)}
 .cmd-title{font-size:.84rem;font-weight:600}
 .cmd-perturb{font-size:.79rem;color:var(--muted)}
 .cmd-cwd{font-size:.79rem;color:var(--muted);margin-bottom:6px}
+.cmd-mismatch{border:2px solid var(--bad-bd);background:var(--bad-bg);color:var(--ink);border-radius:6px;
+  padding:9px 12px;margin:8px 0 2px;font-size:.87rem}
+.cmd-mismatch strong:first-child{letter-spacing:.02em}
 pre.shell{background:var(--codebg);color:var(--codeink);border:1px solid var(--line);border-radius:6px;
   padding:9px 12px 9px 28px;margin:6px 0;overflow-x:auto;font-size:.86rem;line-height:1.5;
   white-space:pre-wrap;word-break:break-word}
 pre.shell.inline{margin:0;padding:5px 9px 5px 25px;font-size:.8rem;background:var(--codebg)}
+pre.shell.inline.out{padding-left:9px;white-space:pre-wrap;word-break:break-word}
 pre.shell.append{font-size:.82rem}
 .prompt{display:inline-block;width:16px;margin-left:-16px;color:var(--muted);user-select:none}
 .cmt{color:var(--muted)}

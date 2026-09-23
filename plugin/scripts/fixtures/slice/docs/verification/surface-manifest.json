@@ -2,8 +2,8 @@
   "schema": "surface-manifest/v1",
   "generator": "plugin/scripts/surface.mjs",
   "governance_version": "0.9.1",
-  "generated_at": "2026-09-23T23:05:38.252Z",
-  "content_sha256": "a8d76b32f476c5e8bb4b5b7bebcddbc027c1280696ec9836af06e8d7d87d3342",
+  "generated_at": "2026-09-23T23:42:45.093Z",
+  "content_sha256": "41a24926506585ad14db61c55ddadc30180a168c1ec028c56894fd19909d31f5",
   "root": "plugin/scripts/fixtures/slice",
   "delta": {
     "path": "llm/governance/governance-delta.md",
@@ -35,7 +35,7 @@
     },
     "verification": {
       "status": "ENABLED",
-      "sha256": "7907b266c8066baa7c8bd045fa6157b3f408ff1f186fd7f49f088f09cc277fdc"
+      "sha256": "fd7fd9722c43b23801eda155c302f778345f5cc370b14c8ba998dcf984a16ffa"
     }
   },
   "verification": {
@@ -100,7 +100,8 @@
             "sha256": "6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c",
             "produced_by": {
               "actor": "fixture-builder",
-              "class": "agent"
+              "class": "agent",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-22",
             "pdatasets": [
@@ -128,6 +129,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "16a3f1f6bc2fac365b1058ec3da6966ba946efb1e5eb986bc6a8f3442733d414",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 108,
@@ -157,6 +159,7 @@
                 "timed_out": false,
                 "outcome": "fail",
                 "outcome_source": "executed",
+                "failure_shape": "asserted",
                 "stdout_sha256": "698737296cd994b9ea5b23c486b8981395718f24cb9fe70d33e2cfc4cf8d3b71",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 142,
@@ -182,6 +185,7 @@
         "unfalsified": false,
         "unfalsified_reason": null,
         "failed_to_falsify": [],
+        "crashed_modified_replays": [],
         "unexecuted_replays": [],
         "evidence_actor_classes": [
           "agent"
@@ -231,7 +235,8 @@
             "sha256": "db20ef5e8d5d751f966f37b5b0c846e1b8f105fb76c7f4fdfc71fb64f9866409",
             "produced_by": {
               "actor": "fixture-builder",
-              "class": "agent"
+              "class": "agent",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-22",
             "pdatasets": [],
@@ -252,6 +257,7 @@
         "unfalsified": false,
         "unfalsified_reason": null,
         "failed_to_falsify": [],
+        "crashed_modified_replays": [],
         "unexecuted_replays": [],
         "evidence_actor_classes": [
           "agent"
@@ -320,7 +326,8 @@
             "sha256": "4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0",
             "produced_by": {
               "actor": "fixture-builder",
-              "class": "agent"
+              "class": "agent",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-20",
             "pdatasets": [
@@ -348,6 +355,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "8f8e16379273aad0bf24201c8eed48b518b8259b6abbb4dde01a757d9e06ea8b",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 64,
@@ -377,6 +385,7 @@
                 "timed_out": false,
                 "outcome": "fail",
                 "outcome_source": "executed",
+                "failure_shape": "asserted",
                 "stdout_sha256": "5090625e5341028ed49cefa6a369ccd222159ff41ef8607cc005d9f8ac66adb0",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 152,
@@ -402,6 +411,7 @@
         "unfalsified": false,
         "unfalsified_reason": null,
         "failed_to_falsify": [],
+        "crashed_modified_replays": [],
         "unexecuted_replays": [],
         "evidence_actor_classes": [
           "agent"
@@ -451,7 +461,8 @@
             "sha256": "b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e",
             "produced_by": {
               "actor": "fixture-builder",
-              "class": "agent"
+              "class": "agent",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-22",
             "pdatasets": [
@@ -479,6 +490,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "a860e17986ccca6cf7f7b9702b7f20560ce2ab251f8f8c13184edef8dab192ed",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 59,
@@ -508,6 +520,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "9b992cf4236d5bc12ddb06bdf8ff291b781747158c5585f2de9ff9bada2d9a79",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 98,
@@ -535,6 +548,7 @@
         "failed_to_falsify": [
           "checks/ac04-transform-runs.mjs"
         ],
+        "crashed_modified_replays": [],
         "unexecuted_replays": [],
         "evidence_actor_classes": [
           "agent"
@@ -595,7 +609,8 @@
             "sha256": "61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6",
             "produced_by": {
               "actor": "fixture-builder",
-              "class": "agent"
+              "class": "agent",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-23",
             "pdatasets": [
@@ -624,6 +639,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "a7eda8a5c3e1ab63ee4d736e7013783e99bb3b82be779d2513deffebf95d98f7",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 143,
@@ -653,6 +669,7 @@
                 "timed_out": false,
                 "outcome": "fail",
                 "outcome_source": "executed",
+                "failure_shape": "asserted",
                 "stdout_sha256": "c3a787a1c4714949b1ff66467680956d47db2cb27656f0bad2942f9e4c913bbe",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 229,
@@ -679,7 +696,8 @@
             "sha256": "25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944",
             "produced_by": {
               "actor": "fixture-owner",
-              "class": "human"
+              "class": "human",
+              "class_source": "self-attested (L1)"
             },
             "produced_at": "2026-09-23",
             "pdatasets": [
@@ -708,6 +726,7 @@
                 "timed_out": false,
                 "outcome": "pass",
                 "outcome_source": "executed",
+                "failure_shape": null,
                 "stdout_sha256": "eaece3d2830bf4cc50549f4e77b5a6d62e7516f982665beab873b1c5f402dcac",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 149,
@@ -737,6 +756,7 @@
                 "timed_out": false,
                 "outcome": "fail",
                 "outcome_source": "executed",
+                "failure_shape": "asserted",
                 "stdout_sha256": "fc8d6b9ffc631b169eb30c6c46dcb5ec08800569388331a8a678456599c0ff17",
                 "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "stdout_bytes": 186,
@@ -762,6 +782,7 @@
         "unfalsified": false,
         "unfalsified_reason": null,
         "failed_to_falsify": [],
+        "crashed_modified_replays": [],
         "unexecuted_replays": [],
         "evidence_actor_classes": [
           "agent",
@@ -893,6 +914,10 @@
       "claims_l1_only": [
         "P1-AC-02"
       ],
+      "human_state_uncorroborated_producer": [
+        "P1-AC-01",
+        "S1-CL-01"
+      ],
       "agent_verified_not_human_verified": [
         "P1-AC-02",
         "P1-AC-04"
@@ -907,6 +932,7 @@
       "human_state_on_agent_evidence": [
         "P1-AC-01"
       ],
+      "crashed_modified_replays": [],
       "drifted": [],
       "artifact_invalidated": [],
       "capped_by_evidence": [],
@@ -941,6 +967,8 @@
   "previous": {
     "path": "docs/verification/surface-manifest.json",
     "source": "default: the committed manifest",
+    "compared": true,
+    "baseline_was_rebaseline": false,
     "content_sha256": null,
     "content_sha256_source": "omitted by design: carrying the baseline's hash would make this manifest a function of which baseline it was compared against, and the committed manifest is its own default baseline. The baseline is named in `path`; hash it there.",
     "claims_compared": 5,
@@ -959,17 +987,24 @@
     },
     {
       "severity": "warn",
+      "code": "human-state-on-agent-evidence",
+      "subject": "P1-AC-01",
+      "message": "`HUMAN VERIFIED` rests entirely on evidence produced by agent (no `produced-by: <actor> (human)` record cites this claim). It stands only because the evidence was executed and falsified this run, not because a human is behind it (design §5.3 mechanism 2).",
+      "locator": "llm/claims.md:19"
+    },
+    {
+      "severity": "warn",
+      "code": "human-state-on-agent-evidence",
+      "subject": "S1-CL-01",
+      "message": "`HUMAN VERIFIED` rests on evidence whose human producer is SELF-ATTESTED: `human/cl01-independent-relationship.mjs` declare `(human)` in their own comment header. This engine reads no git history, no signature and no external register, so nothing corroborates that class — the same one-word edit that would make it `(agent)` made it `(human)`. The state stands on evidence that was EXECUTED and falsified this run, which is the part that was observed (design §5.3 mechanism 2, §14.1).",
+      "locator": "llm/claims.md:35"
+    },
+    {
+      "severity": "warn",
       "code": "unfalsified",
       "subject": "P1-AC-04",
       "message": "reported **unfalsified** — modified replay failed to fail (design §14.4)",
       "locator": "llm/claims.md:29"
-    },
-    {
-      "severity": "info",
-      "code": "human-state-on-agent-evidence",
-      "subject": "P1-AC-01",
-      "message": "`HUMAN VERIFIED` rests entirely on evidence produced by agent (no `produced-by: <actor> (human)` record cites this claim). It stands only because the evidence was executed and falsified this run (design §5.3 mechanism 2).",
-      "locator": "llm/claims.md:19"
     },
     {
       "severity": "info",
@@ -981,7 +1016,7 @@
   ],
   "findings_by_severity": {
     "error": 0,
-    "warn": 2,
-    "info": 2
+    "warn": 4,
+    "info": 1
   }
 }

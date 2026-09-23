@@ -565,6 +565,128 @@ for (const state of ['HUMAN VERIFIED', 'HUMAN REVIEWED']) {
 }
 
 // ===========================================================================
+// V-1 — THE FORGERY THAT WORKED. The rule this capability rests on is "no
+// agent may mark its own work HUMAN VERIFIED", and it was enforced in exactly
+// one place: inside `if (shape === 'verification-marker')`. `shapeConstraint`
+// returns [] for `path-only` BEFORE it reads the diff, so a claims file
+// allowlisted `allow llm/** path-only` — one word from a plausible steward
+// mistake, and canonically the memory-bank shape — took an agent-authored
+// `— HUMAN VERIFIED (PR #11, 2026-09-21)` through a full --l0 run with a valid
+// certification at exit 0.
+//
+// The guard is now lane-wide: every added line of every allowed file, whatever
+// shape the path declares. The loop below is the bound the verifier
+// established — of the six shapes only `path-only` admitted the forgery — run
+// against all six, so no future shape can quietly re-open it.
+// ===========================================================================
+
+const FORGED_CLAIMS = `# Claims
+
+- [x] \`P1-AC-01\` The pipeline rejects duplicate source records
+  — AGENT VERIFIED (PR #10, 2026-09-20)
+`;
+
+for (const shape of ['path-only', 'link-target-only', 'index-table-rows', 'checkbox-only', 'status-line-only', 'verification-marker']) {
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta(MARKER_LAYOUT, {
+      roadmap: '`llm/claims.md`',
+      allowlist: `allow llm/** ${shape}`,
+    }),
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'llm/claims.md': FORGED_CLAIMS,
+    'docs/README.md': '# artifacts\n',
+  });
+  branchEdit(dir, { 'llm/claims.md': FORGED_CLAIMS + '  — HUMAN VERIFIED (PR #11, 2026-09-21)\n' });
+  const { code, out } = runL0(dir);
+  check(
+    `V-1: a forged HUMAN VERIFIED fails --l0 under the "${shape}" shape`,
+    code !== 0 && /FAIL {2}l0-paths/.test(out) && /human-only state/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The control: the identical diff asserting a state an agent MAY assert still
+// passes the lane under a weaker shape. A guard that refuses everything proves
+// nothing, and `path-only` must not become "no L0 edits at all".
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta(MARKER_LAYOUT, {
+      roadmap: '`llm/claims.md`',
+      allowlist: 'allow llm/** path-only',
+    }),
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'llm/memory_bank/notes.md': '# Notes\n',
+    'llm/claims.md': FORGED_CLAIMS,
+    'docs/README.md': '# artifacts\n',
+  });
+  branchEdit(dir, { 'llm/memory_bank/notes.md': '# Notes\n\nMerged PR #11.\n' });
+  const { out } = runL0(dir);
+  check(
+    'V-1 control: an ordinary path-only L0 edit still passes',
+    /PASS {2}l0-paths/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The second half of V-1, which the state guard cannot reach. `path-only` also
+// waives APPEND-ONLY: under it an agent may DELETE a reset line and restore a
+// stale HUMAN VERIFIED without adding a single human state. A marker-bearing
+// claim source must therefore be allowlisted under the shape that guards it.
+{
+  const WITH_RESET = FORGED_CLAIMS + '  — NOT VERIFIED (artifact changed: transform.mjs, 2026-09-21)\n';
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta(MARKER_LAYOUT, {
+      roadmap: '`llm/claims.md`',
+      allowlist: 'allow llm/** path-only',
+    }),
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'llm/claims.md': WITH_RESET,
+    'docs/README.md': '# artifacts\n',
+  });
+  branchEdit(dir, { 'llm/claims.md': FORGED_CLAIMS }); // the reset line, deleted
+  const { code, out } = runL0(dir);
+  check(
+    'V-1: deleting a reset line under a weaker shape fails --l0 on the declaration',
+    code !== 0 && /carries verification markers but is allowlisted "path-only"/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The control for THAT: a roadmap carrying no markers at all keeps its
+// `checkbox-only` allowance. Adoption is incremental — the shape requirement
+// binds a file once it carries markers, not every roadmap in every repo.
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': delta(MARKER_LAYOUT, {
+      roadmap: '`llm/claims.md`',
+      allowlist: 'allow llm/claims.md checkbox-only\nallow llm/** path-only',
+    }),
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'llm/claims.md': '# Claims\n\n- [ ] Ship the thing\n',
+    'docs/README.md': '# artifacts\n',
+  });
+  branchEdit(dir, { 'llm/claims.md': '# Claims\n\n- [x] Ship the thing\n' });
+  const { out } = runL0(dir);
+  check(
+    'a marker-free claim source keeps its checkbox-only tick flip',
+    /PASS {2}l0-paths/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ===========================================================================
 // Marker grammar and state validation over the declared claim source
 // (design §3.4 grammar, §5.2 transitions, §5.3 mechanism 4 / §6.3 the
 // determinism cap).
@@ -611,7 +733,25 @@ for (const state of ['HUMAN VERIFIED', 'HUMAN REVIEWED']) {
 
 // The happy path: well-formed grammar, a legal transition chain, L3 evidence
 // under a HUMAN VERIFIED claim.
-const EVIDENCE_L3 = 'def test_cache():\n    """P1-AC-01 — L3 deterministic replay of the cache gate."""\n';
+//
+// The evidence is written in the project's own multi-line form — the
+// `EVIDENCE <id>` header block that surface.mjs §Evidence documents and that
+// every artifact in fixtures/slice/ uses. The claim ID is on one line and the
+// level three lines below it, which is precisely the shape the first cut of
+// the cap could not read (V-3): it looked for an `L1`/`L2`/`L3` token on the
+// citing line, so the honest format declared nothing and a legitimate `L3`
+// claim was BLOCKED, while narrative prose about the evidence satisfied it.
+const EVIDENCE_L3 = `# EVIDENCE P1-AC-01
+# kind: test
+# determinism: L3
+# produced-by: builder (agent)
+# produced-at: 2026-09-17
+# replay: pytest tests/test_cache.py
+# replay-expect: pass
+# replay-outcome: pass
+def test_cache():
+    """P1-AC-01 — deterministic replay of the cache gate."""
+`;
 const ROADMAP_HUMAN = `# Roadmap
 
 - [x] \`P1-AC-01\` A gate test asserts that no \`/p/**\` response carries \`public\` (ADR-0004)
@@ -636,7 +776,9 @@ const ROADMAP_HUMAN = `# Roadmap
 // and this test passes while the one above fails.
 {
   const dir = markerFixture(ROADMAP_HUMAN, {
-    'tests/test_cache.py': 'def test_cache():\n    """P1-AC-01 — L1 attested: I read the config and it looked right."""\n',
+    'tests/test_cache.py':
+      '# EVIDENCE P1-AC-01\n# kind: assertion\n# determinism: L1\n' +
+      'def test_cache():\n    """P1-AC-01 — attested: I read the config and it looked right."""\n',
   });
   const { code, out } = runChecker(dir);
   check(
@@ -670,7 +812,101 @@ const ROADMAP_HUMAN = `# Roadmap
   const { code, out } = runChecker(dir);
   check(
     'evidence with no declared determinism level FAILs as a gap',
-    code !== 0 && /no citing artifact declares a determinism level/.test(out),
+    code !== 0 && /no citing artifact DECLARES a determinism level/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------------------------------------------------------------------------
+// V-3, the other direction: what must NOT satisfy the cap.
+//
+// The cap was both too loose and too tight. Too tight is covered by the happy
+// path above (the honest multi-line block now passes). These are too loose:
+// each fixture puts an `L3` where a reader would see one and where the first
+// cut of the scan counted it, and none of them is a DECLARATION by a tracked
+// evidence artifact.
+// ---------------------------------------------------------------------------
+
+// DEFECT INJECTED: narrative prose about the evidence, in a report file. This
+// is not hypothetical — it is how the shipped slice fixture satisfied the cap,
+// via `BUILDER-1-REPORT.md:126` and `README.md:37`.
+{
+  const dir = markerFixture(ROADMAP_HUMAN, {
+    'BUILDER-1-REPORT.md': '| Claim | Evidence | Ends up |\n|---|---|---|\n| `P1-AC-01` | `L3`, replay both ways | `HUMAN VERIFIED` |\n',
+    'README.md': '# The slice\n\nP1-AC-01 is backed by L3 deterministic replay evidence.\n',
+  });
+  const { code, out } = runChecker(dir);
+  check(
+    'narrative prose in a report does not satisfy the determinism cap',
+    code !== 0 && /FAIL {2}verification-markers/.test(out) && /no evidence anywhere in the tree cites it/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// DEFECT INJECTED: a full, well-formed EVIDENCE block — inside a narrative
+// report, as a quoted example. `fixtures/slice/BUILDER-1-REPORT.md:80` carries
+// exactly this. A report ABOUT evidence is not evidence, and an adopter who
+// copies the capability carries the artifacts and not the reports.
+{
+  const dir = markerFixture(ROADMAP_HUMAN, {
+    'VERIFIER-1-REPORT.md': 'The block I checked reads:\n\n```\nEVIDENCE P1-AC-01\nkind: test\ndeterminism: L3\n```\n',
+  });
+  const { code, out } = runChecker(dir);
+  check(
+    'an EVIDENCE block quoted in a report does not satisfy the cap',
+    code !== 0 && /FAIL {2}verification-markers/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// DEFECT INJECTED: a NEGATION. The first cut read any `L3` token on a line
+// mentioning the ID, so a line SAYING THERE IS NO L3 EVIDENCE unlocked the cap
+// and the run exited 0.
+{
+  const dir = markerFixture(ROADMAP_HUMAN, {
+    'tests/test_cache.py': '# P1-AC-01 has no L3 evidence and was never replayed.\ndef test_cache():\n    pass\n',
+  });
+  const { code, out } = runChecker(dir);
+  check(
+    'a negation ("has no L3 evidence") does not satisfy the cap',
+    code !== 0 && /no citing artifact DECLARES a determinism level/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// DEFECT INJECTED: the evidence exists on disk and is never committed. The
+// fast track accepts a pasted LOCAL run as the checks-pass artifact, so an
+// untracked file that is not in the PR and will not exist in CI must not be
+// able to make that run green.
+{
+  const dir = markerFixture(ROADMAP_HUMAN);
+  fs.mkdirSync(path.join(dir, 'tests'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'tests/scratch.py'), EVIDENCE_L3); // never `git add`ed
+  const { code, out } = runChecker(dir);
+  check(
+    'an untracked evidence file does not satisfy the cap',
+    code !== 0 && /no evidence anywhere in the tree cites it/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The control for all four: the same claim, the same marker chain, with the
+// evidence committed as a real artifact — lowercase `l3`, to pin V-9's fix
+// (a level is a level whatever its case; it used to be reported as "no level
+// declared", which names the wrong cause).
+{
+  const dir = markerFixture(ROADMAP_HUMAN, {
+    'tests/test_cache.py': '# EVIDENCE P1-AC-01\n# kind: test\n# determinism: l3\ndef test_cache():\n    pass\n',
+  });
+  const { code, out } = runChecker(dir);
+  check(
+    'a committed EVIDENCE block declaring a level (any case) PASSes',
+    code === 0 && /PASS {2}verification-markers/.test(out),
     out
   );
   fs.rmSync(dir, { recursive: true, force: true });
@@ -733,6 +969,43 @@ const ROADMAP_HUMAN = `# Roadmap
   check(
     'a malformed marker in the claim file FAILs the grammar check',
     code !== 0 && /malformed verification marker/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// V-5. MARKER_CANDIDATE matched a state word ANYWHERE on a line, so ordinary
+// prose about verification was read as a malformed marker — and the shipped
+// slice fixture failed on three of its own explanatory paragraphs. That is
+// over-matching, not a finding: a state word in mid-sentence is not an
+// attempted marker. A candidate must now START like one, and these two cases
+// pin both halves of that judgement.
+{
+  const dir = markerFixture(
+    '# Roadmap\n\n' +
+    'Verification markers follow `— <STATE> (PR #<n>)`.\n' +
+    '**An absent marker means `NOT VERIFIED`** — the default costs nothing.\n' +
+    'Done means `HUMAN VERIFIED`, not ticked.\n\n' +
+    '- [x] `P1-AC-01` A claim\n  — AGENT VERIFIED (PR #22, 2026-09-16)\n'
+  );
+  const { code, out } = runChecker(dir);
+  check(
+    'prose explaining the marker convention is not read as a marker',
+    code === 0 && /PASS {2}verification-markers/.test(out) && !/not attached to any claim/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// …and the narrowing must not lose the attempts it was catching. A marker with
+// NO dash at all still has to be reported as malformed, not silently ignored:
+// silence is how an unverified claim comes to look verified.
+{
+  const dir = markerFixture('# Roadmap\n\n- [x] `P1-AC-01` A claim\n  HUMAN VERIFIED (PR #25, 2026-09-17)\n');
+  const { code, out } = runChecker(dir);
+  check(
+    'a marker attempt with no dash at all is still reported as malformed',
+    code !== 0 && /malformed verification marker/.test(out) && /em dash/.test(out),
     out
   );
   fs.rmSync(dir, { recursive: true, force: true });
@@ -838,6 +1111,175 @@ const ROADMAP_HUMAN = `# Roadmap
       /FAIL {2}verification-markers/.test(out) &&
       /illegal transition "AGENT VERIFIED" -> "AGENT VERIFIED"/.test(out),
     out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ===========================================================================
+// V-2 — one unbalanced ``` line must not hide a claim.
+//
+// A fence hides what it encloses. Placed above one claim it removed that claim
+// from the check and the run reported `PASS`, exit 0, with a forged
+// `HUMAN VERIFIED` on L1-only evidence sitting below it; placed at the top of
+// the file it degraded the whole check to `SKIP`, exit 0. Both contradict
+// §3.2 — a claim is never silently omitted — and an unbalanced fence is an
+// ordinary accident as well as an attack.
+// ===========================================================================
+
+const L1_EVIDENCE = '# EVIDENCE P1-AC-02\n# kind: assertion\n# determinism: L1\ndef t():\n    pass\n';
+
+// The control: without the fence, the L1 cap fires on P1-AC-02.
+const TWO_CLAIMS = `# Roadmap
+
+- [x] \`P1-AC-01\` A claim
+  — AGENT VERIFIED (PR #22, 2026-09-16)
+- [x] \`P1-AC-02\` The claim the fence is about to hide
+  — HUMAN VERIFIED (PR #25, 2026-09-17)
+`;
+{
+  const dir = markerFixture(TWO_CLAIMS, { 'tests/t.py': L1_EVIDENCE });
+  const { code, out } = runChecker(dir);
+  check(
+    'V-2 control: without a fence, the hidden claim is cap-checked',
+    code !== 0 && /only evidence is L1/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// DEFECT INJECTED: one ``` line above the second claim.
+{
+  const dir = markerFixture(
+    TWO_CLAIMS.replace('- [x] `P1-AC-02`', '```\n- [x] `P1-AC-02`'),
+    { 'tests/t.py': L1_EVIDENCE }
+  );
+  const { code, out } = runChecker(dir);
+  check(
+    'V-2: an unbalanced fence above a claim FAILs instead of hiding it',
+    code !== 0 && /FAIL {2}verification-markers/.test(out) && /unbalanced code fence/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// DEFECT INJECTED: the same line at the top of the file, which emptied the
+// parse entirely and turned the check into a SKIP at exit 0.
+{
+  const dir = markerFixture('```\n' + TWO_CLAIMS, { 'tests/t.py': L1_EVIDENCE });
+  const { code, out } = runChecker(dir);
+  check(
+    'V-2: an unbalanced fence at the top of the file FAILs, never SKIPs',
+    code !== 0 && /unbalanced code fence/.test(out) && !/SKIP {2}verification-markers/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// A BALANCED fence is still a fence: a marker example inside one is
+// documentation, not a claim, and must not be read as either.
+{
+  const dir = markerFixture(
+    '# Roadmap\n\nThe form is:\n\n```\n- [x] `P9-AC-99` example\n  — HUMAN VERIFIED (PR #1, 2026-01-01)\n```\n\n- [x] `P1-AC-01` A real claim\n  — AGENT VERIFIED (PR #22, 2026-09-16)\n'
+  );
+  const { code, out } = runChecker(dir);
+  check(
+    'a balanced fence still excludes its contents, and PASSes',
+    code === 0 && /PASS {2}verification-markers/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// A PASS must say what it examined. "PASS over twelve claims" and "PASS over
+// one" printed identically, which is what made the hidden-claim attack
+// invisible in a CI log even after it stopped working.
+{
+  const dir = markerFixture(TWO_CLAIMS.replace('— HUMAN VERIFIED (PR #25, 2026-09-17)', '— AGENT VERIFIED (PR #25, 2026-09-17)'));
+  const { code, out } = runChecker(dir);
+  check(
+    'a passing verification-markers run prints the claim and marker count',
+    code === 0 && /PASS {2}verification-markers \(2 claim\(s\), 2 marker\(s\)\)/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// ===========================================================================
+// V-4 — the checker and the engine must resolve the claim source the same way.
+//
+// `governance-checks.mjs` read `## Roadmap` → `Path:`; `surface.mjs` reads
+// `## Published Surface` → `Claims source:`. The slice fixture declares only
+// the latter, so this check SKIPped on the one repository built to exercise
+// the capability end to end and had never run against it. The suite and the
+// fixture were built against each other's assumptions and never met.
+// ===========================================================================
+{
+  const dir = fixture({
+    'llm/governance/governance-delta.md': `# Governance Delta: fixture
+
+## Repository Layout
+
+${MARKER_LAYOUT}
+
+## Published Surface
+
+Claims source: llm/claims.md
+
+## L0 Path Allowlist
+
+\`\`\`l0-allowlist
+allow llm/claims.md verification-marker
+\`\`\`
+`,
+    'llm/governance/adr/0001-x.md': '# ADR-0001\n\nStatus: Accepted\n',
+    'llm/governance/adr/README.md':
+      '# Index\n\n| ADR | Title | Status |\n|---|---|---|\n| [0001](0001-x.md) | X | Accepted |\n',
+    'llm/claims.md': '# Claims\n\n- [x] `P1-AC-01` A claim\n  — AGENT VERIFIED (PR #22, 2026-09-16)\n',
+    'docs/README.md': '# artifacts\n',
+  });
+  const { code, out } = runChecker(dir);
+  check(
+    'V-4: `## Published Surface` / `Claims source:` binds the claim source',
+    code === 0 && /PASS {2}verification-markers \(1 claim/.test(out) && !/SKIP {2}verification-markers/.test(out),
+    out
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// The shipped slice fixture, run through the real checker as a standalone
+// repository. This is the test whose absence was V-4: the two halves of the
+// slice each had tests, and nothing ran one against the other.
+{
+  const src = fileURLToPath(new URL('./fixtures/slice', import.meta.url));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'govchk-slice-'));
+  fs.cpSync(src, dir, { recursive: true });
+  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe' });
+  git('init', '-q');
+  execFileSync('git', ['symbolic-ref', 'HEAD', 'refs/heads/main'], { cwd: dir, stdio: 'pipe' });
+  git('config', 'user.email', 'test@example.invalid');
+  git('config', 'user.name', 'test');
+  git('add', '-A');
+  git('commit', '-qm', 'the slice fixture');
+  const { code, out } = runChecker(dir, []);
+  check(
+    'the shipped slice fixture passes verification-markers (V-4: it now RUNS)',
+    code === 0 && /PASS {2}verification-markers \(6 claim\(s\)/.test(out) && !/SKIP {2}verification-markers/.test(out),
+    out
+  );
+  // …and the fixture's own `L3` claims pass on the fixture's own evidence
+  // format, with the narrative reports removed — an adopter carries the
+  // evidence artifacts, not the builder's and verifier's reports. This is the
+  // exact tree the cap used to be STUCK CLOSED against.
+  for (const f of fs.readdirSync(dir)) {
+    if (/-REPORT\.md$/.test(f) || f === 'README.md') fs.rmSync(path.join(dir, f), { force: true });
+  }
+  git('add', '-A');
+  git('-c', 'user.email=t@e.invalid', '-c', 'user.name=t', 'commit', '-qm', 'drop the narrative reports');
+  const bare = runChecker(dir, []);
+  check(
+    "the fixture's L3 claims still pass with every narrative report deleted",
+    bare.code === 0 && /PASS {2}verification-markers/.test(bare.out),
+    bare.out
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }

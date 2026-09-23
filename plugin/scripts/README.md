@@ -1,7 +1,7 @@
 # Governance Checks — Script Usage
 
 Status: Active
-Last updated: 2026-08-18
+Last updated: 2026-09-23
 Owner: Project owner (canonical governance)
 
 ## Purpose
@@ -14,11 +14,16 @@ tooling, not CI infrastructure. Policy itself lives in
 `llm/governance/l0-fast-track.md` and `llm/governance/governance-levels.md`
 and is not restated here.
 
+This directory no longer holds one script. `governance-checks.mjs` is the
+enforcement mechanism and everything from §Usage to §Assumptions below is
+about it; the verification-surface generators that ship beside it are
+described in §Other Scripts In This Directory.
+
 ## Scope
 
 Usage, path resolution, check definitions, the allowlist parsing
-convention, and the honest boundary between what is and is not
-mechanically enforced.
+convention, the honest boundary between what is and is not mechanically
+enforced, and a short account of every other executable in this directory.
 
 ## How Adopting Repos Use It
 
@@ -174,11 +179,26 @@ Two security properties are preserved from the seed implementation:
    (`origin/main`), never from the PR's tree, so an L0 PR cannot amend the
    allowlist that judges it. Bootstrap fallback to the working tree only
    when the base delta has no block, with a loud warning.
-2. **Paired-diff shape constraints.** `checkbox-only` and
-   `link-target-only` require every removed line to pair 1:1 with an added
-   line identical except the toggled checkbox / the link target;
-   `status-line-only` additionally requires the added Status line to match
-   the constrained legal form (no free prose in the parenthetical).
+2. **Shape constraints on the diff.** Most shapes are *paired*:
+   `checkbox-only` and `link-target-only` require every removed line to
+   pair 1:1 with an added line identical except the toggled checkbox / the
+   link target; `status-line-only` additionally requires the added Status
+   line to match the constrained legal form (no free prose in the
+   parenthetical).
+
+   **`verification-marker` is deliberately not one of them.** A verification
+   marker block is APPEND-ONLY (design §3.5: "Removal is a violation, and it
+   is mechanically checkable"), so the shape permits added lines and refuses
+   every removed or rewritten one — including the 1:1 replacement that every
+   paired shape allows. Rewriting `— AGENT VERIFIED (PR #22, …)` into
+   `— AGENT VERIFIED (PR #99, …)` is a legal paired diff and an illegal
+   marker edit, and that difference is the whole reason the shape exists.
+   It also refuses a `HUMAN VERIFIED` or `HUMAN REVIEWED` append, because an
+   L0 diff is a lane where an AI role may merge and those two states are not
+   an agent's to assert. Declaring `verification-marker` over a file
+   therefore buys append-only enforcement and gives up in-lane checkbox
+   flips on that file; `plugin/scripts/governance-checks.test.mjs` asserts
+   both halves of that trade.
 
 ## Glob Parsing
 
@@ -289,6 +309,75 @@ records its own platform's enforcement reality.
   Current recommendation: invoke the canonical copy and record the pinned
   governance version in the delta.
 
+## Other Scripts In This Directory
+
+Everything above documents `governance-checks.mjs`. These ship beside it
+and are separate programs with separate jobs. The capability they implement
+is specified in
+`llm/specs/2026-09-18-human-verification-capability-design.md`; section
+numbers below refer to it.
+
+- **`surface.mjs`** — the verification-surface generator. It reads a
+  repository's declared claim source, its PDataset declarations and its
+  evidence artifacts, and emits one `surface-manifest/v1` JSON document
+  recording, per claim, the marker block, the state the marker asserts, the
+  state the evidence can actually carry, and why the two differ. An asserted
+  state above the evidence ceiling is **refused**, not annotated: that
+  refusal is the determinism cap (§5.3 mechanism 4, §6.3), and it is what
+  stops an agent promoting its own work. It executes every declared REPLAY
+  and MODIFIED REPLAY through `replay.mjs` and derives each outcome from the
+  child process's exit status, so a verdict is never a function of what an
+  artifact says about itself. On a default run it also reads the manifest it
+  is about to write as a **baseline** and compares every bound identifier of
+  §5.5 — claim text, evidence hashes, dataset hashes, marker history — and
+  **refuses to overwrite a baseline it has just contradicted**, so a drift
+  cannot be laundered by re-running. Deterministic: two runs over unchanged
+  inputs differ in `generated_at` alone, and `content_sha256` covers
+  everything else. Usage: `node surface.mjs --root <dir>`; `--no-previous`
+  for a genuine first run, `--no-execute` where a process cannot be spawned
+  (it then refuses to produce any human state), `--replay-ledger <path>` for
+  the timings, which are kept out of the manifest precisely so the
+  determinism claim stays checkable.
+
+- **`replay.mjs`** — the execution boundary. One job: run a declared command
+  and return an execution record that says what actually happened
+  (`executed`, `exit_status`, `outcome`, output hashes, a content-addressed
+  `execution_id`). A command that cannot be run comes back
+  `executed: false` with a stated reason and `outcome: null` — never a pass,
+  never a silent skip. Because the command string is untrusted input read
+  out of a file in the tree under audit, execution is bounded: no shell ever
+  (`shell: false`), shell metacharacters refused rather than sanitized, the
+  program allowlist is `node` alone, the script and every path-shaped
+  argument must resolve inside the declared root after `realpath`, and the
+  child runs under a timeout, a `maxBuffer` and a pruned environment. It is
+  also a CLI:
+  `node replay.mjs --root <dir> --command "node checks/x.mjs"`.
+
+- **`surface-html.mjs`** — the projection, rendered for a human. Input is a
+  `surface-manifest/v1` document; output is one self-contained static page
+  with no script, no CDN, no webfont and no network at view time. It renders
+  the exact REPLAY and MODIFIED REPLAY commands for the reader to run in
+  their own shell; the page never executes them and never shows an outcome
+  it did not read out of the manifest (§7.3, `Renderer: none`). A declared
+  path absent on disk is rendered as a visible `MISSING ON DISK` gap marker
+  and sets exit 1 — never a dead link presented as a live one. Two
+  guardrails are enforced on the emitted bytes rather than asserted in
+  prose: an absolute URL under `Pages mechanism: none`, or any `<script>` or
+  inline event handler, makes the generator refuse to write the page at all.
+
+- **`governance-checks.test.mjs`**, **`surface.test.mjs`** — the regression
+  suites, both wired into `.github/workflows/ci.yml`. Plain Node, zero
+  dependencies, temp dirs, non-zero exit on failure. `surface.test.mjs`
+  builds a copy of `fixtures/slice/` per case, perturbs exactly one thing
+  and runs the real generators over it; the committed fixture is never
+  modified.
+
+- **`fixtures/slice/`** — the synthetic mini-adopter `surface.test.mjs` runs
+  against, with its own README (`governance-checks.test.mjs` builds its own
+  throwaway git repositories instead and does not use it). Its `checks/ac04-transform-runs.mjs` is deliberately
+  vacuous: it passes under its own perturbation, which is what a
+  verification tool must be able to detect. Do not "fix" it.
+
 ## Cross-References
 
 - `llm/governance/l0-fast-track.md` — the policy this script serves
@@ -300,3 +389,7 @@ records its own platform's enforcement reality.
   script reads, including §Repository Layout.
 - `plugin/agents/repository-steward.md` — steward duties, including
   running these checks.
+- `llm/specs/2026-09-18-human-verification-capability-design.md` — the
+  design the surface scripts implement (§3.4 marker grammar, §3.5
+  append-only, §5.5 artifact invalidation, §14.1 determinism levels).
+- `plugin/scripts/fixtures/slice/README.md` — the fixture, claim by claim.

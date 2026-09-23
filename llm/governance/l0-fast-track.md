@@ -202,6 +202,14 @@ only the first matching allow line applies to a path, so a second one would be
 dead. Keep the roadmap's line above the broad `llm/**` rule for the same
 reason.
 
+This replacement is **enforced**, not merely advised: once the declared claim
+source carries a marker, an `--l0` run that touches it under any other shape
+fails and names the line to change. A weaker shape on that path would waive
+the append-only rule — under `path-only`, deleting a
+`— NOT VERIFIED (<reason>, DATE)` reset restores the stale
+`HUMAN VERIFIED` above it — and the whole point of the shape is that such a
+deletion is a violation and is mechanically checkable.
+
 ### The Deny Rule
 
 The following are **always denied**, whether or not a repo's block lists
@@ -311,8 +319,16 @@ Mechanically verifiable by the governance check command in `--l0` mode:
 - Diff shapes match their declared constraints (status-line-only,
   index-table-rows, checkbox-only, link-target-only, verification-marker).
 - For `verification-marker`: that the diff **appends** and does nothing else
-  (no marker line removed or edited, no claim text changed), that every added
-  marker is well-formed, and that no added marker asserts a human-only state.
+  (no marker line removed or edited, no claim text changed), and that every
+  added marker is well-formed.
+- That **no** added line of **any** changed path asserts `HUMAN REVIEWED` or
+  `HUMAN VERIFIED` in marker form. This is a lane rule, not a shape rule:
+  it is checked before the shape is dispatched, so a claim source allowlisted
+  under a weaker shape cannot opt out of it.
+- That a declared claim source which **carries** verification markers is
+  allowlisted under `verification-marker` and not under a shape that waives
+  the append-only rule. (A claim source carrying no markers is unaffected;
+  adoption is incremental.)
 - Presence of the certification block heading and checked declarations in
   the PR body (when the body is supplied).
 
@@ -351,9 +367,20 @@ detectable after the fact.
 
 - The canonical check script (`plugin/scripts/governance-checks.mjs`)
   implements the block format and shapes above; a repo may substitute an
-  equivalent command, declared in its delta, provided it preserves both
-  security properties: the read-from-base allowlist and the paired
-  diff-shape constraints.
+  equivalent command, declared in its delta, provided it preserves all
+  three security properties:
+  1. the read-from-base allowlist;
+  2. the diff-shape constraints — including `verification-marker`'s
+     **append-only** rule, which is deliberately **not** paired. Five of
+     the six shapes are paired 1:1 line replacements; a substitute command
+     that implemented the sixth as a paired constraint would satisfy the
+     word "paired" while permitting the in-place marker rewrite the shape
+     exists to forbid;
+  3. the human-only state guard — `HUMAN REVIEWED` and `HUMAN VERIFIED`
+     may not be asserted by an L0 diff, **whatever shape the changed path
+     declares**. The guard belongs to the lane, not to one shape: L0 is
+     the lane in which an AI role may merge, so a shape-bound guard can be
+     routed around by allowlisting the claim source under a weaker shape.
 - Until a repo's governance check command exists and runs, condition 9
   cannot be satisfied and no fast-track merge can occur there.
 

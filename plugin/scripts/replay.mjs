@@ -15,6 +15,13 @@
 //
 //   * Every outcome this module reports was OBSERVED. `outcome: 'pass'` means
 //     a real child process exited 0; `'fail'` means it exited non-zero.
+//   * A non-zero exit says only that the process died. It does not say the
+//     check REACHED its assertion and refused it. `failure_shape` separates
+//     the two: a child that produced nothing on stdout and wrote only to
+//     stderr did not report a failure, it BROKE. The caller needs this
+//     because design §14.4 makes a failing MODIFIED REPLAY a precondition for
+//     `HUMAN VERIFIED`, and a check that fails because its input is missing
+//     is not a check that failed because the perturbation worked.
 //   * A command that CANNOT be executed is never a pass and never a silent
 //     skip. It comes back `executed: false` with a stated `unexecuted_reason`,
 //     which the caller must turn into a visible gap and a non-zero finding —
@@ -154,6 +161,33 @@ export function planCommand(command, root) {
 }
 
 /**
+ * The path-shaped arguments a declared command names, root-relative.
+ *
+ * Tokenization lives here, beside `planCommand`, so a caller that wants to ask
+ * "does the perturbed input this command names actually exist?" is reading the
+ * same argument list the runner will execute, not a second parse of the same
+ * string. The program and the script are excluded: `planCommand` already
+ * refuses a script that is not on disk.
+ *
+ * `--flag=path` is split on the first `=`, because that is what a child
+ * process does with it.
+ */
+export function commandInputPaths(command) {
+  if (typeof command !== 'string' || command.trim() === '') return [];
+  if (SHELL_METACHARACTERS.test(command)) return [];
+  const out = [];
+  for (const token of command.trim().split(/\s+/).slice(2)) {
+    const candidate = token.startsWith('-') && token.includes('=')
+      ? token.slice(token.indexOf('=') + 1)
+      : token;
+    if (candidate === '' || candidate.startsWith('-')) continue;
+    if (!candidate.includes('/')) continue;
+    out.push(candidate);
+  }
+  return out;
+}
+
+/**
  * Redact anything machine-specific or link-shaped out of a captured line.
  *
  * The manifest must be byte-identical between two machines, and under
@@ -173,6 +207,34 @@ function redact(text, rootReal) {
   // eslint-disable-next-line no-control-regex
   s = s.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
   return s.length > 200 ? `${s.slice(0, 197)}...` : s;
+}
+
+/**
+ * WHICH KIND of failure a non-zero exit was.
+ *
+ * `'asserted'` — the check ran far enough to say something on stdout and then
+ * exited non-zero. That is a check reporting a refusal: the shape a MODIFIED
+ * REPLAY must have for design §14.2's "it failed as it must" to mean anything.
+ *
+ * `'crashed'` — the process produced NOTHING of its own on stdout and wrote
+ * only to stderr. A missing input file, an unresolved import, a syntax error:
+ * the harness broke before it could assert. Graded as a falsification, this is
+ * the cheapest way in the world to satisfy §14.4 — declare a perturbation
+ * input that was never committed and let `ENOENT` do the work.
+ *
+ * The discriminator is deliberately a property of the OBSERVED streams and not
+ * of the stderr text: parsing a stack trace would make the grade a function of
+ * Node's diagnostic wording. The caller decides what to do with the shape;
+ * this module only reports what it saw.
+ *
+ * It errs toward `'crashed'`: a check that reports its refusal on stderr alone
+ * is indistinguishable here from one that died, and the safe reading of an
+ * ambiguous failure is that nothing was falsified. A check that wants to be
+ * read as asserting says so on stdout, which every check in this repo does.
+ */
+function failureShape(status, stdout, stderr) {
+  if (status === 0) return null;
+  return stdout.length === 0 && stderr.length > 0 ? 'crashed' : 'asserted';
 }
 
 function identify(record) {
@@ -205,6 +267,8 @@ function unexecuted(command, cwdLabel, reason, extra = {}) {
     // Never a pass, never a silent skip: an outcome nobody observed is `null`.
     outcome: null,
     outcome_source: 'unexecuted',
+    // Nothing ran, so there is no failure to shape. See `failureShape`.
+    failure_shape: null,
     stdout_sha256: null,
     stderr_sha256: null,
     stdout_bytes: null,
@@ -291,6 +355,8 @@ export function executeCommand({ root, command, cwdLabel = null, timeoutMs = DEF
     // The whole point of this module: the outcome is OBSERVED, not declared.
     outcome: res.status === 0 ? 'pass' : 'fail',
     outcome_source: 'executed',
+    // `null` on a pass; on a failure, WHICH KIND of failure it was.
+    failure_shape: failureShape(res.status, stdout, stderr),
     stdout_sha256: sha256(stdout),
     stderr_sha256: sha256(stderr),
     stdout_bytes: stdout.length,

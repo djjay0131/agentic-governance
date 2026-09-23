@@ -133,6 +133,22 @@ Wrong twice:
 edited versus base; every added line a well-formed marker; no added marker
 asserting a human state, since the L0 lane is the agent lane.
 
+### C-4 — MODIFIED REPLAY is a defence against error, not against an adversary
+
+Found by **building** it, not by reading. §14.3 calls MODIFIED REPLAY "the most
+valuable idea here" and argues all three of the portfolio's real vacuous guards
+would have been caught by it. That argument holds — but only for *honest*
+mistakes, which is what those three were.
+
+The perturbation is **self-administered**: `--perturb` is implemented by the
+artifact under test. `if (perturb) process.exit(1)` satisfies the rule. A
+Verifier drove a claim reading "two plus two equals five" to `HUMAN VERIFIED`
+while the manifest recorded `ASSERTION FALSE` in both execution records.
+
+**Resolution: amend §14.3 to state the bound**, and name INDEPENDENT
+VERIFICATION as the property that closes it. The slice's human-authored check
+is the worked example — it survives deletion of the pipeline it verifies.
+
 ## 5. Requires an amendment (no ADR needed)
 
 | # | Amendment | File | Why not an ADR |
@@ -141,6 +157,7 @@ asserting a human state, since the L0 lane is the agent lane.
 | A-2 | §7.3 gains the generated-command execution path; interactive console stays deferred | capability design | Clarifies scope the section already intended |
 | A-3 | One merged slice fixture drawn from §13.1 + §13.2 | activity plan | Scope note for the slice; both fixture designs stand |
 | A-4 | §9.1's sketch defers to §3.5 (C-3) | capability design | Correcting a sketch against the rule it was meant to implement |
+| A-5 | §14.3 states what MODIFIED REPLAY cannot prove (C-4) | capability design | Bounding a claim the section overstated; no design changes |
 
 **No ADR is required for the slice.** §8 already anticipates ADR-0002 and
 ADR-0003 for the *full* capability; the slice neither settles nor pre-empts

@@ -848,6 +848,42 @@ mechanises.
 That is not a hypothetical benefit. It is the strongest available argument for
 this capability, and it is drawn from this portfolio's own recent history.
 
+> **Amended 2026-09-23 (slice verification, D8). What MODIFIED REPLAY cannot
+> prove, found by building it.**
+>
+> **The perturbation is self-administered.** `--perturb` is implemented *by the
+> artifact under test*. Nothing external checks that the perturbation is real,
+> so the rule "MODIFIED REPLAY must fail" is satisfiable by
+> `if (perturb) process.exit(1)`.
+>
+> An independent Verifier demonstrated the consequence: a claim reading **"two
+> plus two equals five"** reached `HUMAN VERIFIED` while the manifest recorded
+> `ASSERTION FALSE` verbatim in **both** execution records. The check failed on
+> perturbation exactly as required, and the requirement was met by a check that
+> proves nothing.
+>
+> **So MODIFIED REPLAY is a defence against error, not against an adversary.**
+> That distinction was not drawn above and should have been. The three vacuous
+> guards this section cites were *honest mistakes* — nobody wrote them to
+> deceive — and against that failure mode, which is overwhelmingly the common
+> one, MODIFIED REPLAY works and the argument above stands. Against an artifact
+> written to satisfy the check, it does not, and no amount of re-running fixes
+> that: the artifact and the perturbation share an author.
+>
+> **What actually closes the gap is the thing this capability already names but
+> does not yet mechanise:** INDEPENDENT VERIFICATION (§14.2) — a *different*
+> implementation, by a different actor, from the claim text alone. The slice
+> shipped one, `human/cl01-independent-relationship.mjs`, and the Verifier
+> singled it out: deleting the pipeline's `transform.mjs` leaves it passing
+> while the agent-authored check cannot even load. That is what "independent"
+> has to mean, and it is the property MODIFIED REPLAY lacks.
+>
+> **Consequence for the determinism cap.** A modified replay that *crashes* —
+> missing input, stack trace, empty stdout — is currently graded "it failed as
+> it must". Falsified and failed-to-run are not distinguished, and the
+> discriminator is already in the execution record, unread. Until that is
+> closed, a green MODIFIED REPLAY is weaker evidence than §14.4 assumes.
+
 ### 14.4 Enforcement
 
 - `L3` evidence: the generator recomputes and compares the hash. A mismatch is

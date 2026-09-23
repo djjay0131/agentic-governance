@@ -60,7 +60,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { executeCommand, manifestRecord, writeLedger, REPLAY_SCHEMA, DEFAULT_TIMEOUT_MS }
+import { executeCommand, manifestRecord, writeLedger, commandInputPaths, REPLAY_SCHEMA, DEFAULT_TIMEOUT_MS }
   from './replay.mjs';
 
 // ---------------------------------------------------------------------------
@@ -441,6 +441,33 @@ if (!claimsRel) {
 // change to the code.
 
 const EVIDENCE_RE = /EVIDENCE\s+([A-Z][A-Z0-9]*-[A-Z]+-\d{2,})\s*$/;
+
+/**
+ * The claim ID this ONE LINE declares evidence for, or `null`.
+ *
+ * This is the only place in the engine that decides what an `EVIDENCE` line
+ * means, and both readers of that question go through it: the parser that
+ * BUILDS an evidence record, and `artifactCitesClaim()`, the guard that asks
+ * whether an executed artifact is evidence about the claim it was run for.
+ *
+ * They used to be two spellings of one concept — the parser anchored to
+ * end-of-line, the guard matched the bare substring anywhere in the file — and
+ * the gap between them was a hole. A line the parser refuses as a declaration:
+ *
+ *     // (context: EVIDENCE P1-AC-04 is discussed in the handoff, not asserted here)
+ *
+ * satisfied the guard, so an evidence record could repoint its `locator:` and
+ * its `replay:` at somebody else's check, have that check's falsification
+ * counted as its own, and reach `HUMAN VERIFIED` at exit 0 — while the check
+ * it was supposed to be about was never executed at all, deleting the
+ * `failed-to-falsify` finding that was the whole point of it.
+ *
+ * A MENTION is not a DECLARATION. One rule, stated once.
+ */
+function declaredEvidenceClaimId(line) {
+  const m = EVIDENCE_RE.exec(stripComment(line));
+  return m ? m[1] : null;
+}
 const TEXT_EXT = new Set(['.mjs', '.js', '.cjs', '.ts', '.py', '.md', '.txt', '.yml', '.yaml', '.json', '.sh', '.r']);
 
 function walk(abs, out = []) {
@@ -496,6 +523,7 @@ function runDeclared(command) {
       timed_out: false,
       outcome: null,
       outcome_source: 'unexecuted',
+      failure_shape: null,
       stdout_sha256: null,
       stderr_sha256: null,
       stdout_bytes: null,
@@ -525,8 +553,12 @@ function artifactCitesClaim(relPath, claimId) {
   if (citationCache.has(key)) return citationCache.get(key);
   let cites = false;
   try {
-    const text = readText(underRoot(relPath));
-    cites = new RegExp(`EVIDENCE\\s+${claimId}(?![A-Z0-9-])`).test(text);
+    // Line by line through the SAME predicate the parser uses. Anything else
+    // is a second, looser definition of "cites", which is how an artifact that
+    // merely names a claim came to satisfy a guard that meant to ask whether
+    // it declares evidence for one.
+    cites = readText(underRoot(relPath)).split('\n')
+      .some((line) => declaredEvidenceClaimId(line) === claimId);
   } catch { cites = false; }
   citationCache.set(key, cites);
   return cites;
@@ -551,9 +583,8 @@ for (const rel of evidenceRels) {
     const fileSha = sha256(fs.readFileSync(file));
     const srcLines = text.split('\n');
     for (let i = 0; i < srcLines.length; i += 1) {
-      const em = EVIDENCE_RE.exec(stripComment(srcLines[i]));
-      if (!em) continue;
-      const claimId = em[1];
+      const claimId = declaredEvidenceClaimId(srcLines[i]);
+      if (claimId === null) continue;
       const fields = new Map();
       for (let j = i + 1; j < srcLines.length; j += 1) {
         const raw = srcLines[j];
@@ -600,7 +631,15 @@ for (const rel of evidenceRels) {
       const rawProducedBy = fields.get('produced-by') ?? null;
       let producedBy = null;
       const pb = rawProducedBy ? /^(.+?)\s*\((human|agent)\)$/.exec(rawProducedBy) : null;
-      if (pb) producedBy = { actor: pb[1].trim(), class: pb[2] };
+      // `class_source` is not decoration. `produced_by.class` is the input to
+      // §5.3 mechanism 2, and it is a word the artifact writes about ITSELF in
+      // a comment: one `sed` turns `(agent)` into `(human)`. This engine reads
+      // no git history, no signature and no external register, so it cannot
+      // corroborate the value — and the engine's own principle is that an
+      // outcome nobody observed is testimony. The honest move is not to
+      // pretend otherwise but to record the provenance of the provenance, so
+      // the manifest stops implying a mechanical fact it never established.
+      if (pb) producedBy = { actor: pb[1].trim(), class: pb[2], class_source: 'self-attested (L1)' };
       else {
         gap(claimId, 'produced_by', `evidence ${relFile} declares no \`<actor> (human|agent)\``, relFile);
         finding('warn', 'undeclared-actor-class', claimId,
@@ -664,6 +703,37 @@ for (const rel of evidenceRels) {
             relFile);
         }
 
+        // design §14.2, §14.4 — a MODIFIED REPLAY that CRASHED is not a
+        // MODIFIED REPLAY that failed. "It failed as it must" was being read
+        // off the exit status alone, so a command naming a perturbation input
+        // that was never committed — `ENOENT`, a stack trace, empty stdout —
+        // graded as a successful falsification. The discriminator was already
+        // in the execution record and simply unread.
+        if (modeName === 'MODIFIED REPLAY' && exec.executed && exec.failure_shape === 'crashed') {
+          finding('error', 'modified-replay-failed-to-run', claimId,
+            `MODIFIED REPLAY \`${cmd}\` exited ${exec.exit_status} without writing anything to stdout `
+            + `(${exec.stderr_bytes} bytes on stderr, 0 on stdout): the harness BROKE rather than the check `
+            + `refusing its assertion. A check that fails because it could not run is not a check that failed `
+            + `because the perturbation worked, and design §14.4 makes only the second one a precondition for `
+            + `\`HUMAN VERIFIED\`. Check that every input this command names exists.`, relFile);
+        }
+
+        // The perturbed inputs themselves. `locator:` has been existence-
+        // checked since the first build; the paths a replay command NAMES
+        // never were, which is how §15.2's research shape — where the
+        // perturbation IS an input file — gets this wrong by accident.
+        // A `warn`, not an `error`: §14.2 explicitly allows a perturbation
+        // that DELETES the thing being asserted about, and a check that
+        // notices the absence and reports it on stdout is falsifying
+        // correctly. The crash rule above is what refuses; this one discloses.
+        for (const input of commandInputPaths(cmd)) {
+          if (exists(underRoot(input))) continue;
+          finding('warn', 'replay-input-missing', claimId,
+            `${modeName} \`${cmd}\` names \`${input}\`, which does not exist on disk. If the absence IS the `
+            + `perturbation, the check must notice it and say so on stdout; if it is not, this command did not `
+            + `run what it says it runs (design §14.2).`, relFile);
+        }
+
         const rec = {
           command: cmd,
           cwd: surfaceRoot,
@@ -698,13 +768,18 @@ for (const rel of evidenceRels) {
       if (uniqueExecuted.length) {
         matchesLocator = uniqueExecuted.every((a) => a === locator);
         citesClaim = uniqueExecuted.every((a) => artifactCitesClaim(a, claimId));
+        // `error`, not `warn`. A record that executes somebody else's artifact
+        // proves nothing here — it cannot lift the ceiling and (since
+        // 2026-09-23) it cannot falsify the claim either. A fact with that
+        // much weight must be visible at the exit code, which is the only
+        // signal a CI gate reads.
         if (!matchesLocator) {
-          finding('warn', 'replay-artifact-mismatch', claimId,
+          finding('error', 'replay-artifact-mismatch', claimId,
             `the executed artifact(s) ${uniqueExecuted.map((a) => `\`${a}\``).join(', ')} are not the declared `
             + `\`locator: ${locator}\`, so the hash this record binds is not the hash of what ran. `
             + `The record cannot lift this claim's ceiling.`, relFile);
         } else if (!citesClaim) {
-          finding('warn', 'replay-artifact-does-not-cite-claim', claimId,
+          finding('error', 'replay-artifact-does-not-cite-claim', claimId,
             `the executed artifact \`${uniqueExecuted.join(', ')}\` does not cite \`EVIDENCE ${claimId}\`. `
             + `Evidence binds by the claim ID cited in the artifact (design §6.1, §6.2), so pointing a `
             + `replay at another claim's check proves nothing here.`, relFile);
@@ -809,6 +884,11 @@ function liftBlockedReason(e) {
       + `The check passes while the thing it asserts is broken, which is the definition of a vacuous `
       + `check (design §14.3)`;
   }
+  if (e.modified_replay.execution.failure_shape === 'crashed') {
+    return `MODIFIED REPLAY exited ${e.modified_replay.execution.exit_status} with nothing on stdout and `
+      + `${e.modified_replay.execution.stderr_bytes} bytes on stderr — it FAILED TO RUN, not failed to hold. `
+      + `A broken harness is not a falsification (design §14.2, §14.4)`;
+  }
   if (e.executed_artifact_matches_locator === false) {
     return `the executed artifact is not the declared \`locator: ${e.locator}\``;
   }
@@ -847,7 +927,30 @@ for (const c of claims) {
   const executable = own.filter((e) => e.determinism === 'L3' || e.determinism === 'L2');
   const withReplay = executable.filter((e) => e.replay);
   const lifting = own.filter((e) => e.lifts_ceiling);
-  const falsifying = executable.filter((e) => e.modified_replay && e.modified_replay.as_expected === true);
+
+  /**
+   * Is this record's execution BINDING on this claim?
+   *
+   * A record whose replay executed some other artifact, or an artifact that
+   * declares no evidence for this claim, is not testimony about this claim —
+   * in either direction. It could already not lift the ceiling; it must also
+   * not be able to FALSIFY, or repointing a vacuous check at a healthy one
+   * both promotes the claim and deletes the `unfalsified` / `failed-to-falsify`
+   * signal that says the real check asserts nothing (design §6.1, §6.2).
+   */
+  const binding = (e) => e.executed_artifact_matches_locator !== false
+    && e.executed_artifact_cites_claim !== false;
+
+  const falsifying = executable.filter((e) => binding(e)
+    && e.modified_replay
+    && e.modified_replay.as_expected === true
+    // A crash is not a falsification (design §14.2, §14.4).
+    && e.modified_replay.execution.failure_shape !== 'crashed');
+  const crashedModified = executable.filter((e) => e.modified_replay
+    && e.modified_replay.execution.failure_shape === 'crashed');
+  // Falsifications that happened, but not to this claim's declared artifact.
+  const borrowedFalsifiers = executable.filter((e) => !binding(e)
+    && e.modified_replay && e.modified_replay.as_expected === true);
   const failedToFail = executable.filter((e) => e.modified_replay && e.modified_replay.as_expected === false);
   const unexecuted = own.filter((e) => (e.replay && !e.replay.execution.executed)
     || (e.modified_replay && !e.modified_replay.execution.executed));
@@ -888,7 +991,11 @@ for (const c of claims) {
   c.unfalsified_reason = c.unfalsified
     ? (failedToFail.length
       ? 'modified replay failed to fail'
-      : (noModified.length ? 'replay recorded, no modified replay' : 'no replay recorded'))
+      : (crashedModified.length
+        ? 'modified replay crashed rather than failing: nothing was falsified'
+        : (borrowedFalsifiers.length
+          ? 'the only modified replay that failed executed another claim\'s artifact'
+          : (noModified.length ? 'replay recorded, no modified replay' : 'no replay recorded'))))
     : null;
 
   // Kept separate from `unfalsified` on purpose. A sibling record that DOES
@@ -896,6 +1003,9 @@ for (const c of claims) {
   // coverage block entirely; the two signals answer different questions and a
   // vacuous check stays visible whatever else cites the claim.
   c.failed_to_falsify = failedToFail.map((e) => e.locator).sort();
+  // Same reasoning as `failed_to_falsify`: a modified replay that CRASHED is a
+  // distinct, nameable fact and stays visible whatever else cites the claim.
+  c.crashed_modified_replays = crashedModified.map((e) => e.locator).sort();
   c.unexecuted_replays = unexecuted.map((e) => e.locator).sort();
   c.evidence_actor_classes = [...new Set(own.map((e) => e.produced_by?.class ?? 'undeclared'))].sort();
   c.human_produced_evidence = own.some((e) => e.produced_by?.class === 'human');
@@ -946,15 +1056,40 @@ for (const c of claims) {
       'only `L1` (attested) evidence: capped at `AGENT VERIFIED` and can never reach `HUMAN VERIFIED` (design §6.3)',
       `${c.source.path}:${c.source.line}`);
   }
-  // §5.3 mechanism 2 — the actor-class gate. `produced_by.class` was parsed
-  // and stored and never read; this is its read site. A human state resting
-  // entirely on agent-produced evidence is legitimate only because the
-  // evidence was EXECUTED — so it is reported rather than silently accepted.
-  if (own.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED') && !c.human_produced_evidence) {
-    finding('info', 'human-state-on-agent-evidence', c.id,
-      `\`${c.state}\` rests entirely on evidence produced by ${c.evidence_actor_classes.join(' and ')} `
-      + `(no \`produced-by: <actor> (human)\` record cites this claim). It stands only because the evidence `
-      + `was executed and falsified this run (design §5.3 mechanism 2).`, `${c.source.path}:${c.source.line}`);
+  // §5.3 mechanism 2 — the actor-class gate, and the disclosure that goes with
+  // it. Three changes here, and the reasoning matters more than the code:
+  //
+  //   * `warn`, not `info`. `info` is the severity this engine uses for facts
+  //     that are EXPECTED (`l1-only`). "`HUMAN VERIFIED` and no human is
+  //     anywhere in the evidence" is the most surprising line in the manifest,
+  //     and §14.3's lesson is that the surprising thing must be loud.
+  //   * It fires on EVERY claim at `HUMAN REVIEWED` or above, not only on
+  //     claims with no human producer declared. The narrow form was deletable
+  //     by the party it discloses: one word, `(agent)` -> `(human)`, and the
+  //     only record that a human state rested on agent work disappeared from
+  //     the findings, from coverage and from the page — with no error, no warn
+  //     and no trace. A disclosure its subject can delete is a courtesy, not a
+  //     control. Under this engine NO human producer is corroborated, so the
+  //     honest predicate is the wider one and the wording says why.
+  //   * NOT `error`, deliberately. An `error` would fail the shipped fixture
+  //     for doing the right thing and would push adopters toward relabelling
+  //     `(agent)` as `(human)` — which the line above shows is free. The grade
+  //     is not capped either: executed evidence is not an attestation, and
+  //     capping it would make `HUMAN VERIFIED` unreachable for any
+  //     agent-written test (§5.3's four mechanisms are independent).
+  if (own.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED')) {
+    const humanRecords = own.filter((e) => e.produced_by?.class === 'human').map((e) => e.locator).sort();
+    finding('warn', 'human-state-on-agent-evidence', c.id, humanRecords.length
+      ? `\`${c.state}\` rests on evidence whose human producer is SELF-ATTESTED: `
+        + `${humanRecords.map((l) => `\`${l}\``).join(', ')} declare \`(human)\` in their own comment header. `
+        + `This engine reads no git history, no signature and no external register, so nothing corroborates `
+        + `that class — the same one-word edit that would make it \`(agent)\` made it \`(human)\`. The state `
+        + `stands on evidence that was EXECUTED and falsified this run, which is the part that was observed `
+        + `(design §5.3 mechanism 2, §14.1).`
+      : `\`${c.state}\` rests entirely on evidence produced by ${c.evidence_actor_classes.join(' and ')} `
+        + `(no \`produced-by: <actor> (human)\` record cites this claim). It stands only because the evidence `
+        + `was executed and falsified this run, not because a human is behind it (design §5.3 mechanism 2).`,
+      `${c.source.path}:${c.source.line}`);
   }
 }
 
@@ -1199,11 +1334,48 @@ const explicitPrevious = value('--previous', null);
 const defaultOutRel = posix(path.join(outputDir.replace(/\/+$/, ''), 'surface-manifest.json'));
 const defaultBaselineAbs = path.join(ROOT, defaultOutRel);
 
+// Is `p` a surface manifest, i.e. a baseline and not merely a file at a path?
+function isBaselineManifest(abs) {
+  if (!exists(abs)) return false;
+  try { return JSON.parse(readText(abs))?.schema === 'surface-manifest/v1'; } catch { return false; }
+}
+
 let previousAbs = null;
 let previousSource = 'none';
 let previousLabel = null;
+// The baseline that EXISTED but will not be compared against. Recorded
+// because `--no-previous` used to leave `previousInfo` null, which made a
+// discarded baseline byte-indistinguishable from a genuine first run: the
+// manifest had no field in which a re-baseline could be visible, so the one
+// re-baseline this repo actually performed was disclosed in prose, in a
+// report no tool reads (`BUILDER-2-REPORT.md` §7).
+let discardedBaselineLabel = null;
 if (NO_PREVIOUS) {
   previousSource = 'none: `--no-previous`';
+  const skipped = explicitPrevious !== null ? path.resolve(explicitPrevious) : defaultBaselineAbs;
+  const skippedLabel = explicitPrevious !== null ? posix(explicitPrevious) : defaultOutRel;
+  if (isBaselineManifest(skipped)) {
+    discardedBaselineLabel = skippedLabel;
+    previousSource = `none: \`--no-previous\` DISCARDED the baseline at \`${skippedLabel}\``;
+  }
+
+  // The laundering lane, closed. `--no-previous` together with an `--out` that
+  // IS an existing baseline rewrites the only record of what was verified,
+  // against no comparison at all, at exit 0 — one command, and a claim-text
+  // edit is permanent. The engine knows the baseline is there; it must not
+  // also pretend the run is a first run. `--accept-baseline-rewrite` is the
+  // flag that already exists for saying it out loud, and saying it out loud is
+  // all that is being asked for.
+  const outHere = value('--out', null);
+  const outAbsHere = outHere === null ? defaultBaselineAbs : path.resolve(outHere);
+  if (isBaselineManifest(outAbsHere) && !ACCEPT_BASELINE_REWRITE) {
+    die('--no-previous would rewrite an existing baseline without comparing against it: '
+      + `${outHere === null ? defaultOutRel : outHere}\n`
+      + '  `--no-previous` declares a FIRST run; this is a RE-BASELINE, and the two must not be\n'
+      + '  indistinguishable in the artifact they produce.\n'
+      + '  Re-baseline deliberately with --accept-baseline-rewrite (it is recorded in the manifest),\n'
+      + '  or drop --no-previous and let the run compare, or write elsewhere with --out.');
+  }
 } else if (explicitPrevious !== null) {
   previousAbs = path.resolve(explicitPrevious);
   if (!exists(previousAbs)) die(`--previous ${explicitPrevious} does not exist`);
@@ -1220,6 +1392,34 @@ if (NO_PREVIOUS) {
 let previousInfo = null;
 const unresolvedBaseline = [];
 for (const c of claims) { c.drift = null; c.invalidation = null; }
+
+// A skipped comparison is recorded, not omitted. `drifted`, `invalidated` and
+// `markers_mutated` are `null` here and NOT `[]`: an empty list is "the
+// comparison ran and found none", which is exactly the sentence a discarded
+// baseline must not be allowed to say about itself.
+if (discardedBaselineLabel !== null) {
+  previousInfo = {
+    path: discardedBaselineLabel,
+    source: previousSource,
+    compared: false,
+    baseline_discarded: discardedBaselineLabel,
+    rebaseline: ACCEPT_BASELINE_REWRITE,
+    content_sha256: null,
+    content_sha256_source:
+      'a baseline existed at `path` and was DISCARDED by `--no-previous`: this manifest was compared '
+      + 'against nothing. Drift (§5.4) and artifact invalidation (§5.5) are UNCHECKED this run. '
+      + 'A genuine first run records `previous: null`; this run is a re-baseline and says so.',
+    claims_compared: null,
+    drifted: null,
+    invalidated: null,
+    markers_mutated: null,
+  };
+  finding('warn', 'baseline-discarded', 'previous',
+    `a baseline exists at \`${discardedBaselineLabel}\` and \`--no-previous\` discarded it: nothing was `
+    + `compared. Claim-text drift (§5.4) and artifact invalidation (§5.5) are UNCHECKED this run. This is a `
+    + `RE-BASELINE, not a first run, and the manifest now records which of the two it was.`,
+    discardedBaselineLabel);
+}
 
 if (previousAbs) {
   let prev = null;
@@ -1243,9 +1443,24 @@ if (previousAbs) {
     // regenerating the same manifest to a different path would produce a
     // different hash. What the comparison found is recorded instead, and the
     // baseline is named so anyone can hash it themselves.
+    // Chain of custody. A `--no-previous` re-baseline is now recorded in the
+    // manifest that used the lane — but the NEXT default run compares against
+    // that manifest, finds nothing drifted (nothing could: the record it would
+    // have drifted from was discarded) and would report a clean comparison
+    // with no hint that the thing it compared against had itself skipped one.
+    // That is how `BUILDER-2-REPORT.md` §7's disclosed re-baseline came to be
+    // invisible in the committed artifact. The flag therefore PROPAGATES: a
+    // clean comparison against a laundered baseline is not the same fact as a
+    // clean comparison against a baseline with an unbroken lineage, and the
+    // difference stays visible until someone rebuilds the chain from a genuine
+    // first run.
+    const baselineWasRebaseline = prev?.previous?.compared === false
+      || prev?.previous?.baseline_was_rebaseline === true;
     previousInfo = {
       path: previousLabel,
       source: previousSource,
+      compared: true,
+      baseline_was_rebaseline: baselineWasRebaseline,
       content_sha256: null,
       content_sha256_source:
         'omitted by design: carrying the baseline\'s hash would make this manifest a function of which '
@@ -1256,6 +1471,14 @@ if (previousAbs) {
       invalidated: [],
       markers_mutated: [],
     };
+    if (baselineWasRebaseline) {
+      finding('warn', 'baseline-lineage-rebaselined', 'previous',
+        `the baseline \`${previousLabel}\` was itself written by a run that DISCARDED its own baseline `
+        + `(\`--no-previous\`). This run's comparison is clean, but it is clean against a record that had `
+        + `already skipped one: drift erased before that re-baseline cannot be detected here. The lineage `
+        + `stays flagged until the chain is rebuilt from a genuine first run (design §5.4, §5.5).`,
+        previousLabel);
+    }
     const today = GENERATED_AT.slice(0, 10);
 
     for (const c of claims) {
@@ -1419,6 +1642,15 @@ const coverage = {
   claims_total: claims.length,
   claims_with_no_evidence: ids((c) => c.evidence.length === 0),
   claims_l1_only: ids((c) => c.evidence.length > 0 && c.best_determinism === 'L1'),
+  // The second headline metric, and it belongs beside the first (§6.3 calls
+  // `claims_l1_only` "the audit's headline metric ... the first honest output
+  // of this capability is an uncomfortable number"). This is the second
+  // uncomfortable number: claims carrying a HUMAN state whose human producer
+  // is nowhere corroborated — which, under an engine with no git, no
+  // signatures and no register, is every one of them.
+  human_state_uncorroborated_producer: ids(
+    (c) => c.evidence.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED'),
+  ),
   agent_verified_not_human_verified: ids((c) => c.state === 'AGENT VERIFIED'),
   unfalsified: ids((c) => c.unfalsified),
   // Separate from `unfalsified` on purpose (see the claim loop): a check that
@@ -1426,9 +1658,14 @@ const coverage = {
   // claim, so a sibling record cannot make it disappear from coverage.
   failed_to_falsify: ids((c) => c.failed_to_falsify.length > 0),
   unexecuted_replays: ids((c) => c.unexecuted_replays.length > 0),
+  // Kept, and deliberately narrower than the metric above: "no human producer
+  // is declared at all" is a different, stronger fact than "the declared human
+  // producer is self-attested", and losing it would trade one blind spot for
+  // another. The finding fires on the wider set; both are counted.
   human_state_on_agent_evidence: ids(
     (c) => c.evidence.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED') && !c.human_produced_evidence,
   ),
+  crashed_modified_replays: ids((c) => c.crashed_modified_replays.length > 0),
   drifted: ids((c) => c.drift !== null),
   artifact_invalidated: ids((c) => c.invalidation !== null),
   capped_by_evidence: ids((c) => c.state_source === 'capped-by-evidence'),
@@ -1614,7 +1851,11 @@ if (!QUIET) {
     + `  un-ID'd claim lines ${unidentified.length}`);
   line(`  replays: ${manifest.replay.commands_executed} executed, `
     + `${manifest.replay.commands_unexecuted} unexecuted`
-    + `${previousInfo ? `  baseline: ${previousInfo.path}` : '  baseline: none'}`);
+    + `${previousInfo
+      ? (previousInfo.compared === false
+        ? `  baseline: ${previousInfo.path} DISCARDED (--no-previous)`
+        : `  baseline: ${previousInfo.path}`)
+      : '  baseline: none'}`);
   for (const c of claims) {
     const det = c.best_determinism ?? '--';
     const flags = [
@@ -1626,6 +1867,14 @@ if (!QUIET) {
     line(`  ${c.id.padEnd(10)} ${c.state.padEnd(20)} ${det}  ${flags}`);
   }
   for (const u of unidentified) line(`  (un-ID'd)  ${u.path}:${u.line}  "${u.text}"`);
+  // The two headline metrics, side by side (design §6.3). The first is the
+  // one the spec names; the second is the one an agent could previously
+  // delete by editing a comment in its own file, and it is printed beside the
+  // first because it is the same kind of uncomfortable number.
+  const n = claims.length;
+  line(`  headline: ${coverage.claims_l1_only.length}/${n} claims L1-only (attested, can never reach `
+    + `HUMAN VERIFIED)  ·  ${coverage.human_state_uncorroborated_producer.length}/${n} at HUMAN REVIEWED+ `
+    + `with no corroborated human producer`);
   line(`  gaps ${gaps.length}  findings: ${counts.error} error, ${counts.warn} warn, ${counts.info} info`);
 }
 

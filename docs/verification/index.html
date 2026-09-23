@@ -183,10 +183,14 @@ li.marker-current::before{background:var(--ink)}
 .cmd-title{font-size:.84rem;font-weight:600}
 .cmd-perturb{font-size:.79rem;color:var(--muted)}
 .cmd-cwd{font-size:.79rem;color:var(--muted);margin-bottom:6px}
+.cmd-mismatch{border:2px solid var(--bad-bd);background:var(--bad-bg);color:var(--ink);border-radius:6px;
+  padding:9px 12px;margin:8px 0 2px;font-size:.87rem}
+.cmd-mismatch strong:first-child{letter-spacing:.02em}
 pre.shell{background:var(--codebg);color:var(--codeink);border:1px solid var(--line);border-radius:6px;
   padding:9px 12px 9px 28px;margin:6px 0;overflow-x:auto;font-size:.86rem;line-height:1.5;
   white-space:pre-wrap;word-break:break-word}
 pre.shell.inline{margin:0;padding:5px 9px 5px 25px;font-size:.8rem;background:var(--codebg)}
+pre.shell.inline.out{padding-left:9px;white-space:pre-wrap;word-break:break-word}
 pre.shell.append{font-size:.82rem}
 .prompt{display:inline-block;width:16px;margin-left:-16px;color:var(--muted);user-select:none}
 .cmt{color:var(--muted)}
@@ -244,7 +248,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
 
 <header class="masthead">
   <h1>Human Verification Surface</h1>
-  <p class="sub">5 claims &middot; 6 evidence records &middot; 2 PDatasets &middot; 1 un-ID'd claim line &middot; generated from a manifest dated <span class="mono">2026-09-23T23:05:38.252Z</span></p>
+  <p class="sub">5 claims &middot; 6 evidence records &middot; 2 PDatasets &middot; 1 un-ID'd claim line &middot; generated from a manifest dated <span class="mono">2026-09-23T23:42:45.093Z</span></p>
   <span class="plane">Data plane &mdash; generated view &mdash; not a source of truth</span>
 </header>
 
@@ -273,12 +277,16 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     </p>
     <ul class="boundary-list">
       <li>Nothing on this page executes. There is no script on this page at all &mdash; no JavaScript, no network request at view time, no embedded runtime.</li>
-      <li>Every <code>expect</code> and <code>outcome</code> shown below was <em>read out of the manifest</em>, where it was recorded by whoever last ran the command. <strong>No result on this page was obtained by this page.</strong></li>
+      <li>Every <code>expect</code> and <code>outcome</code> shown below was <em>read out of the manifest</em>. <strong>No result on this page was obtained by this page.</strong>
+        The manifest distinguishes two of them and so does every command block below: <code>attested_outcome</code> is what the artifact's own comment claims, and
+        <code>recorded_outcome</code> is what happened when <code>plugin/scripts/replay.mjs</code> actually executed the command while the manifest was being generated
+        (<code>2026-09-23T23:42:45.093Z</code>, <code>10</code> commands executed).
+        An asserted outcome and an observed one are never shown as the same thing &mdash; that conflation is the defect this record exists to prevent (design §14.2).</li>
       <li>There is no spinner, no simulated output and no <code>PASS</code> this page produced. A page that animated a result would be worse than one that runs nothing (design §7.3, as amended 2026-09-23).</li>
       <li><strong>To verify anything here, you run the command yourself</strong>, in your own shell, from the working directory the command block names. That is the required execution path under <code>Renderer: none</code>; an interactive in-page console remains deferred, deliberately.</li>
     </ul>
     <p class="fine">Recompute the manifest itself the same way &mdash; from the repository root, per <code>surface.mjs</code>'s usage header:</p>
-    <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface.mjs --root plugin/scripts/fixtures/slice --generated-at 2026-09-23T23:05:38.252Z --print</pre>
+    <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface.mjs --root plugin/scripts/fixtures/slice --generated-at 2026-09-23T23:42:45.093Z --print</pre>
     <p class="fine">and regenerate this page from it:</p>
     <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface-html.mjs --manifest plugin/scripts/fixtures/slice/docs/verification/surface-manifest.json --out docs/verification/index.html</pre>
   </section>
@@ -368,7 +376,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>drifted <span class="hint">claim text changed since verification</span></th><td><span class="null">none</span></td></tr>
       <tr><th>capped by evidence</th><td><span class="null">none</span></td></tr>
       <tr><th>un-ID'd claim lines</th><td><a class="chip" href="#unidentified">1</a> <span class="hint">counted, never silently dropped</span></td></tr>
-      <tr><th>findings</th><td><a class="chip" href="#findings">0 error &middot; 2 warn &middot; 2 info</a></td></tr>
+      <tr><th>findings</th><td><a class="chip" href="#findings">0 error &middot; 4 warn &middot; 1 info</a></td></tr>
     </table>
   </section>
 
@@ -381,9 +389,29 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <span class="finding-code">failed-to-falsify</span>
         <a class="chip" href="#claim-P1-AC-04">P1-AC-04</a>
       </div>
-      <p class="finding-msg">MODIFIED REPLAY of `checks/ac04-transform-runs.mjs` (`node checks/ac04-transform-runs.mjs --perturb accept-duplicates`) exited 0 when it must fail. The perturbation (stop rejecting duplicate source ids in the transformation) did not change the result, so the check does not depend on what it asserts (design §14.3).</p>
+      <p class="finding-msg">MODIFIED REPLAY of <code>checks/ac04-transform-runs.mjs</code> (<code>node checks/ac04-transform-runs.mjs --perturb accept-duplicates</code>) exited 0 when it must fail. The perturbation (stop rejecting duplicate source ids in the transformation) did not change the result, so the check does not depend on what it asserts (design §14.3).</p>
       
       <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs">plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs</a></p>
+    </div>
+    <div class="finding finding-warn">
+      <div class="finding-head">
+        <span class="sev sev-warn">warn</span>
+        <span class="finding-code">human-state-on-agent-evidence</span>
+        <a class="chip" href="#claim-P1-AC-01">P1-AC-01</a>
+      </div>
+      <p class="finding-msg"><code>HUMAN VERIFIED</code> rests entirely on evidence produced by agent (no <code>produced-by: &lt;actor&gt; (human)</code> record cites this claim). It stands only because the evidence was executed and falsified this run, not because a human is behind it (design §5.3 mechanism 2).</p>
+      
+      <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:19</a></p>
+    </div>
+    <div class="finding finding-warn">
+      <div class="finding-head">
+        <span class="sev sev-warn">warn</span>
+        <span class="finding-code">human-state-on-agent-evidence</span>
+        <a class="chip" href="#claim-S1-CL-01">S1-CL-01</a>
+      </div>
+      <p class="finding-msg"><code>HUMAN VERIFIED</code> rests on evidence whose human producer is SELF-ATTESTED: <code>human/cl01-independent-relationship.mjs</code> declare <code>(human)</code> in their own comment header. This engine reads no git history, no signature and no external register, so nothing corroborates that class — the same one-word edit that would make it <code>(agent)</code> made it <code>(human)</code>. The state stands on evidence that was EXECUTED and falsified this run, which is the part that was observed (design §5.3 mechanism 2, §14.1).</p>
+      
+      <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:35</a></p>
     </div>
     <div class="finding finding-warn">
       <div class="finding-head">
@@ -391,7 +419,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <span class="finding-code">unfalsified</span>
         <a class="chip" href="#claim-P1-AC-04">P1-AC-04</a>
       </div>
-      <p class="finding-msg">reported **unfalsified** — modified replay failed to fail (design §14.4)</p>
+      <p class="finding-msg">reported <strong>unfalsified</strong> — modified replay failed to fail (design §14.4)</p>
       <p class="finding-why"><strong>What this means.</strong> The MODIFIED REPLAY for this claim was expected to <em>fail</em> and it passed &mdash; <em>the modified replay failed to fail</em>.
         The check runs green while the behaviour it asserts is broken, so <strong>the check may be vacuous</strong>: it may be asserting nothing.
         A passing REPLAY on this claim tells you the script executes. It does not tell you the claim holds. This is precisely the defect class MODIFIED REPLAY exists to expose (design §14.3), and it is why this claim's ceiling is
@@ -401,20 +429,10 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     <div class="finding finding-info">
       <div class="finding-head">
         <span class="sev sev-info">info</span>
-        <span class="finding-code">human-state-on-agent-evidence</span>
-        <a class="chip" href="#claim-P1-AC-01">P1-AC-01</a>
-      </div>
-      <p class="finding-msg">`HUMAN VERIFIED` rests entirely on evidence produced by agent (no `produced-by: &lt;actor&gt; (human)` record cites this claim). It stands only because the evidence was executed and falsified this run (design §5.3 mechanism 2).</p>
-      
-      <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:19</a></p>
-    </div>
-    <div class="finding finding-info">
-      <div class="finding-head">
-        <span class="sev sev-info">info</span>
         <span class="finding-code">l1-only</span>
         <a class="chip" href="#claim-P1-AC-02">P1-AC-02</a>
       </div>
-      <p class="finding-msg">only `L1` (attested) evidence: capped at `AGENT VERIFIED` and can never reach `HUMAN VERIFIED` (design §6.3)</p>
+      <p class="finding-msg">only <code>L1</code> (attested) evidence: capped at <code>AGENT VERIFIED</code> and can never reach <code>HUMAN VERIFIED</code> (design §6.3)</p>
       <p class="finding-why"><strong>What this means, and why it is capped.</strong> The only evidence for this claim is <code>L1</code> (attested): somebody stated it and there is nothing to re-execute &mdash; no command, no output to compare, no perturbation that could falsify it.
         <code>L1</code> is testimony, and an agent's assertion about its own work is <code>L1</code> by definition (design §5.3 mechanism 4).
         A claim whose best evidence is <code>L1</code> is therefore capped at <code>AGENT VERIFIED</code> and <strong>can never reach <code>HUMAN VERIFIED</code></strong> (design §6.3, §14.4) &mdash; not because nobody has looked yet, but because there is nothing a human could look at.
@@ -498,7 +516,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="det-explain">
           <strong>L3 &mdash; Deterministic.</strong>
           Same inputs produce byte-identical outputs.
-          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-verify">Verified by: Re-execute; compare <code>sha256</code>.</span>
           <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
         </div>
         <table class="kv">
@@ -517,10 +535,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac01-duplicate-rejection.mjs</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>pass</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>pass</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS P1-AC-01 REPLAY: 9 unique valid source records -&gt; 9 output records; 1 duplicated source id(s) rejected</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">16a3f1f6bc2fac365b1058ec3da6966ba946efb1e5eb986bc6a8f3442733d414</code> <span class="hint">over 108 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">2b027de10f3013a997cf589f38ea0500ae9fa31fda0c001c66a8604312fddc77</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
         
@@ -528,17 +553,24 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: stop rejecting duplicate source ids in the transformation</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac01-duplicate-rejection.mjs --perturb accept-duplicates</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>fail</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>fail</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>fail</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>fail</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>fail</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>1</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">FAIL P1-AC-01 MODIFIED REPLAY (--perturb accept-duplicates)</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">698737296cd994b9ea5b23c486b8981395718f24cb9fe70d33e2cfc4cf8d3b71</code> <span class="hint">over 142 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">371d7ab778af3a2c4cd40ceb43bf98c712468509067afe4e6b93bffb42944393</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
 
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node checks/ac01-duplicate-rejection.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;stop rejecting duplicate source ids in the transformation&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
+            <ul><li><strong>REPLAY.</strong> <code>node checks/ac01-duplicate-rejection.mjs</code> was executed from <code>plugin/scripts/fixtures/slice</code> by <code>plugin/scripts/replay.mjs</code> when this manifest was generated, and it <code>pass</code>ed &mdash; which is what was expected (<code>pass</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;stop rejecting duplicate source ids in the transformation&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -605,7 +637,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:23</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">best evidence is `L1` (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">best evidence is <code>L1</code> (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4)</span></td></tr>
       <tr><th>unfalsified</th><td><code>false</code></td></tr>
     </table>
 
@@ -705,7 +737,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </table>
         
         <p class="warnline"><strong><code>HUMAN VERIFIED</code> is not available for this claim.</strong>
-          Its evidence ceiling is <code>AGENT VERIFIED</code>: best evidence is `L1` (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4).
+          Its evidence ceiling is <code>AGENT VERIFIED</code>: best evidence is <code>L1</code> (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4).
           Appending <code>HUMAN VERIFIED</code> here would assert more than the evidence can carry. Fix the evidence first.</p>
         <p class="fine"><strong>An absent marker already means <code>NOT VERIFIED</code></strong> (design §3.4), so you never write that line to mean
           &ldquo;nobody has looked yet&rdquo;. The only reason to append it is to record that something <em>stopped</em> being verified (design §5.4, §5.5).
@@ -808,7 +840,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="det-explain">
           <strong>L3 &mdash; Deterministic.</strong>
           Same inputs produce byte-identical outputs.
-          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-verify">Verified by: Re-execute; compare <code>sha256</code>.</span>
           <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
         </div>
         <table class="kv">
@@ -827,10 +859,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac03-sort-order.mjs</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>pass</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>pass</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS P1-AC-03 REPLAY: 9 rows, sorted ascending by normalized id</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">8f8e16379273aad0bf24201c8eed48b518b8259b6abbb4dde01a757d9e06ea8b</code> <span class="hint">over 64 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">c86345e066efc829e0b8fb6dada3cee3b2d01da203a1cc8c5688e656b44a9f32</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
         
@@ -838,17 +877,24 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: reverse the transformation's output order</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac03-sort-order.mjs --perturb shuffle-output</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>fail</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>fail</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>fail</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>fail</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>fail</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>1</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">FAIL P1-AC-03 MODIFIED REPLAY (--perturb shuffle-output)</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">5090625e5341028ed49cefa6a369ccd222159ff41ef8607cc005d9f8ac66adb0</code> <span class="hint">over 152 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">fe29591bbfb9d68a50b466edc497f3a9b105e3097f52dbfa802b38a9ad2247b1</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
 
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node checks/ac03-sort-order.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;reverse the transformation's output order&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
+            <ul><li><strong>REPLAY.</strong> <code>node checks/ac03-sort-order.mjs</code> was executed from <code>plugin/scripts/fixtures/slice</code> by <code>plugin/scripts/replay.mjs</code> when this manifest was generated, and it <code>pass</code>ed &mdash; which is what was expected (<code>pass</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;reverse the transformation's output order&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -953,7 +999,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="det-explain">
           <strong>L3 &mdash; Deterministic.</strong>
           Same inputs produce byte-identical outputs.
-          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-verify">Verified by: Re-execute; compare <code>sha256</code>.</span>
           <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
         </div>
         <table class="kv">
@@ -972,10 +1018,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac04-transform-runs.mjs</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>pass</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>pass</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS P1-AC-04 REPLAY: the transformation ran to completion</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">a860e17986ccca6cf7f7b9702b7f20560ce2ab251f8f8c13184edef8dab192ed</code> <span class="hint">over 59 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">22e58824eeb2567289b4d63f8e53bfc49a19766e64928c60ea8cb7a44ac7f040</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
         
@@ -983,17 +1036,24 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: stop rejecting duplicate source ids in the transformation</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/ac04-transform-runs.mjs --perturb accept-duplicates</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>fail</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-bad">false</span></td></tr>
+        <tr><th>expected result</th><td><code>fail</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-bad"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-bad">false</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS P1-AC-04 MODIFIED REPLAY (--perturb accept-duplicates): the transformation ran to completion</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">9b992cf4236d5bc12ddb06bdf8ff291b781747158c5585f2de9ff9bada2d9a79</code> <span class="hint">over 98 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">5677cbb8ce3265e79632675617bbb17d995c373f08b8f5aec90a73adede90084</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
 
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node checks/ac04-transform-runs.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li></ul>
+            <ul><li><strong>REPLAY.</strong> <code>node checks/ac04-transform-runs.mjs</code> was executed from <code>plugin/scripts/fixtures/slice</code> by <code>plugin/scripts/replay.mjs</code> when this manifest was generated, and it <code>pass</code>ed &mdash; which is what was expected (<code>pass</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -1114,7 +1174,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="det-explain">
           <strong>L3 &mdash; Deterministic.</strong>
           Same inputs produce byte-identical outputs.
-          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-verify">Verified by: Re-execute; compare <code>sha256</code>.</span>
           <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
         </div>
         <table class="kv">
@@ -1133,10 +1193,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/cl01-record-count.mjs</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>pass</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>pass</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS S1-CL-01 REPLAY: 9 records, recomputed sha256 69e24c33f1325ad8688ce99f6b9ebb63bf5267420dc4e53dfebe5763f841612e matches data/generated.csv</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">a7eda8a5c3e1ab63ee4d736e7013783e99bb3b82be779d2513deffebf95d98f7</code> <span class="hint">over 143 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">582ceb992a6a65c5fe66af8a55dac47aad96f7d1cbd1e0199d734bfef274f815</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
         
@@ -1144,17 +1211,24 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: alter one score in the source dataset in memory; the recomputed generated dataset must change</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node checks/cl01-record-count.mjs --perturb source-score</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>fail</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>fail</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>fail</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>fail</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>fail</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>1</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">FAIL S1-CL-01 MODIFIED REPLAY (--perturb source-score)</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">c3a787a1c4714949b1ff66467680956d47db2cb27656f0bad2942f9e4c913bbe</code> <span class="hint">over 229 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">c44d4740f9a692689b6d2a7e8b97daa72b655bdfde4b7fef29a3c96e77714b8c</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
 
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node checks/cl01-record-count.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;alter one score in the source dataset in memory; the recomputed generated dataset must change&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
+            <ul><li><strong>REPLAY.</strong> <code>node checks/cl01-record-count.mjs</code> was executed from <code>plugin/scripts/fixtures/slice</code> by <code>plugin/scripts/replay.mjs</code> when this manifest was generated, and it <code>pass</code>ed &mdash; which is what was expected (<code>pass</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;alter one score in the source dataset in memory; the recomputed generated dataset must change&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -1179,7 +1253,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="det-explain">
           <strong>L3 &mdash; Deterministic.</strong>
           Same inputs produce byte-identical outputs.
-          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-verify">Verified by: Re-execute; compare <code>sha256</code>.</span>
           <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
         </div>
         <table class="kv">
@@ -1198,10 +1272,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node human/cl01-independent-relationship.mjs</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>pass</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>pass</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>pass</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>pass</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>0</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">PASS S1-CL-01 REPLAY: 9 generated records match the 9 valid, uniquely-identified source records one-for-one, computed independently of transform.mjs</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">eaece3d2830bf4cc50549f4e77b5a6d62e7516f982665beab873b1c5f402dcac</code> <span class="hint">over 149 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">795579d631ba31e0472b8ded3d2a671dcd6a1ff0933d8dd5d0ce7cdc9745a4d1</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
         
@@ -1209,17 +1290,24 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds</span></div>
       <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
       <pre class="shell"><span class="prompt">$ </span>node human/cl01-independent-relationship.mjs --perturb drop-generated-row</pre>
+      
       <table class="kv kv-tight">
-        <tr><th>expected result</th><td><code>fail</code></td></tr>
-        <tr><th>outcome recorded in the manifest</th><td><code>fail</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
-        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+        <tr><th>expected result</th><td><code>fail</code> <span class="hint">what this command must do for the evidence to hold</span></td></tr>
+        <tr><th><code>attested_outcome</code> <span class="hint">what the artifact says</span></th><td><code>fail</code> <span class="hint">read out of the artifact's own <code>// replay-outcome:</code> header &mdash; testimony, never a result</span></td></tr>
+        <tr><th><code>recorded_outcome</code> <span class="hint">what running it produced</span></th><td><span class="outcome-ok"><code>fail</code></span> <span class="hint">observed by <code>plugin/scripts/replay.mjs</code>, which executed this command when the manifest was generated (<code>2026-09-23T23:42:45.093Z</code>). Not by this page, and not by the artifact's producer.</span></td></tr>
+        <tr><th><code>outcome_source</code></th><td><code>executed</code> <span class="hint">the outcome above was observed, not copied from the artifact</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span> <span class="hint">compares the observed outcome against the expectation above</span></td></tr>
+        <tr><th><code>exit_status</code></th><td><code>1</code> <span class="hint">the mechanical basis of the outcome above</span></td></tr>
+        <tr><th><code>stdout_first_line</code></th><td><pre class="shell inline out">FAIL S1-CL-01 MODIFIED REPLAY (--perturb drop-generated-row)</pre><span class="hint">run the command yourself and compare this line against your own terminal</span></td></tr>
+        <tr><th><code>stdout_sha256</code></th><td><code class="hash">fc8d6b9ffc631b169eb30c6c46dcb5ec08800569388331a8a678456599c0ff17</code> <span class="hint">over 186 bytes of captured output</span></td></tr>
+        <tr><th><code>execution_id</code></th><td><code class="hash">03aef4b0648a962dd3b168be98579c56f1c257f90e686514b768fd90feeca3fe</code> <span class="hint">identifies this one execution inside the <code>replay-record/v1</code> record</span></td></tr>
       </table>
     </div>
 
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node human/cl01-independent-relationship.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li><li><strong>Actor class.</strong> <code>produced_by</code> is <code>fixture-owner (human)</code> &mdash; this check was authored by a human, not by the agent whose work it examines.</li></ul>
+            <ul><li><strong>REPLAY.</strong> <code>node human/cl01-independent-relationship.mjs</code> was executed from <code>plugin/scripts/fixtures/slice</code> by <code>plugin/scripts/replay.mjs</code> when this manifest was generated, and it <code>pass</code>ed &mdash; which is what was expected (<code>pass</code>). It reproduces: the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li><li><strong>Actor class.</strong> <code>produced_by</code> is <code>fixture-owner (human)</code> &mdash; this check was authored by a human, not by the agent whose work it examines.</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -1307,15 +1395,17 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       </header>
       <table class="kv">
         <tr><th>path</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/data/source.csv">plugin/scripts/fixtures/slice/data/source.csv</a></td></tr>
-        <tr><th>rows</th><td><code>12</code></td></tr>
+        <tr><th>rows</th><td><code>12</code> <span class="hint"><strong>data rows, excluding the header line.</strong> A plain <code>wc -l</code> over this file returns one more than this number; the command below skips the header so that it reproduces exactly the figure printed here.</span></td></tr>
         <tr><th>bytes</th><td><code>453</code></td></tr>
         <tr><th><code>sha256</code></th><td><code class="hash">d496eda0abeee9c1f14dab82477fd13d6e03d4d20b8e9426c3aa2657f9a17793</code></td></tr>
-        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/data/source.csv &amp;&amp; wc -lc plugin/scripts/fixtures/slice/data/source.csv</pre></td></tr>
+        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/data/source.csv
+<span class="prompt">$ </span>tail -n +2 plugin/scripts/fixtures/slice/data/source.csv | wc -l   <span class="cmt"># 12 &mdash; data rows, header skipped</span>
+<span class="prompt">$ </span>wc -c plugin/scripts/fixtures/slice/data/source.csv   <span class="cmt"># 453 bytes</span></pre><span class="hint">Run these from the repository root. Each one reproduces exactly the value printed above it &mdash; a confirmation command that disagrees with the page would be worse than none.</span></td></tr>
         <tr><th><code>produced_by</code></th><td><code>manual</code></td></tr>
         <tr><th><code>produced_at</code></th><td><code>2026-09-20</code></td></tr>
         <tr><th><code>derived_from</code></th><td><code>none</code> <span class="hint">stated, not omitted &mdash; a root dataset must be distinguishable from one whose provenance was never recorded (design §4.1)</span></td></tr>
         <tr><th><code>transformation</code></th><td><code>manual (records transcribed by hand from the collection sheet)</code> <span class="det det-L1">L1</span></td></tr>
-        <tr><th>why that level</th><td>derived: `manual` transformation is `L1` (design §4.1) <span class="hint">A human or an agent states it. There is nothing to re-execute. It is testimony.</span></td></tr>
+        <tr><th>why that level</th><td>derived: <code>manual</code> transformation is <code>L1</code> (design §4.1) <span class="hint">A human or an agent states it. There is nothing to re-execute. It is testimony.</span></td></tr>
         <tr><th>provenance chain</th><td class="chain"><a class="chip" href="#pds-S1-DS-01">S1-DS-01</a> <span class="hint">this one is the root</span></td></tr>
         <tr><th><code>link_resolution</code></th><td><code>local</code> <span class="hint">repo-relative paths only; no absolute URL is emitted anywhere on this page</span></td></tr>
         <tr><th>license</th><td><code>CC0-1.0</code></td></tr>
@@ -1339,10 +1429,12 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       </header>
       <table class="kv">
         <tr><th>path</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/data/generated.csv">plugin/scripts/fixtures/slice/data/generated.csv</a></td></tr>
-        <tr><th>rows</th><td><code>9</code></td></tr>
+        <tr><th>rows</th><td><code>9</code> <span class="hint"><strong>data rows, excluding the header line.</strong> A plain <code>wc -l</code> over this file returns one more than this number; the command below skips the header so that it reproduces exactly the figure printed here.</span></td></tr>
         <tr><th>bytes</th><td><code>367</code></td></tr>
         <tr><th><code>sha256</code></th><td><code class="hash">69e24c33f1325ad8688ce99f6b9ebb63bf5267420dc4e53dfebe5763f841612e</code></td></tr>
-        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/data/generated.csv &amp;&amp; wc -lc plugin/scripts/fixtures/slice/data/generated.csv</pre></td></tr>
+        <tr><th>confirm hash, rows and bytes yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/data/generated.csv
+<span class="prompt">$ </span>tail -n +2 plugin/scripts/fixtures/slice/data/generated.csv | wc -l   <span class="cmt"># 9 &mdash; data rows, header skipped</span>
+<span class="prompt">$ </span>wc -c plugin/scripts/fixtures/slice/data/generated.csv   <span class="cmt"># 367 bytes</span></pre><span class="hint">Run these from the repository root. Each one reproduces exactly the value printed above it &mdash; a confirmation command that disagrees with the page would be worse than none.</span></td></tr>
         <tr><th><code>produced_by</code></th><td><code>transform.mjs</code></td></tr>
         <tr><th><code>produced_at</code></th><td><code>2026-09-22</code></td></tr>
         <tr><th><code>derived_from</code></th><td><a class="chip" href="#pds-S1-DS-01">S1-DS-01</a></td></tr>
@@ -1401,7 +1493,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     <table class="states-table">
       <thead><tr><th>level</th><th>name</th><th>definition</th><th>verified by</th></tr></thead>
       <tbody>
-        <tr><td><span class="det det-L3">L3</span></td><td>Deterministic</td><td>Same inputs produce byte-identical outputs.</td><td>Re-execute; compare `sha256`.</td></tr><tr><td><span class="det det-L2">L2</span></td><td>Executable, non-deterministic</td><td>Runs to a pass/fail, but the output is not byte-stable (timestamps, network, cloud state, LLM sampling).</td><td>Re-execute; compare assertions, not bytes.</td></tr><tr><td><span class="det det-L1">L1</span></td><td>Attested</td><td>A human or an agent states it. There is nothing to re-execute. It is testimony.</td><td>Nothing. It cannot be re-executed.</td></tr>
+        <tr><td><span class="det det-L3">L3</span></td><td>Deterministic</td><td>Same inputs produce byte-identical outputs.</td><td>Re-execute; compare <code>sha256</code>.</td></tr><tr><td><span class="det det-L2">L2</span></td><td>Executable, non-deterministic</td><td>Runs to a pass/fail, but the output is not byte-stable (timestamps, network, cloud state, LLM sampling).</td><td>Re-execute; compare assertions, not bytes.</td></tr><tr><td><span class="det det-L1">L1</span></td><td>Attested</td><td>A human or an agent states it. There is nothing to re-execute. It is testimony.</td><td>Nothing. It cannot be re-executed.</td></tr>
       </tbody>
     </table>
     <p class="fine">Determinism and verification are <strong>two axes, never one boolean.</strong> A deterministic check can be
@@ -1416,16 +1508,25 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     <table class="kv">
       <tr><th>manifest schema</th><td><code>surface-manifest/v1</code></td></tr>
       <tr><th>governance version</th><td><code>0.9.1</code></td></tr>
-      <tr><th><code>generated_at</code> <span class="hint">the manifest's field &mdash; not this page's run time</span></th><td><code>2026-09-23T23:05:38.252Z</code></td></tr>
-      <tr><th>manifest <code>content_sha256</code></th><td><code class="hash">a8d76b32f476c5e8bb4b5b7bebcddbc027c1280696ec9836af06e8d7d87d3342</code></td></tr>
+      <tr><th><code>generated_at</code> <span class="hint">the manifest's field &mdash; not this page's run time</span></th><td><code>2026-09-23T23:42:45.093Z</code></td></tr>
+      <tr><th>manifest <code>content_sha256</code></th><td><code class="hash">41a24926506585ad14db61c55ddadc30180a168c1ec028c56894fd19909d31f5</code></td></tr>
       <tr><th>surface root</th><td><a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></td></tr>
       <tr><th><code>bound.commit_sha</code></th><td><span class="null">null</span> <span class="hint">null: this manifest is not pinned to a commit</span></td></tr>
       <tr><th><code>bound.claims_source_sha256</code></th><td><code class="hash">67874a7f1327a03a99fd1d72672b6602f185b39045009f610206ad103dd3b802</code></td></tr>
       <tr><th><code>bound.pdataset_source_sha256</code></th><td><code class="hash">5e64c355abd1a6d5f7cbbefdb7fcd67ba9ad8d30bd4cfe983110ab70937a5fbb</code></td></tr>
       <tr><th><code>bound.delta_sha256</code></th><td><code class="hash">c5f06253611ed9bd46c691d384a21e80851840a10c0e314991eabbffdc533f99</code></td></tr>
       <tr><th>design projection</th><td><code>DISABLED</code>, sha256 <span class="null">null</span></td></tr>
-      <tr><th>verification projection</th><td><code>ENABLED</code>, sha256 <code class="hash">7907b266c8066baa7c8bd045fa6157b3f408ff1f186fd7f49f088f09cc277fdc</code></td></tr>
-      <tr><th><code>previous</code></th><td>[object Object] <span class="hint">no prior manifest to diff against</span></td></tr>
+      <tr><th>verification projection</th><td><code>ENABLED</code>, sha256 <code class="hash">fd7fd9722c43b23801eda155c302f778345f5cc370b14c8ba998dcf984a16ffa</code></td></tr>
+      <tr><th>replay runner</th><td><a class="path" href="../../plugin/scripts/replay.mjs">plugin/scripts/replay.mjs</a> <span class="hint">execution <code>enabled</code> &middot; <code>10</code> commands executed, <code>0</code> unexecuted &middot; timeout <code>60000</code> ms &middot; record schema <code>replay-record/v1</code>. Every <code>recorded_outcome</code> on this page was observed by this runner at <code>2026-09-23T23:42:45.093Z</code>.</span></td></tr>
+      <tr><th>timing fields</th><td><span class="hint"><code>duration_ms</code>, <code>started_at</code> and <code>finished_at</code> are recorded only in the replay ledger (<code>--replay-ledger</code>). They vary between two runs over identical inputs, and the manifest's determinism claim is that two runs differ in <code>generated_at</code> alone.</span></td></tr>
+      <tr><th><code>previous</code> <span class="hint">the baseline this manifest was compared against</span></th><td><a class="path" href="../../plugin/scripts/fixtures/slice/docs/verification/surface-manifest.json">docs/verification/surface-manifest.json</a> <span class="hint">default: the committed manifest</span>
+        <table class="kv kv-tight">
+          <tr><th><code>claims_compared</code></th><td><code>5</code> <span class="hint">claims matched against the baseline by id</span></td></tr>
+          <tr><th><code>drifted</code></th><td><code>0</code> <span class="hint">claims whose text changed since the baseline. <code>0</code> is a comparison that ran and found none, not a comparison that was skipped (design §5.4)</span></td></tr>
+          <tr><th><code>invalidated</code></th><td><code>0</code> <span class="hint">claims whose evidence artifact changed since the baseline. <code>0</code> is a comparison that ran and found none (design §5.5)</span></td></tr>
+          <tr><th><strong><code>markers_mutated</code></strong></th><td><code>0</code> <span class="hint"><strong>the append-only enforcement result.</strong> A marker block may only be appended to. Any marker present in the baseline that is now missing, reordered or rewritten appears here. An empty list is the guarantee holding &mdash; mechanically checked against the baseline, not asserted (design §3.5).</span></td></tr>
+          <tr><th><code>content_sha256</code></th><td><span class="null">null</span> <span class="hint">omitted by design: carrying the baseline's hash would make this manifest a function of which baseline it was compared against, and the committed manifest is its own default baseline. The baseline is named in <code>path</code>; hash it there.</span></td></tr>
+        </table></td></tr>
       <tr><th><code>gaps</code></th><td><span class="null">none</span></td></tr>
       <tr><th>delta declarations</th><td><code>Renderer: none</code> &middot;
         <code>Pages mechanism: none</code> &middot;
