@@ -4,6 +4,7 @@
 // determinism: L3
 // produced-by: fixture-builder (agent)
 // produced-at: 2026-09-22
+// pdatasets: S1-DS-01
 // replay: node checks/ac01-duplicate-rejection.mjs
 // replay-expect: pass
 // replay-outcome: pass

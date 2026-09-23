@@ -4,6 +4,7 @@
 // determinism: L3
 // produced-by: fixture-builder (agent)
 // produced-at: 2026-09-20
+// pdatasets: S1-DS-01
 // replay: node checks/ac03-sort-order.mjs
 // replay-expect: pass
 // replay-outcome: pass

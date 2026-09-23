@@ -2,8 +2,8 @@
   "schema": "surface-manifest/v1",
   "generator": "plugin/scripts/surface.mjs",
   "governance_version": "0.9.1",
-  "generated_at": "2026-09-23T00:00:00.000Z",
-  "content_sha256": "f00eeabfc0a1239fde7eec9d63ae5a08aa011087c01a6cf78798e3532693a0ca",
+  "generated_at": "2026-09-23T23:05:38.252Z",
+  "content_sha256": "a8d76b32f476c5e8bb4b5b7bebcddbc027c1280696ec9836af06e8d7d87d3342",
   "root": "plugin/scripts/fixtures/slice",
   "delta": {
     "path": "llm/governance/governance-delta.md",
@@ -16,7 +16,17 @@
     "commit_sha": null,
     "claims_source_sha256": "67874a7f1327a03a99fd1d72672b6602f185b39045009f610206ad103dd3b802",
     "pdataset_source_sha256": "5e64c355abd1a6d5f7cbbefdb7fcd67ba9ad8d30bd4cfe983110ab70937a5fbb",
-    "delta_sha256": "d23790179ab05364fb311cdaa143ad374cf4c7c40fc6503f1191e33b6068a064"
+    "delta_sha256": "c5f06253611ed9bd46c691d384a21e80851840a10c0e314991eabbffdc533f99"
+  },
+  "replay": {
+    "schema": "replay-record/v1",
+    "runner": "plugin/scripts/replay.mjs",
+    "execution": "enabled",
+    "timeout_ms": 60000,
+    "commands_executed": 10,
+    "commands_unexecuted": 0,
+    "ledger": null,
+    "timing_excluded": "`duration_ms`, `started_at` and `finished_at` are recorded only in the replay ledger (`--replay-ledger`). They vary between two runs over identical inputs, and the manifest's determinism claim is that two runs differ in `generated_at` alone."
   },
   "projections": {
     "design": {
@@ -25,7 +35,7 @@
     },
     "verification": {
       "status": "ENABLED",
-      "sha256": "34df4f2ed3a19c7f8e276725c00e2216bac02c60716aa4f5195f53e3c1a55805"
+      "sha256": "7907b266c8066baa7c8bd045fa6157b3f408ff1f186fd7f49f088f09cc277fdc"
     }
   },
   "verification": {
@@ -39,7 +49,8 @@
     "pdataset_source": "llm/pdatasets.md",
     "evidence_sources": [
       "checks",
-      "evidence"
+      "evidence",
+      "human"
     ],
     "claims": [
       {
@@ -80,44 +91,109 @@
             "well_formed": true
           }
         ],
+        "best_determinism": "L3",
         "evidence": [
           {
             "kind": "test",
             "determinism": "L3",
             "locator": "checks/ac01-duplicate-rejection.mjs",
-            "sha256": "71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c",
+            "sha256": "6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c",
             "produced_by": {
               "actor": "fixture-builder",
               "class": "agent"
             },
             "produced_at": "2026-09-22",
+            "pdatasets": [
+              "S1-DS-01"
+            ],
+            "pdatasets_declared": "S1-DS-01",
             "replay": {
               "command": "node checks/ac01-duplicate-rejection.mjs",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "pass",
+              "attested_outcome": "pass",
               "recorded_outcome": "pass",
-              "as_expected": true
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac01-duplicate-rejection.mjs",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac01-duplicate-rejection.mjs",
+                "artifact_sha256": "6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "16a3f1f6bc2fac365b1058ec3da6966ba946efb1e5eb986bc6a8f3442733d414",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 108,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS P1-AC-01 REPLAY: 9 unique valid source records -> 9 output records; 1 duplicated source id(s) rejected",
+                "execution_id": "2b027de10f3013a997cf589f38ea0500ae9fa31fda0c001c66a8604312fddc77"
+              }
             },
             "modified_replay": {
               "command": "node checks/ac01-duplicate-rejection.mjs --perturb accept-duplicates",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "fail",
+              "attested_outcome": "fail",
               "recorded_outcome": "fail",
+              "outcome_source": "executed",
               "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac01-duplicate-rejection.mjs --perturb accept-duplicates",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac01-duplicate-rejection.mjs",
+                "artifact_sha256": "6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 1,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "fail",
+                "outcome_source": "executed",
+                "stdout_sha256": "698737296cd994b9ea5b23c486b8981395718f24cb9fe70d33e2cfc4cf8d3b71",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 142,
+                "stderr_bytes": 0,
+                "stdout_first_line": "FAIL P1-AC-01 MODIFIED REPLAY (--perturb accept-duplicates)",
+                "execution_id": "371d7ab778af3a2c4cd40ceb43bf98c712468509067afe4e6b93bffb42944393"
+              },
               "perturbation": "stop rejecting duplicate source ids in the transformation"
             },
+            "executed_artifacts": [
+              "checks/ac01-duplicate-rejection.mjs"
+            ],
+            "executed_artifact_matches_locator": true,
+            "executed_artifact_cites_claim": true,
             "declared_in": "checks/ac01-duplicate-rejection.mjs",
-            "declared_in_sha256": "71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c"
+            "declared_in_sha256": "6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c",
+            "lifts_ceiling": true,
+            "lift_blocked_reason": null
           }
         ],
-        "best_determinism": "L3",
         "ceiling": "HUMAN VERIFIED",
-        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "ceiling_reason": "L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)",
         "unfalsified": false,
         "unfalsified_reason": null,
+        "failed_to_falsify": [],
+        "unexecuted_replays": [],
+        "evidence_actor_classes": [
+          "agent"
+        ],
+        "human_produced_evidence": false,
         "state": "HUMAN VERIFIED",
         "state_source": "marker",
-        "drift": null
+        "bound_pdatasets": [
+          "S1-DS-01"
+        ],
+        "drift": null,
+        "invalidation": null
       },
       {
         "id": "P1-AC-02",
@@ -146,6 +222,7 @@
             "well_formed": true
           }
         ],
+        "best_determinism": "L1",
         "evidence": [
           {
             "kind": "assertion",
@@ -157,20 +234,34 @@
               "class": "agent"
             },
             "produced_at": "2026-09-22",
+            "pdatasets": [],
+            "pdatasets_declared": null,
             "replay": null,
             "modified_replay": null,
+            "executed_artifacts": [],
+            "executed_artifact_matches_locator": null,
+            "executed_artifact_cites_claim": null,
             "declared_in": "evidence/attestations.md",
-            "declared_in_sha256": "db20ef5e8d5d751f966f37b5b0c846e1b8f105fb76c7f4fdfc71fb64f9866409"
+            "declared_in_sha256": "db20ef5e8d5d751f966f37b5b0c846e1b8f105fb76c7f4fdfc71fb64f9866409",
+            "lifts_ceiling": false,
+            "lift_blocked_reason": "`L1` (attested) evidence produced by an agent: testimony, with nothing to re-execute. An agent's say-so is never enough (design §14.1, §6.3, §5.3 mechanism 4)"
           }
         ],
-        "best_determinism": "L1",
         "ceiling": "AGENT VERIFIED",
-        "ceiling_reason": "best evidence is `L1` (attested): an agent's say-so is never enough (design §6.3, §5.3 mechanism 4)",
+        "ceiling_reason": "best evidence is `L1` (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4)",
         "unfalsified": false,
         "unfalsified_reason": null,
+        "failed_to_falsify": [],
+        "unexecuted_replays": [],
+        "evidence_actor_classes": [
+          "agent"
+        ],
+        "human_produced_evidence": false,
         "state": "AGENT VERIFIED",
         "state_source": "marker",
-        "drift": null
+        "bound_pdatasets": [],
+        "drift": null,
+        "invalidation": null
       },
       {
         "id": "P1-AC-03",
@@ -220,44 +311,109 @@
             "well_formed": true
           }
         ],
+        "best_determinism": "L3",
         "evidence": [
           {
             "kind": "test",
             "determinism": "L3",
             "locator": "checks/ac03-sort-order.mjs",
-            "sha256": "1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b",
+            "sha256": "4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0",
             "produced_by": {
               "actor": "fixture-builder",
               "class": "agent"
             },
             "produced_at": "2026-09-20",
+            "pdatasets": [
+              "S1-DS-01"
+            ],
+            "pdatasets_declared": "S1-DS-01",
             "replay": {
               "command": "node checks/ac03-sort-order.mjs",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "pass",
+              "attested_outcome": "pass",
               "recorded_outcome": "pass",
-              "as_expected": true
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac03-sort-order.mjs",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac03-sort-order.mjs",
+                "artifact_sha256": "4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "8f8e16379273aad0bf24201c8eed48b518b8259b6abbb4dde01a757d9e06ea8b",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 64,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS P1-AC-03 REPLAY: 9 rows, sorted ascending by normalized id",
+                "execution_id": "c86345e066efc829e0b8fb6dada3cee3b2d01da203a1cc8c5688e656b44a9f32"
+              }
             },
             "modified_replay": {
               "command": "node checks/ac03-sort-order.mjs --perturb shuffle-output",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "fail",
+              "attested_outcome": "fail",
               "recorded_outcome": "fail",
+              "outcome_source": "executed",
               "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac03-sort-order.mjs --perturb shuffle-output",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac03-sort-order.mjs",
+                "artifact_sha256": "4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 1,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "fail",
+                "outcome_source": "executed",
+                "stdout_sha256": "5090625e5341028ed49cefa6a369ccd222159ff41ef8607cc005d9f8ac66adb0",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 152,
+                "stderr_bytes": 0,
+                "stdout_first_line": "FAIL P1-AC-03 MODIFIED REPLAY (--perturb shuffle-output)",
+                "execution_id": "fe29591bbfb9d68a50b466edc497f3a9b105e3097f52dbfa802b38a9ad2247b1"
+              },
               "perturbation": "reverse the transformation's output order"
             },
+            "executed_artifacts": [
+              "checks/ac03-sort-order.mjs"
+            ],
+            "executed_artifact_matches_locator": true,
+            "executed_artifact_cites_claim": true,
             "declared_in": "checks/ac03-sort-order.mjs",
-            "declared_in_sha256": "1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b"
+            "declared_in_sha256": "4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0",
+            "lifts_ceiling": true,
+            "lift_blocked_reason": null
           }
         ],
-        "best_determinism": "L3",
         "ceiling": "HUMAN VERIFIED",
-        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "ceiling_reason": "L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)",
         "unfalsified": false,
         "unfalsified_reason": null,
+        "failed_to_falsify": [],
+        "unexecuted_replays": [],
+        "evidence_actor_classes": [
+          "agent"
+        ],
+        "human_produced_evidence": false,
         "state": "NOT VERIFIED",
         "state_source": "marker",
-        "drift": null
+        "bound_pdatasets": [
+          "S1-DS-01"
+        ],
+        "drift": null,
+        "invalidation": null
       },
       {
         "id": "P1-AC-04",
@@ -286,44 +442,111 @@
             "well_formed": true
           }
         ],
+        "best_determinism": "L3",
         "evidence": [
           {
             "kind": "test",
             "determinism": "L3",
             "locator": "checks/ac04-transform-runs.mjs",
-            "sha256": "d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a",
+            "sha256": "b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e",
             "produced_by": {
               "actor": "fixture-builder",
               "class": "agent"
             },
             "produced_at": "2026-09-22",
+            "pdatasets": [
+              "S1-DS-01"
+            ],
+            "pdatasets_declared": "S1-DS-01",
             "replay": {
               "command": "node checks/ac04-transform-runs.mjs",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "pass",
+              "attested_outcome": "pass",
               "recorded_outcome": "pass",
-              "as_expected": true
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac04-transform-runs.mjs",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac04-transform-runs.mjs",
+                "artifact_sha256": "b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "a860e17986ccca6cf7f7b9702b7f20560ce2ab251f8f8c13184edef8dab192ed",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 59,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS P1-AC-04 REPLAY: the transformation ran to completion",
+                "execution_id": "22e58824eeb2567289b4d63f8e53bfc49a19766e64928c60ea8cb7a44ac7f040"
+              }
             },
             "modified_replay": {
               "command": "node checks/ac04-transform-runs.mjs --perturb accept-duplicates",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "fail",
+              "attested_outcome": "pass",
               "recorded_outcome": "pass",
+              "outcome_source": "executed",
               "as_expected": false,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/ac04-transform-runs.mjs --perturb accept-duplicates",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/ac04-transform-runs.mjs",
+                "artifact_sha256": "b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "9b992cf4236d5bc12ddb06bdf8ff291b781747158c5585f2de9ff9bada2d9a79",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 98,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS P1-AC-04 MODIFIED REPLAY (--perturb accept-duplicates): the transformation ran to completion",
+                "execution_id": "5677cbb8ce3265e79632675617bbb17d995c373f08b8f5aec90a73adede90084"
+              },
               "perturbation": "stop rejecting duplicate source ids in the transformation"
             },
+            "executed_artifacts": [
+              "checks/ac04-transform-runs.mjs"
+            ],
+            "executed_artifact_matches_locator": true,
+            "executed_artifact_cites_claim": true,
             "declared_in": "checks/ac04-transform-runs.mjs",
-            "declared_in_sha256": "d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a"
+            "declared_in_sha256": "b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e",
+            "lifts_ceiling": false,
+            "lift_blocked_reason": "MODIFIED REPLAY exited 0 — it FAILED TO FAIL. The check passes while the thing it asserts is broken, which is the definition of a vacuous check (design §14.3)"
           }
         ],
-        "best_determinism": "L3",
         "ceiling": "AGENT VERIFIED",
-        "ceiling_reason": "MODIFIED REPLAY did not fail: the check passes while the thing it asserts is broken (design §14.3)",
+        "ceiling_reason": "MODIFIED REPLAY exited 0 — it FAILED TO FAIL. The check passes while the thing it asserts is broken, which is the definition of a vacuous check (design §14.3)",
         "unfalsified": true,
         "unfalsified_reason": "modified replay failed to fail",
+        "failed_to_falsify": [
+          "checks/ac04-transform-runs.mjs"
+        ],
+        "unexecuted_replays": [],
+        "evidence_actor_classes": [
+          "agent"
+        ],
+        "human_produced_evidence": false,
         "state": "AGENT VERIFIED",
         "state_source": "marker",
-        "drift": null
+        "bound_pdatasets": [
+          "S1-DS-01"
+        ],
+        "drift": null,
+        "invalidation": null
       },
       {
         "id": "S1-CL-01",
@@ -363,44 +586,196 @@
             "well_formed": true
           }
         ],
+        "best_determinism": "L3",
         "evidence": [
           {
             "kind": "test",
             "determinism": "L3",
             "locator": "checks/cl01-record-count.mjs",
-            "sha256": "295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16",
+            "sha256": "61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6",
             "produced_by": {
-              "actor": "fixture-owner",
-              "class": "human"
+              "actor": "fixture-builder",
+              "class": "agent"
             },
             "produced_at": "2026-09-23",
+            "pdatasets": [
+              "S1-DS-01",
+              "S1-DS-02"
+            ],
+            "pdatasets_declared": "S1-DS-01, S1-DS-02",
             "replay": {
               "command": "node checks/cl01-record-count.mjs",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "pass",
+              "attested_outcome": "pass",
               "recorded_outcome": "pass",
-              "as_expected": true
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/cl01-record-count.mjs",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/cl01-record-count.mjs",
+                "artifact_sha256": "61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "a7eda8a5c3e1ab63ee4d736e7013783e99bb3b82be779d2513deffebf95d98f7",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 143,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS S1-CL-01 REPLAY: 9 records, recomputed sha256 69e24c33f1325ad8688ce99f6b9ebb63bf5267420dc4e53dfebe5763f841612e matches data/generated.csv",
+                "execution_id": "582ceb992a6a65c5fe66af8a55dac47aad96f7d1cbd1e0199d734bfef274f815"
+              }
             },
             "modified_replay": {
               "command": "node checks/cl01-record-count.mjs --perturb source-score",
               "cwd": "plugin/scripts/fixtures/slice",
               "expect": "fail",
+              "attested_outcome": "fail",
               "recorded_outcome": "fail",
+              "outcome_source": "executed",
               "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node checks/cl01-record-count.mjs --perturb source-score",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "checks/cl01-record-count.mjs",
+                "artifact_sha256": "61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 1,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "fail",
+                "outcome_source": "executed",
+                "stdout_sha256": "c3a787a1c4714949b1ff66467680956d47db2cb27656f0bad2942f9e4c913bbe",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 229,
+                "stderr_bytes": 0,
+                "stdout_first_line": "FAIL S1-CL-01 MODIFIED REPLAY (--perturb source-score)",
+                "execution_id": "c44d4740f9a692689b6d2a7e8b97daa72b655bdfde4b7fef29a3c96e77714b8c"
+              },
               "perturbation": "alter one score in the source dataset in memory; the recomputed generated dataset must change"
             },
+            "executed_artifacts": [
+              "checks/cl01-record-count.mjs"
+            ],
+            "executed_artifact_matches_locator": true,
+            "executed_artifact_cites_claim": true,
             "declared_in": "checks/cl01-record-count.mjs",
-            "declared_in_sha256": "295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16"
+            "declared_in_sha256": "61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6",
+            "lifts_ceiling": true,
+            "lift_blocked_reason": null
+          },
+          {
+            "kind": "test",
+            "determinism": "L3",
+            "locator": "human/cl01-independent-relationship.mjs",
+            "sha256": "25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944",
+            "produced_by": {
+              "actor": "fixture-owner",
+              "class": "human"
+            },
+            "produced_at": "2026-09-23",
+            "pdatasets": [
+              "S1-DS-01",
+              "S1-DS-02"
+            ],
+            "pdatasets_declared": "S1-DS-01, S1-DS-02",
+            "replay": {
+              "command": "node human/cl01-independent-relationship.mjs",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "pass",
+              "attested_outcome": "pass",
+              "recorded_outcome": "pass",
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node human/cl01-independent-relationship.mjs",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "human/cl01-independent-relationship.mjs",
+                "artifact_sha256": "25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 0,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "pass",
+                "outcome_source": "executed",
+                "stdout_sha256": "eaece3d2830bf4cc50549f4e77b5a6d62e7516f982665beab873b1c5f402dcac",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 149,
+                "stderr_bytes": 0,
+                "stdout_first_line": "PASS S1-CL-01 REPLAY: 9 generated records match the 9 valid, uniquely-identified source records one-for-one, computed independently of transform.mjs",
+                "execution_id": "795579d631ba31e0472b8ded3d2a671dcd6a1ff0933d8dd5d0ce7cdc9745a4d1"
+              }
+            },
+            "modified_replay": {
+              "command": "node human/cl01-independent-relationship.mjs --perturb drop-generated-row",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "fail",
+              "attested_outcome": "fail",
+              "recorded_outcome": "fail",
+              "outcome_source": "executed",
+              "as_expected": true,
+              "execution": {
+                "schema": "replay-record/v1",
+                "command": "node human/cl01-independent-relationship.mjs --perturb drop-generated-row",
+                "cwd": "plugin/scripts/fixtures/slice",
+                "artifact": "human/cl01-independent-relationship.mjs",
+                "artifact_sha256": "25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944",
+                "executed": true,
+                "unexecuted_reason": null,
+                "exit_status": 1,
+                "signal": null,
+                "timed_out": false,
+                "outcome": "fail",
+                "outcome_source": "executed",
+                "stdout_sha256": "fc8d6b9ffc631b169eb30c6c46dcb5ec08800569388331a8a678456599c0ff17",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 186,
+                "stderr_bytes": 0,
+                "stdout_first_line": "FAIL S1-CL-01 MODIFIED REPLAY (--perturb drop-generated-row)",
+                "execution_id": "03aef4b0648a962dd3b168be98579c56f1c257f90e686514b768fd90feeca3fe"
+              },
+              "perturbation": "delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds"
+            },
+            "executed_artifacts": [
+              "human/cl01-independent-relationship.mjs"
+            ],
+            "executed_artifact_matches_locator": true,
+            "executed_artifact_cites_claim": true,
+            "declared_in": "human/cl01-independent-relationship.mjs",
+            "declared_in_sha256": "25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944",
+            "lifts_ceiling": true,
+            "lift_blocked_reason": null
           }
         ],
-        "best_determinism": "L3",
         "ceiling": "HUMAN VERIFIED",
-        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "ceiling_reason": "L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)",
         "unfalsified": false,
         "unfalsified_reason": null,
+        "failed_to_falsify": [],
+        "unexecuted_replays": [],
+        "evidence_actor_classes": [
+          "agent",
+          "human"
+        ],
+        "human_produced_evidence": true,
         "state": "HUMAN VERIFIED",
         "state_source": "marker",
-        "drift": null
+        "bound_pdatasets": [
+          "S1-DS-01",
+          "S1-DS-02"
+        ],
+        "drift": null,
+        "invalidation": null
       }
     ],
     "unidentified_claims": [
@@ -457,7 +832,9 @@
         "provenance_chain": [
           "S1-DS-01"
         ],
-        "provenance_root": true
+        "provenance_chain_complete": true,
+        "provenance_root": true,
+        "provenance_root_source": "declared"
       },
       {
         "id": "S1-DS-02",
@@ -505,7 +882,9 @@
           "S1-DS-01",
           "S1-DS-02"
         ],
-        "provenance_root": false
+        "provenance_chain_complete": true,
+        "provenance_root": false,
+        "provenance_root_source": "declared"
       }
     ],
     "coverage": {
@@ -521,7 +900,15 @@
       "unfalsified": [
         "P1-AC-04"
       ],
+      "failed_to_falsify": [
+        "P1-AC-04"
+      ],
+      "unexecuted_replays": [],
+      "human_state_on_agent_evidence": [
+        "P1-AC-01"
+      ],
       "drifted": [],
+      "artifact_invalidated": [],
       "capped_by_evidence": [],
       "by_state": {
         "NOT VERIFIED": 1,
@@ -546,20 +933,43 @@
         "none": 0
       },
       "unidentified_claim_lines": 1,
-      "evidence_records": 5,
+      "evidence_records": 6,
       "pdatasets_total": 2,
       "pdatasets_missing": []
     }
   },
-  "previous": null,
+  "previous": {
+    "path": "docs/verification/surface-manifest.json",
+    "source": "default: the committed manifest",
+    "content_sha256": null,
+    "content_sha256_source": "omitted by design: carrying the baseline's hash would make this manifest a function of which baseline it was compared against, and the committed manifest is its own default baseline. The baseline is named in `path`; hash it there.",
+    "claims_compared": 5,
+    "drifted": [],
+    "invalidated": [],
+    "markers_mutated": []
+  },
   "gaps": [],
   "findings": [
+    {
+      "severity": "warn",
+      "code": "failed-to-falsify",
+      "subject": "P1-AC-04",
+      "message": "MODIFIED REPLAY of `checks/ac04-transform-runs.mjs` (`node checks/ac04-transform-runs.mjs --perturb accept-duplicates`) exited 0 when it must fail. The perturbation (stop rejecting duplicate source ids in the transformation) did not change the result, so the check does not depend on what it asserts (design §14.3).",
+      "locator": "checks/ac04-transform-runs.mjs"
+    },
     {
       "severity": "warn",
       "code": "unfalsified",
       "subject": "P1-AC-04",
       "message": "reported **unfalsified** — modified replay failed to fail (design §14.4)",
       "locator": "llm/claims.md:29"
+    },
+    {
+      "severity": "info",
+      "code": "human-state-on-agent-evidence",
+      "subject": "P1-AC-01",
+      "message": "`HUMAN VERIFIED` rests entirely on evidence produced by agent (no `produced-by: <actor> (human)` record cites this claim). It stands only because the evidence was executed and falsified this run (design §5.3 mechanism 2).",
+      "locator": "llm/claims.md:19"
     },
     {
       "severity": "info",
@@ -571,7 +981,7 @@
   ],
   "findings_by_severity": {
     "error": 0,
-    "warn": 1,
-    "info": 1
+    "warn": 2,
+    "info": 2
   }
 }

@@ -12,6 +12,28 @@
 // over unchanged inputs produce byte-identical output apart from
 // `generated_at`. `--generated-at` pins even that.
 //
+// Three things this engine REFUSES to take on trust, each of which it took on
+// trust before 2026-09-23:
+//
+//   1. **Replay outcomes.** `replay-outcome:` and `modified-replay-outcome:`
+//      are comment lines inside the artifact under question. They are now
+//      TESTIMONY, recorded as `attested_outcome` and compared against what
+//      actually happened: every command is EXECUTED by `replay.mjs` and the
+//      authoritative outcome is the child process's exit status. MODIFIED
+//      REPLAY must FAIL; a modified replay that exits 0 means the check is
+//      vacuous, and the claim cannot reach `HUMAN VERIFIED` (design §14.2,
+//      §14.3, §14.4).
+//   2. **Artifact identity.** Every bound identifier of §5.5 — `text_sha256`,
+//      `artifact_sha256`, `dataset_sha256`, `commit_sha` where the caller
+//      states one — is recomputed each run and COMPARED against the manifest
+//      the marker was written against. A mismatch proposes
+//      `— NOT VERIFIED (artifact changed: <identifier>, YYYY-MM-DD)` per §3.5
+//      and is an error finding.
+//   3. **Its own baseline.** The committed manifest is the default baseline,
+//      read before anything is written, and the run REFUSES to overwrite it
+//      while an unacknowledged drift or invalidation stands. One default run
+//      used to launder claim-text drift permanently.
+//
 // Paths are declared, not hardcoded. Everything below is read from the target
 // repo's governance delta `## Published Surface` block; CLI flags override.
 //
@@ -19,13 +41,17 @@
 //   node surface.mjs --root plugin/scripts/fixtures/slice
 //   node surface.mjs --root <dir> --out /tmp/m.json
 //   node surface.mjs --root <dir> --previous docs/verification/surface-manifest.json
+//   node surface.mjs --root <dir> --no-previous     # first run: no baseline
+//   node surface.mjs --root <dir> --no-execute      # replays unexecuted -> findings
+//   node surface.mjs --root <dir> --replay-ledger /tmp/ledger.json
 //   node surface.mjs --root <dir> --claims llm/claims.md      # source override
 //   node surface.mjs --root <dir> --generated-at 2026-09-23T00:00:00.000Z
 //   node surface.mjs --root <dir> --print                     # manifest to stdout
 //
 // Exit codes:
 //   0  manifest written, no `error`-severity findings
-//   1  manifest written, at least one `error`-severity finding
+//   1  at least one `error`-severity finding (the manifest is still written,
+//      unless writing it would overwrite the baseline it just contradicted)
 //   2  the engine could not run (no delta, unreadable declared source, bad flag)
 //
 // A repo with no `## Published Surface` block is unaffected: exit 0, nothing
@@ -34,6 +60,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { executeCommand, manifestRecord, writeLedger, REPLAY_SCHEMA, DEFAULT_TIMEOUT_MS }
+  from './replay.mjs';
 
 // ---------------------------------------------------------------------------
 // Vocabulary. Canon's, not a local invention.
@@ -93,6 +121,24 @@ const ROOT = path.resolve(value('--root', '.'));
 const DELTA_REL = value('--delta', 'llm/governance/governance-delta.md');
 const QUIET = flag('--quiet');
 const PRINT = flag('--print');
+const COMMIT = value('--commit', null);
+
+// Execution is the default, because an unexecuted outcome is testimony.
+// `--no-execute` exists for an environment that genuinely cannot spawn a
+// process; it does not soften anything — every replay then comes back
+// `executed: false`, which is a gap and an error finding, and no claim can
+// reach `HUMAN VERIFIED` on it.
+const EXECUTE = !flag('--no-execute');
+const REPLAY_TIMEOUT = (() => {
+  const raw = value('--replay-timeout', null);
+  if (raw === null) return DEFAULT_TIMEOUT_MS;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) die('--replay-timeout must be a positive number of milliseconds');
+  return n;
+})();
+const LEDGER = value('--replay-ledger', null);
+const NO_PREVIOUS = flag('--no-previous');
+const ACCEPT_BASELINE_REWRITE = flag('--accept-baseline-rewrite');
 
 // `generated_at` is the one field permitted to vary between runs. Pinning it
 // makes even that vary-able field reproducible, which is how the determinism
@@ -372,16 +418,27 @@ if (!claimsRel) {
 //     determinism: L3
 //     produced-by: <actor> (human|agent)
 //     produced-at: YYYY-MM-DD
+//     pdatasets: <ID>[, <ID>...]   | none
 //     replay: <command>            | none
 //     replay-expect: pass|fail
-//     replay-outcome: pass|fail|unrecorded
+//     replay-outcome: pass|fail|unrecorded      <- ATTESTED, not believed
 //     modified-replay: <command>   | none
 //     modified-replay-perturbation: <what was broken on purpose>
 //     modified-replay-expect: fail
-//     modified-replay-outcome: pass|fail|unrecorded
+//     modified-replay-outcome: pass|fail|unrecorded   <- ATTESTED, not believed
 //
 // Comment punctuation (`//`, `#`, `*`, `<!--`, `-->`) is stripped, so the same
 // block works in .mjs, .py, .md and .yml.
+//
+// The two `-outcome:` lines are the author's account of what happened. They
+// are recorded as `attested_outcome` and then CHECKED: `replay.mjs` runs the
+// command and the exit status becomes `recorded_outcome`. Where the two
+// disagree, the disagreement is an error finding — the artifact misreported
+// itself, which is the single most valuable thing this engine can notice.
+//
+// `pdatasets:` names the PDatasets a piece of evidence rests on, so that a
+// change to the DATA invalidates the claim (design §5.5) and not merely a
+// change to the code.
 
 const EVIDENCE_RE = /EVIDENCE\s+([A-Z][A-Z0-9]*-[A-Z]+-\d{2,})\s*$/;
 const TEXT_EXT = new Set(['.mjs', '.js', '.cjs', '.ts', '.py', '.md', '.txt', '.yml', '.yaml', '.json', '.sh', '.r']);
@@ -408,6 +465,72 @@ function stripComment(line) {
 }
 
 const evidence = [];
+
+// ---------------------------------------------------------------------------
+// Execution. Bounded, cached, and never optional-in-effect.
+// ---------------------------------------------------------------------------
+
+/** Every execution record produced this run, in execution order. */
+const executions = [];
+const execCache = new Map();
+
+/**
+ * Execute a declared command exactly once per run, whatever cites it.
+ *
+ * The cache is not only a speed-up: two evidence records declaring the same
+ * command must not be able to disagree about what it did.
+ */
+function runDeclared(command) {
+  if (execCache.has(command)) return execCache.get(command);
+  if (!EXECUTE) {
+    const refused = {
+      schema: REPLAY_SCHEMA,
+      command,
+      cwd: surfaceRoot ?? '.',
+      artifact: null,
+      artifact_sha256: null,
+      executed: false,
+      unexecuted_reason: 'execution disabled by `--no-execute`: the outcome was not observed',
+      exit_status: null,
+      signal: null,
+      timed_out: false,
+      outcome: null,
+      outcome_source: 'unexecuted',
+      stdout_sha256: null,
+      stderr_sha256: null,
+      stdout_bytes: null,
+      stderr_bytes: null,
+      stdout_first_line: null,
+      execution_id: null,
+    };
+    execCache.set(command, refused);
+    executions.push(refused);
+    return refused;
+  }
+  const rec = executeCommand({
+    root: ROOT,
+    command,
+    cwdLabel: surfaceRoot ?? '.',
+    timeoutMs: REPLAY_TIMEOUT,
+  });
+  execCache.set(command, rec);
+  executions.push(rec);
+  return rec;
+}
+
+/** Does an artifact in the tree cite this claim ID? (design §6.1 — binding by citation.) */
+const citationCache = new Map();
+function artifactCitesClaim(relPath, claimId) {
+  const key = `${relPath}\u0000${claimId}`;
+  if (citationCache.has(key)) return citationCache.get(key);
+  let cites = false;
+  try {
+    const text = readText(underRoot(relPath));
+    cites = new RegExp(`EVIDENCE\\s+${claimId}(?![A-Z0-9-])`).test(text);
+  } catch { cites = false; }
+  citationCache.set(key, cites);
+  return cites;
+}
 
 for (const rel of evidenceRels) {
   const abs = underRoot(rel);
@@ -485,21 +608,108 @@ for (const rel of evidenceRels) {
           relFile);
       }
 
-      const mode = (cmdKey, expectKey, outcomeKey, perturbKey, defaultExpect) => {
+      // design §5.5 — the PDatasets this evidence rests on, so that a change
+      // to the DATA invalidates the claim and not only a change to the code.
+      const rawPd = fields.get('pdatasets') ?? null;
+      const boundPdatasets = rawPd === null || rawPd === 'none'
+        ? []
+        : rawPd.split(',').map((s) => s.trim()).filter(Boolean);
+
+      /**
+       * Build one verification mode by EXECUTING it (design §14.2).
+       *
+       * `attested_outcome` is what the artifact says about itself.
+       * `recorded_outcome` is what the child process actually did. Only the
+       * second one is ever used to decide anything.
+       */
+      const mode = (modeName, cmdKey, expectKey, outcomeKey, perturbKey, requiredExpect) => {
         const cmd = fields.get(cmdKey) ?? null;
         if (cmd === null || cmd === 'none') return null;
-        const expect = fields.get(expectKey) ?? defaultExpect;
-        const outcome = fields.get(outcomeKey) ?? 'unrecorded';
+
+        let expect = fields.get(expectKey) ?? requiredExpect;
+        if (modeName === 'MODIFIED REPLAY' && expect !== 'fail') {
+          // A modified replay that expects to pass asserts nothing. The
+          // expectation is not negotiable: it is what §14.2 means by the mode.
+          finding('error', 'modified-replay-expect-invalid', claimId,
+            `evidence \`${locator}\` declares \`${expectKey}: ${expect}\`. MODIFIED REPLAY EXPECTS FAILURE `
+            + `(design §14.2): a perturbation that leaves the check passing is the definition of a vacuous `
+            + `check. Read as \`fail\`.`, relFile);
+          expect = 'fail';
+        }
+        if (modeName === 'REPLAY' && expect !== 'pass' && expect !== 'fail') {
+          finding('error', 'replay-expect-invalid', claimId,
+            `evidence \`${locator}\` declares \`${expectKey}: ${expect}\`, which is neither \`pass\` nor \`fail\``,
+            relFile);
+          expect = 'pass';
+        }
+
+        const attested = fields.get(outcomeKey) ?? 'unrecorded';
+        const exec = runDeclared(cmd);
+        const observed = exec.outcome;   // null unless a real process exited
+
+        if (!exec.executed) {
+          // Never a pass, never a silent skip (design §4.2's idiom, applied to
+          // execution): an unobserved outcome is a gap and a finding.
+          gap(claimId, cmdKey, `${modeName} was not executed: ${exec.unexecuted_reason}`, relFile);
+          finding('error', 'replay-not-executed', claimId,
+            `${modeName} \`${cmd}\` was not executed: ${exec.unexecuted_reason}. An outcome nobody observed `
+            + `is testimony (design §14.1), so it cannot support any state.`, relFile);
+        } else if (attested !== 'unrecorded' && attested !== observed) {
+          // The exploit this engine exists to refuse: the artifact's own
+          // account of its outcome contradicts the outcome.
+          finding('error', 'replay-outcome-misreported', claimId,
+            `evidence \`${locator}\` records \`${outcomeKey}: ${attested}\` but ${modeName} \`${cmd}\` `
+            + `actually exited ${exec.exit_status} (\`${observed}\`). The recorded outcome is testimony and `
+            + `the executed outcome is the evidence; the executed outcome wins (design §14.1, §14.2).`,
+            relFile);
+        }
+
         const rec = {
           command: cmd,
           cwd: surfaceRoot,
           expect,
-          recorded_outcome: outcome,
-          as_expected: outcome === 'unrecorded' ? null : outcome === expect,
+          // What the artifact claims about itself. Kept, never believed.
+          attested_outcome: attested,
+          // What was OBSERVED. `null` means nothing was observed.
+          recorded_outcome: observed,
+          outcome_source: exec.outcome_source,
+          as_expected: observed === null ? null : observed === expect,
+          execution: manifestRecord(exec),
         };
         if (perturbKey) rec.perturbation = fields.get(perturbKey) ?? null;
         return rec;
       };
+
+      // design §14.2 — REPLAY re-executes and expects the recorded result.
+      const replayRec = mode('REPLAY', 'replay', 'replay-expect', 'replay-outcome', null, 'pass');
+      // design §14.2 — MODIFIED REPLAY perturbs and EXPECTS FAILURE.
+      const modifiedRec = mode('MODIFIED REPLAY', 'modified-replay', 'modified-replay-expect',
+        'modified-replay-outcome', 'modified-replay-perturbation', 'fail');
+
+      // What was actually executed, and whether it is the artifact this
+      // evidence record claims to be. An evidence record that executes
+      // somebody else's check is not evidence about this claim.
+      const executed = [replayRec, modifiedRec]
+        .map((r) => r?.execution?.artifact ?? null)
+        .filter(Boolean);
+      const uniqueExecuted = [...new Set(executed)].sort();
+      let matchesLocator = null;
+      let citesClaim = null;
+      if (uniqueExecuted.length) {
+        matchesLocator = uniqueExecuted.every((a) => a === locator);
+        citesClaim = uniqueExecuted.every((a) => artifactCitesClaim(a, claimId));
+        if (!matchesLocator) {
+          finding('warn', 'replay-artifact-mismatch', claimId,
+            `the executed artifact(s) ${uniqueExecuted.map((a) => `\`${a}\``).join(', ')} are not the declared `
+            + `\`locator: ${locator}\`, so the hash this record binds is not the hash of what ran. `
+            + `The record cannot lift this claim's ceiling.`, relFile);
+        } else if (!citesClaim) {
+          finding('warn', 'replay-artifact-does-not-cite-claim', claimId,
+            `the executed artifact \`${uniqueExecuted.join(', ')}\` does not cite \`EVIDENCE ${claimId}\`. `
+            + `Evidence binds by the claim ID cited in the artifact (design §6.1, §6.2), so pointing a `
+            + `replay at another claim's check proves nothing here.`, relFile);
+        }
+      }
 
       evidence.push({
         claim_id: claimId,
@@ -509,11 +719,13 @@ for (const rel of evidenceRels) {
         sha256: locOk ? sha256(fs.readFileSync(locAbs)) : null,
         produced_by: producedBy,
         produced_at: fields.get('produced-at') ?? null,
-        // design §14.2 — REPLAY re-executes and expects the recorded result.
-        replay: mode('replay', 'replay-expect', 'replay-outcome', null, 'pass'),
-        // design §14.2 — MODIFIED REPLAY perturbs and EXPECTS FAILURE.
-        modified_replay: mode('modified-replay', 'modified-replay-expect', 'modified-replay-outcome',
-          'modified-replay-perturbation', 'fail'),
+        pdatasets: boundPdatasets,
+        pdatasets_declared: rawPd,
+        replay: replayRec,
+        modified_replay: modifiedRec,
+        executed_artifacts: uniqueExecuted,
+        executed_artifact_matches_locator: matchesLocator,
+        executed_artifact_cites_claim: citesClaim,
         declared_in: relFile,
         declared_in_sha256: fileSha,
       });
@@ -539,27 +751,106 @@ for (const e of evidence) {
   }
 }
 
+// design §3.2 — the ID *is* the claim's identity. Two records under one ID
+// make two readers of the same manifest disagree about the same claim: one
+// using `find()` sees the first, one building a Map sees the last.
+const seenClaimIds = new Map();
+for (const c of claims) {
+  if (!seenClaimIds.has(c.id)) seenClaimIds.set(c.id, []);
+  seenClaimIds.get(c.id).push(c);
+}
+for (const [id, group] of [...seenClaimIds.entries()].sort()) {
+  if (group.length < 2) continue;
+  finding('error', 'duplicate-claim-id', id,
+    `claim ID \`${id}\` is declared ${group.length} times (${group.map((g) => `${g.source.path}:${g.source.line}`).join(', ')}). `
+    + `The ID is the claim's identity (design §3.2); duplicates make two readers of one manifest disagree.`,
+    `${group[0].source.path}:${group[0].source.line}`);
+  gap(id, 'id', `claim ID declared ${group.length} times`, `${group[0].source.path}:${group[0].source.line}`);
+}
+
+/**
+ * Can this evidence record lift a claim to `HUMAN VERIFIED`?
+ *
+ * Returns `null` when it can, or the reason it cannot. Everything here is a
+ * property of something OBSERVED — an executed exit status, a declared
+ * determinism level, a declared actor class — and nothing is a property of
+ * what the artifact says about its own outcome.
+ */
+function liftBlockedReason(e) {
+  if (e.determinism === null) {
+    return 'declares no determinism level, so there is nothing for a state to rest on (design §14.1)';
+  }
+  if (e.determinism === 'L1') {
+    const cls = e.produced_by ? e.produced_by.class : null;
+    const who = cls === null ? 'with no declared actor class' : `produced by a${cls === 'agent' ? 'n agent' : ' human'}`;
+    return `\`L1\` (attested) evidence ${who}: testimony, with nothing to re-execute. `
+      + `An agent\'s say-so is never enough (design §14.1, §6.3, §5.3 mechanism 4)`;
+  }
+  if (!e.produced_by) {
+    return 'declares no `produced-by: <actor> (human|agent)`, so the actor class behind it is unrecorded '
+      + '(design §3.1, §5.3 mechanism 2)';
+  }
+  if (!e.replay) return 'declares no REPLAY command (design §14.2)';
+  if (!e.replay.execution || !e.replay.execution.executed) {
+    return `REPLAY was not executed: ${e.replay.execution?.unexecuted_reason ?? 'no execution record'}`;
+  }
+  if (e.replay.as_expected !== true) {
+    return `REPLAY exited ${e.replay.execution.exit_status} (\`${e.replay.recorded_outcome}\`) `
+      + `where \`${e.replay.expect}\` was expected`;
+  }
+  if (!e.modified_replay) {
+    return 'REPLAY recorded but no MODIFIED REPLAY: verified to run, not verified to matter (design §14.4)';
+  }
+  if (!e.modified_replay.execution || !e.modified_replay.execution.executed) {
+    return `MODIFIED REPLAY was not executed: ${e.modified_replay.execution?.unexecuted_reason ?? 'no execution record'}`;
+  }
+  if (e.modified_replay.as_expected !== true) {
+    return `MODIFIED REPLAY exited ${e.modified_replay.execution.exit_status} — it FAILED TO FAIL. `
+      + `The check passes while the thing it asserts is broken, which is the definition of a vacuous `
+      + `check (design §14.3)`;
+  }
+  if (e.executed_artifact_matches_locator === false) {
+    return `the executed artifact is not the declared \`locator: ${e.locator}\``;
+  }
+  if (e.executed_artifact_cites_claim === false) {
+    return 'the executed artifact does not cite this claim (design §6.1)';
+  }
+  return null;
+}
+
 for (const c of claims) {
   const own = evidence.filter((e) => e.claim_id === c.id);
-  c.evidence = own.map((e) => {
-    const { claim_id, ...rest } = e;
-    void claim_id;
-    return rest;
-  });
 
   const levels = own.map((e) => e.determinism).filter(Boolean);
   c.best_determinism = levels.length
     ? levels.reduce((a, b) => (strength(b) > strength(a) ? b : a))
     : null;
 
+  // Every record is assessed on its own terms; the assessment is written back
+  // into the manifest so a reader can see WHY a record did or did not count.
+  for (const e of own) {
+    const reason = liftBlockedReason(e);
+    e.lifts_ceiling = reason === null;
+    e.lift_blocked_reason = reason;
+  }
+  c.evidence = own.map((e) => {
+    const { claim_id, ...rest } = e;
+    void claim_id;
+    return rest;
+  });
+
   // design §14.4 — MODIFIED REPLAY is REQUIRED for any claim reaching
   // HUMAN VERIFIED on L3/L2 evidence. A replay with no modified replay, or a
   // modified replay that failed to fail, is "unfalsified": verified to run,
-  // not verified to matter.
+  // not verified to matter. All four of these are now facts about EXECUTED
+  // processes, not about comment lines.
   const executable = own.filter((e) => e.determinism === 'L3' || e.determinism === 'L2');
   const withReplay = executable.filter((e) => e.replay);
+  const lifting = own.filter((e) => e.lifts_ceiling);
   const falsifying = executable.filter((e) => e.modified_replay && e.modified_replay.as_expected === true);
   const failedToFail = executable.filter((e) => e.modified_replay && e.modified_replay.as_expected === false);
+  const unexecuted = own.filter((e) => (e.replay && !e.replay.execution.executed)
+    || (e.modified_replay && !e.modified_replay.execution.executed));
   const noModified = withReplay.filter((e) => !e.modified_replay);
 
   let ceiling;
@@ -567,18 +858,28 @@ for (const c of claims) {
   if (own.length === 0) {
     ceiling = 'NOT VERIFIED';
     ceilingReason = 'no evidence cites this claim';
+  } else if (lifting.length > 0) {
+    ceiling = 'HUMAN VERIFIED';
+    const best = lifting[0];
+    ceilingReason = `${best.determinism} evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY `
+      + `exited ${best.modified_replay.execution.exit_status} — it failed as it must (design §14.2, §14.4)`;
+  } else if (levels.length === 0) {
+    // design §14.1 — an undeclared level is a gap marker, not an assumption.
+    // Saying "L1" here would be the assumption the spec forbids.
+    ceiling = 'AGENT VERIFIED';
+    ceilingReason = 'no evidence declares a determinism level: the level is UNDECLARED, not `L1`, and an '
+      + 'undeclared level is a gap marker rather than an assumption (design §14.1)';
   } else if (executable.length === 0) {
     // design §6.3 — attested only. Nobody can check it; it is testimony.
+    const classes = [...new Set(own.map((e) => e.produced_by?.class ?? 'undeclared'))].sort();
     ceiling = 'AGENT VERIFIED';
-    ceilingReason = 'best evidence is `L1` (attested): an agent\'s say-so is never enough (design §6.3, §5.3 mechanism 4)';
-  } else if (falsifying.length > 0) {
-    ceiling = 'HUMAN VERIFIED';
-    ceilingReason = `${c.best_determinism} evidence with a MODIFIED REPLAY that failed as it should (design §14.4)`;
+    ceilingReason = 'best evidence is `L1` (attested), produced by '
+      + `${classes.join(' and ')}: testimony is never enough for a human state `
+      + '(design §6.3, §5.3 mechanism 4)';
   } else {
     ceiling = 'AGENT VERIFIED';
-    ceilingReason = failedToFail.length
-      ? 'MODIFIED REPLAY did not fail: the check passes while the thing it asserts is broken (design §14.3)'
-      : 'REPLAY recorded but no MODIFIED REPLAY: verified to run, not verified to matter (design §14.4)';
+    ceilingReason = executable.map((e) => e.lift_blocked_reason).filter(Boolean)[0]
+      ?? 'no evidence record could lift the ceiling';
   }
   c.ceiling = ceiling;
   c.ceiling_reason = ceilingReason;
@@ -589,6 +890,15 @@ for (const c of claims) {
       ? 'modified replay failed to fail'
       : (noModified.length ? 'replay recorded, no modified replay' : 'no replay recorded'))
     : null;
+
+  // Kept separate from `unfalsified` on purpose. A sibling record that DOES
+  // falsify used to make a known failed-to-falsify check disappear from the
+  // coverage block entirely; the two signals answer different questions and a
+  // vacuous check stays visible whatever else cites the claim.
+  c.failed_to_falsify = failedToFail.map((e) => e.locator).sort();
+  c.unexecuted_replays = unexecuted.map((e) => e.locator).sort();
+  c.evidence_actor_classes = [...new Set(own.map((e) => e.produced_by?.class ?? 'undeclared'))].sort();
+  c.human_produced_evidence = own.some((e) => e.produced_by?.class === 'human');
 
   // The effective state. A marker asserting more than the evidence can carry
   // is REFUSED, not honoured: that is the determinism cap of design §5.3
@@ -610,86 +920,51 @@ for (const c of claims) {
     finding('warn', 'unfalsified', c.id,
       `reported **unfalsified** — ${c.unfalsified_reason} (design §14.4)`, `${c.source.path}:${c.source.line}`);
   }
+  // Independent of `unfalsified`, and deliberately so: a check that was
+  // executed and failed to fail stays visible even when a sibling record
+  // falsifies the same claim.
+  for (const e of failedToFail) {
+    finding('warn', 'failed-to-falsify', c.id,
+      `MODIFIED REPLAY of \`${e.locator}\` (\`${e.modified_replay.command}\`) exited `
+      + `${e.modified_replay.execution.exit_status} when it must fail. The perturbation `
+      + `(${e.modified_replay.perturbation ?? 'unstated'}) did not change the result, so the check does not `
+      + `depend on what it asserts (design §14.3).`, e.declared_in);
+  }
   if (own.length === 0) {
     gap(c.id, 'evidence', 'no evidence cites this claim', `${c.source.path}:${c.source.line}`);
     finding('warn', 'no-evidence', c.id, 'no evidence artifact cites this claim ID (design §6.4)',
+      `${c.source.path}:${c.source.line}`);
+  } else if (levels.length === 0) {
+    // NOT `l1-only`: the level is undeclared, and saying `L1` to a reader
+    // would be the very assumption design §14.1 forbids the machine to make.
+    finding('info', 'undeclared-determinism-only', c.id,
+      'no evidence declares a determinism level: the level is UNDECLARED, not `L1`. '
+      + 'The claim is capped at `AGENT VERIFIED` because nothing states what could re-execute it (design §14.1)',
       `${c.source.path}:${c.source.line}`);
   } else if (executable.length === 0) {
     finding('info', 'l1-only', c.id,
       'only `L1` (attested) evidence: capped at `AGENT VERIFIED` and can never reach `HUMAN VERIFIED` (design §6.3)',
       `${c.source.path}:${c.source.line}`);
   }
+  // §5.3 mechanism 2 — the actor-class gate. `produced_by.class` was parsed
+  // and stored and never read; this is its read site. A human state resting
+  // entirely on agent-produced evidence is legitimate only because the
+  // evidence was EXECUTED — so it is reported rather than silently accepted.
+  if (own.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED') && !c.human_produced_evidence) {
+    finding('info', 'human-state-on-agent-evidence', c.id,
+      `\`${c.state}\` rests entirely on evidence produced by ${c.evidence_actor_classes.join(' and ')} `
+      + `(no \`produced-by: <actor> (human)\` record cites this claim). It stands only because the evidence `
+      + `was executed and falsified this run (design §5.3 mechanism 2).`, `${c.source.path}:${c.source.line}`);
+  }
 }
 
 claims.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-// ---------------------------------------------------------------------------
-// Claim-text drift (design §5.4) — computed against a previous manifest
-// ---------------------------------------------------------------------------
-//
-// "`text_sha256` is recorded in the manifest at the moment a marker is
-// written. If the claim sentence is edited, its hash changes and the state
-// resets to NOT VERIFIED."  The manifest is the record, so drift is derived by
-// comparing this run's hashes against a previous run's — not by trusting the
-// tree to tell us what changed. The reset is REPORTED and never applied to the
-// file: the generator never auto-fixes (A5-AC-01). What it emits instead is
-// `proposed_marker`, the exact line a human or the checker may APPEND
-// (design §3.5 — a reset appends, it does not erase).
+// The comparison against the previous manifest — claim-text drift (§5.4) AND
+// artifact invalidation (§5.5) — runs after the PDatasets are built, because
+// a dataset's identity is one of the things it compares. See
+// "The baseline comparison" below.
 
-const previousRel = value('--previous', null);
-let previousInfo = null;
-if (previousRel) {
-  const prevAbs = path.resolve(previousRel);
-  if (!exists(prevAbs)) die(`--previous ${previousRel} does not exist`);
-  let prev;
-  try { prev = JSON.parse(readText(prevAbs)); } catch (err) { die(`--previous ${previousRel} is not JSON: ${err.message}`); }
-  const prevClaims = new Map((prev?.verification?.claims ?? []).map((c) => [c.id, c]));
-  previousInfo = {
-    path: posix(previousRel),
-    content_sha256: prev?.content_sha256 ?? null,
-    claims_compared: 0,
-    drifted: [],
-  };
-  const today = GENERATED_AT.slice(0, 10);
-  for (const c of claims) {
-    const p = prevClaims.get(c.id);
-    if (!p) { c.drift = null; continue; }
-    previousInfo.claims_compared += 1;
-    if (p.text_sha256 === c.text_sha256) { c.drift = null; continue; }
-
-    // The claim sentence changed. Was the reset already recorded?
-    const acknowledged = c.markers.some(
-      (m) => m.well_formed && m.state === 'NOT VERIFIED' && m.reason !== null,
-    ) && c.marker_state === 'NOT VERIFIED';
-
-    c.drift = {
-      previous_text_sha256: p.text_sha256,
-      previous_text: p.text,
-      previous_state: p.state,
-      acknowledged,
-      proposed_marker: acknowledged ? null : `— NOT VERIFIED (claim text edited, ${today})`,
-    };
-    previousInfo.drifted.push(c.id);
-
-    if (acknowledged) {
-      finding('info', 'claim-text-drift', c.id,
-        'claim text was edited since the previous manifest; the marker block already records the reset (design §3.5)',
-        `${c.source.path}:${c.source.line}`);
-    } else {
-      finding('error', 'claim-text-drift', c.id,
-        `claim text was edited since the previous manifest (${p.text_sha256.slice(0, 12)} -> `
-        + `${c.text_sha256.slice(0, 12)}) while the marker block still reads \`${c.marker_state}\`. `
-        + `Verification binds to the exact wording, so the state resets to \`NOT VERIFIED\` (design §5.4). `
-        + `Append: — NOT VERIFIED (claim text edited, ${today})`,
-        `${c.source.path}:${c.source.line}`);
-      c.state = 'NOT VERIFIED';
-      c.state_source = 'drift-reset';
-    }
-  }
-  previousInfo.drifted.sort();
-} else {
-  for (const c of claims) c.drift = null;
-}
 
 // ---------------------------------------------------------------------------
 // PDatasets (design §4.1, §4.2)
@@ -847,6 +1122,7 @@ for (const d of pdatasets) {
   }
   const chain = [];
   const seen = new Set();
+  let complete = true;
   let cursor = d;
   while (cursor) {
     if (seen.has(cursor.id)) {
@@ -856,12 +1132,273 @@ for (const d of pdatasets) {
     }
     seen.add(cursor.id);
     chain.unshift(cursor.id);
+    if (cursor.derived_from_declared === null) complete = false;
     cursor = cursor.derived_from.length === 1 ? dsById.get(cursor.derived_from[0]) : null;
   }
-  d.provenance_chain = chain;
-  d.provenance_root = d.derived_from.length === 0;
+
+  // design §4.2 — never silent, never INVENTED. `derived_from: none` stated is
+  // a root; provenance never recorded is not a root, it is unknown, and
+  // asserting `provenance_root: true` for it would invent the one fact §4.1
+  // exists to make visible. The omission is already loud; the rootness must
+  // not quietly contradict it.
+  if (d.derived_from_declared === null) {
+    d.provenance_chain = null;
+    d.provenance_chain_complete = false;
+    d.provenance_root = null;
+    d.provenance_root_source = 'unrecorded: `derived_from` was never stated (design §4.1)';
+  } else {
+    d.provenance_chain = chain;
+    d.provenance_chain_complete = complete;
+    d.provenance_root = d.derived_from.length === 0;
+    d.provenance_root_source = 'declared';
+  }
 }
 pdatasets.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+// Evidence may bind PDatasets by ID; a binding that names nothing is a
+// finding, never a silent no-op.
+for (const c of claims) {
+  c.bound_pdatasets = [...new Set(c.evidence.flatMap((e) => e.pdatasets ?? []))].sort();
+  for (const dsId of c.bound_pdatasets) {
+    if (!dsById.has(dsId)) {
+      finding('error', 'unknown-pdataset-binding', c.id,
+        `evidence binds \`pdatasets: ${dsId}\`, which no PDataset source declares (design §4.1)`,
+        `${c.source.path}:${c.source.line}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The baseline comparison — claim-text drift (§5.4) and artifact
+// invalidation (§5.5), against the manifest the markers were written against
+// ---------------------------------------------------------------------------
+//
+// "`text_sha256` is recorded in the manifest at the moment a marker is
+// written. If the claim sentence is edited, its hash changes and the state
+// resets to NOT VERIFIED." (§5.4) §5.5 generalises that to every bound
+// identifier — `artifact_sha256`, `dataset_sha256`, `commit_sha` — rather
+// than adding a second mechanism: "If any bound identifier changes,
+// `--surface` appends an invalidation marker."
+//
+// Three properties this implementation holds to:
+//
+//   * **The committed manifest is the default baseline.** Drift used to be
+//     invisible unless the caller passed `--previous`, while the default
+//     `--out` overwrote the very file that would have been the baseline. One
+//     default run laundered an edit permanently. The baseline is now read
+//     first, from `<output dir>/surface-manifest.json`, and `--no-previous`
+//     is the explicit escape hatch for a genuine first run.
+//   * **The reset is PROPOSED, never written.** The generator does not edit
+//     the claims file (A5-AC-01). It emits `proposed_marker`, the exact line
+//     a human or the checker APPENDS — §3.5 appends, it never erases, and the
+//     prior `HUMAN VERIFIED` line stays visible on the page.
+//   * **The baseline is not overwritten while it is being contradicted.**
+//     See the write step at the end of this file.
+
+const explicitPrevious = value('--previous', null);
+const defaultOutRel = posix(path.join(outputDir.replace(/\/+$/, ''), 'surface-manifest.json'));
+const defaultBaselineAbs = path.join(ROOT, defaultOutRel);
+
+let previousAbs = null;
+let previousSource = 'none';
+let previousLabel = null;
+if (NO_PREVIOUS) {
+  previousSource = 'none: `--no-previous`';
+} else if (explicitPrevious !== null) {
+  previousAbs = path.resolve(explicitPrevious);
+  if (!exists(previousAbs)) die(`--previous ${explicitPrevious} does not exist`);
+  previousSource = 'flag: `--previous`';
+  previousLabel = posix(explicitPrevious);
+} else if (exists(defaultBaselineAbs)) {
+  previousAbs = defaultBaselineAbs;
+  previousSource = 'default: the committed manifest';
+  previousLabel = defaultOutRel;
+} else {
+  previousSource = `none: no committed manifest at \`${defaultOutRel}\``;
+}
+
+let previousInfo = null;
+const unresolvedBaseline = [];
+for (const c of claims) { c.drift = null; c.invalidation = null; }
+
+if (previousAbs) {
+  let prev = null;
+  try {
+    prev = JSON.parse(readText(previousAbs));
+  } catch (err) {
+    if (explicitPrevious !== null) die(`--previous ${explicitPrevious} is not JSON: ${err.message}`);
+    finding('error', 'unreadable-baseline', 'previous',
+      `the committed manifest \`${defaultOutRel}\` is not readable JSON (${err.message}), so nothing could be `
+      + `compared against it. Drift and artifact invalidation are UNCHECKED this run.`, defaultOutRel);
+  }
+
+  if (prev) {
+    const prevClaims = new Map((prev?.verification?.claims ?? []).map((c) => [c.id, c]));
+    const prevDatasets = new Map((prev?.verification?.pdatasets ?? []).map((d) => [d.id, d]));
+    const prevCommit = prev?.bound?.commit_sha ?? null;
+    // The baseline's own `content_sha256` is deliberately NOT carried into
+    // this manifest. It would make the manifest a function of which baseline
+    // it happened to be compared against: the committed manifest is its own
+    // default baseline, so run N would disagree with run N-1 forever, and
+    // regenerating the same manifest to a different path would produce a
+    // different hash. What the comparison found is recorded instead, and the
+    // baseline is named so anyone can hash it themselves.
+    previousInfo = {
+      path: previousLabel,
+      source: previousSource,
+      content_sha256: null,
+      content_sha256_source:
+        'omitted by design: carrying the baseline\'s hash would make this manifest a function of which '
+        + 'baseline it was compared against, and the committed manifest is its own default baseline. '
+        + 'The baseline is named in `path`; hash it there.',
+      claims_compared: 0,
+      drifted: [],
+      invalidated: [],
+      markers_mutated: [],
+    };
+    const today = GENERATED_AT.slice(0, 10);
+
+    for (const c of claims) {
+      const p = prevClaims.get(c.id);
+      if (!p) continue;
+      previousInfo.claims_compared += 1;
+
+      // ---- §5.4 — the claim sentence -------------------------------------
+      if (p.text_sha256 !== c.text_sha256) {
+        const acknowledged = c.markers.some(
+          (m) => m.well_formed && m.state === 'NOT VERIFIED' && m.reason !== null,
+        ) && c.marker_state === 'NOT VERIFIED';
+
+        c.drift = {
+          previous_text_sha256: p.text_sha256,
+          previous_text: p.text,
+          previous_state: p.state,
+          acknowledged,
+          proposed_marker: acknowledged ? null : `— NOT VERIFIED (claim text edited, ${today})`,
+        };
+        previousInfo.drifted.push(c.id);
+
+        if (acknowledged) {
+          finding('info', 'claim-text-drift', c.id,
+            'claim text was edited since the previous manifest; the marker block already records the reset (design §3.5)',
+            `${c.source.path}:${c.source.line}`);
+        } else {
+          finding('error', 'claim-text-drift', c.id,
+            `claim text was edited since the previous manifest (${p.text_sha256.slice(0, 12)} -> `
+            + `${c.text_sha256.slice(0, 12)}) while the marker block still reads \`${c.marker_state}\`. `
+            + `Verification binds to the exact wording, so the state resets to \`NOT VERIFIED\` (design §5.4). `
+            + `Append: — NOT VERIFIED (claim text edited, ${today})`,
+            `${c.source.path}:${c.source.line}`);
+          c.state = 'NOT VERIFIED';
+          c.state_source = 'drift-reset';
+          unresolvedBaseline.push({ id: c.id, marker: c.drift.proposed_marker });
+        }
+      }
+
+      // ---- §5.5 — every other bound identifier ---------------------------
+      const changed = [];
+      const note = (identifier, subject, before, after) => {
+        if (!before || !after || before === after) return;
+        if (changed.some((x) => x.identifier === identifier && x.subject === subject)) return;
+        changed.push({
+          identifier,
+          subject,
+          previous_sha256: before,
+          current_sha256: after,
+        });
+      };
+
+      const prevEvidence = p.evidence ?? [];
+      for (const e of c.evidence) {
+        const pe = prevEvidence.find((x) => x.locator === e.locator && x.declared_in === e.declared_in);
+        if (!pe) continue;
+        note('artifact_sha256', e.locator, pe.sha256, e.sha256);
+        note('artifact_sha256', e.declared_in, pe.declared_in_sha256, e.declared_in_sha256);
+        for (const key of ['replay', 'modified_replay']) {
+          const before = pe[key]?.execution?.artifact_sha256 ?? null;
+          const after = e[key]?.execution?.artifact_sha256 ?? null;
+          const subject = e[key]?.execution?.artifact ?? pe[key]?.execution?.artifact ?? null;
+          if (subject) note('artifact_sha256', subject, before, after);
+        }
+      }
+      for (const dsId of c.bound_pdatasets) {
+        note('dataset_sha256', dsId, prevDatasets.get(dsId)?.sha256 ?? null, dsById.get(dsId)?.sha256 ?? null);
+      }
+      // `commit_sha` is never derived by this engine (it does not shell out to
+      // git, A3-AC-03), so it binds only when a caller STATES one on both
+      // runs. That is deliberate: deriving it would invalidate every claim on
+      // every unrelated commit, which is not what §5.5 is for.
+      if (COMMIT && prevCommit && COMMIT !== prevCommit) {
+        changed.push({
+          identifier: 'commit_sha',
+          subject: 'repository',
+          previous_sha256: prevCommit,
+          current_sha256: COMMIT,
+        });
+      }
+
+      if (changed.length) {
+        changed.sort((a, b) => {
+          const k = `${a.identifier}\u0000${a.subject}`;
+          const l = `${b.identifier}\u0000${b.subject}`;
+          return k < l ? -1 : k > l ? 1 : 0;
+        });
+        const identifiers = [...new Set(changed.map((x) => x.identifier))].sort();
+        // ` and `, not `, `: the §3.4 reset grammar admits no comma before the
+        // date, so a marker naming several identifiers must not use one.
+        const proposed = `— NOT VERIFIED (artifact changed: ${identifiers.join(' and ')}, ${today})`;
+        const acknowledged = c.markers.some(
+          (m) => m.well_formed && m.state === 'NOT VERIFIED'
+            && (m.reason ?? '').startsWith('artifact changed'),
+        ) && c.marker_state === 'NOT VERIFIED';
+
+        c.invalidation = {
+          changed,
+          identifiers,
+          acknowledged,
+          proposed_marker: acknowledged ? null : proposed,
+        };
+        previousInfo.invalidated.push(c.id);
+
+        const detail = changed
+          .map((x) => `${x.identifier} of \`${x.subject}\` (${x.previous_sha256.slice(0, 12)} -> ${x.current_sha256.slice(0, 12)})`)
+          .join('; ');
+        if (acknowledged) {
+          finding('info', 'artifact-invalidated', c.id,
+            `bound artifacts changed since the previous manifest (${detail}); the marker block already records `
+            + `the invalidation (design §3.5, §5.5)`, `${c.source.path}:${c.source.line}`);
+        } else {
+          finding('error', 'artifact-invalidated', c.id,
+            `a bound identifier changed since the marker was written: ${detail}. Verification identifies WHAT `
+            + `was verified, so a claim whose artifacts moved underneath it cannot keep presenting as `
+            + `\`${c.marker_state}\` (design §5.5). Append: ${proposed}`,
+            `${c.source.path}:${c.source.line}`);
+          c.state = 'NOT VERIFIED';
+          c.state_source = 'artifact-invalidation';
+          unresolvedBaseline.push({ id: c.id, marker: proposed });
+        }
+      }
+
+      // ---- §3.5 — the marker block is append-only ------------------------
+      const prevMarkers = (p.markers ?? []).map((m) => m.raw);
+      const nowMarkers = c.markers.map((m) => m.raw);
+      const isPrefix = prevMarkers.every((raw, i) => nowMarkers[i] === raw);
+      if (!isPrefix) {
+        const lost = prevMarkers.filter((raw, i) => nowMarkers[i] !== raw);
+        previousInfo.markers_mutated.push(c.id);
+        finding('error', 'marker-history-mutated', c.id,
+          `the marker block is append-only (design §3.5) and this one is not a continuation of the previous `
+          + `manifest's: ${lost.map((l) => `\`${l}\``).join(', ')} ${lost.length === 1 ? 'is' : 'are'} removed or `
+          + `rewritten. Deleting a marker hides exactly the event that matters most.`,
+          `${c.source.path}:${c.source.line}`);
+      }
+    }
+
+    previousInfo.drifted.sort();
+    previousInfo.invalidated.sort();
+    previousInfo.markers_mutated.sort();
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Coverage — the three questions nothing can answer today (design §6.4)
@@ -884,7 +1421,16 @@ const coverage = {
   claims_l1_only: ids((c) => c.evidence.length > 0 && c.best_determinism === 'L1'),
   agent_verified_not_human_verified: ids((c) => c.state === 'AGENT VERIFIED'),
   unfalsified: ids((c) => c.unfalsified),
+  // Separate from `unfalsified` on purpose (see the claim loop): a check that
+  // was executed and failed to fail is listed here whatever else cites the
+  // claim, so a sibling record cannot make it disappear from coverage.
+  failed_to_falsify: ids((c) => c.failed_to_falsify.length > 0),
+  unexecuted_replays: ids((c) => c.unexecuted_replays.length > 0),
+  human_state_on_agent_evidence: ids(
+    (c) => c.evidence.length > 0 && rung(c.state) >= rung('HUMAN REVIEWED') && !c.human_produced_evidence,
+  ),
   drifted: ids((c) => c.drift !== null),
+  artifact_invalidated: ids((c) => c.invalidation !== null),
   capped_by_evidence: ids((c) => c.state_source === 'capped-by-evidence'),
   by_state: tally(STATES, (c) => c.state),
   by_marker_state: tally(STATES, (c) => c.marker_state),
@@ -930,7 +1476,7 @@ const verificationProjection = {
 // supplied by the caller (this engine does not shell out to git, so it can run
 // from a `git archive` with no repository anywhere above it, A3-AC-03).
 const bound = {
-  commit_sha: value('--commit', null),
+  commit_sha: COMMIT,
   claims_source_sha256: claimsRel && exists(underRoot(claimsRel))
     ? sha256(fs.readFileSync(underRoot(claimsRel))) : null,
   pdataset_source_sha256: pdatasetRel && exists(underRoot(pdatasetRel))
@@ -953,6 +1499,20 @@ const manifest = {
     output_dir: outputDir,
   },
   bound,
+  // What was EXECUTED this run. Every `recorded_outcome` in the verification
+  // projection is an exit status captured here, never a comment line.
+  replay: {
+    schema: REPLAY_SCHEMA,
+    runner: 'plugin/scripts/replay.mjs',
+    execution: EXECUTE ? 'enabled' : 'disabled by `--no-execute`',
+    timeout_ms: REPLAY_TIMEOUT,
+    commands_executed: executions.filter((e) => e.executed).length,
+    commands_unexecuted: executions.filter((e) => !e.executed).length,
+    ledger: LEDGER ? posix(path.basename(LEDGER)) : null,
+    timing_excluded: '`duration_ms`, `started_at` and `finished_at` are recorded only in the replay ledger '
+      + '(`--replay-ledger`). They vary between two runs over identical inputs, and the manifest\'s determinism '
+      + 'claim is that two runs differ in `generated_at` alone.',
+  },
   projections: {
     design: { status: designStatus, sha256: null },
     verification: { status: verificationStatus, sha256: null },
@@ -1009,21 +1569,61 @@ if (!PUBLISHED_PAGES.includes(pagesMechanism)) {
   }
 }
 
-const outPath = value('--out', null)
-  ?? path.join(ROOT, outputDir.replace(/\/+$/, ''), 'surface-manifest.json');
-fs.mkdirSync(path.dirname(path.resolve(outPath)), { recursive: true });
-fs.writeFileSync(path.resolve(outPath), serialized);
+const outPath = value('--out', null) ?? defaultBaselineAbs;
+
+// The laundering this refusal exists to stop: the default `--out` IS the
+// default baseline, so a run that has just detected drift or artifact
+// invalidation would overwrite the only record of what was verified — and the
+// next run, comparing against the rewritten file, would be clean. One run, and
+// the edit is permanent. The engine will not silently overwrite the thing it
+// just contradicted; the human appends the proposed marker (§3.5) and runs
+// again, or says `--accept-baseline-rewrite` out loud.
+const overwritesBaseline = previousAbs !== null
+  && path.resolve(outPath) === path.resolve(previousAbs);
+let written = true;
+if (overwritesBaseline && unresolvedBaseline.length && !ACCEPT_BASELINE_REWRITE) {
+  written = false;
+  process.stderr.write(
+    `surface.mjs: refusing to overwrite the baseline it contradicts — ${previousLabel}\n`
+    + `  ${unresolvedBaseline.length} claim(s) drifted or were invalidated against it:\n`
+    + unresolvedBaseline.map((u) => `    ${u.id}  append: ${u.marker}\n`).join('')
+    + '  Append the marker(s) above (design §3.5 — a reset appends, it never erases), then re-run.\n'
+    + '  Or write elsewhere with --out, or overwrite deliberately with --accept-baseline-rewrite.\n',
+  );
+} else {
+  fs.mkdirSync(path.dirname(path.resolve(outPath)), { recursive: true });
+  fs.writeFileSync(path.resolve(outPath), serialized);
+}
+
+if (LEDGER) {
+  writeLedger(executions, LEDGER, {
+    root: surfaceRoot,
+    generated_at: GENERATED_AT,
+    generator: 'plugin/scripts/surface.mjs',
+  });
+}
 
 if (PRINT) process.stdout.write(serialized);
 
 if (!QUIET) {
   const line = (s) => process.stdout.write(`${s}\n`);
-  line(`surface: ${posix(path.relative(process.cwd(), path.resolve(outPath)))}`);
+  line(written
+    ? `surface: ${posix(path.relative(process.cwd(), path.resolve(outPath)))}`
+    : 'surface: NOT WRITTEN — the baseline it contradicts was left intact');
   line(`  claims ${claims.length}  evidence ${evidence.length}  pdatasets ${pdatasets.length}`
     + `  un-ID'd claim lines ${unidentified.length}`);
+  line(`  replays: ${manifest.replay.commands_executed} executed, `
+    + `${manifest.replay.commands_unexecuted} unexecuted`
+    + `${previousInfo ? `  baseline: ${previousInfo.path}` : '  baseline: none'}`);
   for (const c of claims) {
     const det = c.best_determinism ?? '--';
-    line(`  ${c.id.padEnd(10)} ${c.state.padEnd(20)} ${det}  ${c.unfalsified ? 'unfalsified' : ''}`);
+    const flags = [
+      c.unfalsified ? 'unfalsified' : '',
+      c.failed_to_falsify.length ? 'failed-to-falsify' : '',
+      c.invalidation ? 'artifact-changed' : '',
+      c.drift ? 'text-drift' : '',
+    ].filter(Boolean).join(' ');
+    line(`  ${c.id.padEnd(10)} ${c.state.padEnd(20)} ${det}  ${flags}`);
   }
   for (const u of unidentified) line(`  (un-ID'd)  ${u.path}:${u.line}  "${u.text}"`);
   line(`  gaps ${gaps.length}  findings: ${counts.error} error, ${counts.warn} warn, ${counts.info} info`);

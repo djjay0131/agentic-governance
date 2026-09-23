@@ -244,7 +244,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
 
 <header class="masthead">
   <h1>Human Verification Surface</h1>
-  <p class="sub">5 claims &middot; 5 evidence records &middot; 2 PDatasets &middot; 1 un-ID'd claim line &middot; generated from a manifest dated <span class="mono">2026-09-23T00:00:00.000Z</span></p>
+  <p class="sub">5 claims &middot; 6 evidence records &middot; 2 PDatasets &middot; 1 un-ID'd claim line &middot; generated from a manifest dated <span class="mono">2026-09-23T23:05:38.252Z</span></p>
   <span class="plane">Data plane &mdash; generated view &mdash; not a source of truth</span>
 </header>
 
@@ -278,7 +278,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <li><strong>To verify anything here, you run the command yourself</strong>, in your own shell, from the working directory the command block names. That is the required execution path under <code>Renderer: none</code>; an interactive in-page console remains deferred, deliberately.</li>
     </ul>
     <p class="fine">Recompute the manifest itself the same way &mdash; from the repository root, per <code>surface.mjs</code>'s usage header:</p>
-    <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface.mjs --root plugin/scripts/fixtures/slice --generated-at 2026-09-23T00:00:00.000Z --print</pre>
+    <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface.mjs --root plugin/scripts/fixtures/slice --generated-at 2026-09-23T23:05:38.252Z --print</pre>
     <p class="fine">and regenerate this page from it:</p>
     <pre class="shell"><span class="prompt">$ </span>node plugin/scripts/surface-html.mjs --manifest plugin/scripts/fixtures/slice/docs/verification/surface-manifest.json --out docs/verification/index.html</pre>
   </section>
@@ -359,7 +359,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     <h3>Coverage, verbatim from <code>verification.coverage</code></h3>
     <table class="kv">
       <tr><th>claims total</th><td>5</td></tr>
-      <tr><th>evidence records</th><td>5</td></tr>
+      <tr><th>evidence records</th><td>6</td></tr>
       <tr><th>PDatasets</th><td>2 <span class="hint">missing: <span class="null">none</span></span></td></tr>
       <tr><th>claims with no evidence</th><td><span class="null">none</span></td></tr>
       <tr><th>claims with <code>L1</code>-only evidence <span class="hint">cannot reach <code>HUMAN VERIFIED</code></span></th><td><a class="chip" href="#claim-P1-AC-02">P1-AC-02</a></td></tr>
@@ -368,13 +368,23 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>drifted <span class="hint">claim text changed since verification</span></th><td><span class="null">none</span></td></tr>
       <tr><th>capped by evidence</th><td><span class="null">none</span></td></tr>
       <tr><th>un-ID'd claim lines</th><td><a class="chip" href="#unidentified">1</a> <span class="hint">counted, never silently dropped</span></td></tr>
-      <tr><th>findings</th><td><a class="chip" href="#findings">0 error &middot; 1 warn &middot; 1 info</a></td></tr>
+      <tr><th>findings</th><td><a class="chip" href="#findings">0 error &middot; 2 warn &middot; 2 info</a></td></tr>
     </table>
   </section>
 
   <section id="findings" class="panel">
     <h2>Findings</h2>
     
+    <div class="finding finding-warn">
+      <div class="finding-head">
+        <span class="sev sev-warn">warn</span>
+        <span class="finding-code">failed-to-falsify</span>
+        <a class="chip" href="#claim-P1-AC-04">P1-AC-04</a>
+      </div>
+      <p class="finding-msg">MODIFIED REPLAY of `checks/ac04-transform-runs.mjs` (`node checks/ac04-transform-runs.mjs --perturb accept-duplicates`) exited 0 when it must fail. The perturbation (stop rejecting duplicate source ids in the transformation) did not change the result, so the check does not depend on what it asserts (design §14.3).</p>
+      
+      <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs">plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs</a></p>
+    </div>
     <div class="finding finding-warn">
       <div class="finding-head">
         <span class="sev sev-warn">warn</span>
@@ -387,6 +397,16 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         A passing REPLAY on this claim tells you the script executes. It does not tell you the claim holds. This is precisely the defect class MODIFIED REPLAY exists to expose (design §14.3), and it is why this claim's ceiling is
         <code>AGENT VERIFIED</code> rather than <code>HUMAN VERIFIED</code>.</p>
       <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:29</a></p>
+    </div>
+    <div class="finding finding-info">
+      <div class="finding-head">
+        <span class="sev sev-info">info</span>
+        <span class="finding-code">human-state-on-agent-evidence</span>
+        <a class="chip" href="#claim-P1-AC-01">P1-AC-01</a>
+      </div>
+      <p class="finding-msg">`HUMAN VERIFIED` rests entirely on evidence produced by agent (no `produced-by: &lt;actor&gt; (human)` record cites this claim). It stands only because the evidence was executed and falsified this run (design §5.3 mechanism 2).</p>
+      
+      <p class="fine">locator: <a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:19</a></p>
     </div>
     <div class="finding finding-info">
       <div class="finding-head">
@@ -426,7 +446,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:19</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)</span></td></tr>
       <tr><th>unfalsified</th><td><code>false</code></td></tr>
     </table>
 
@@ -483,12 +503,12 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </div>
         <table class="kv">
           <tr><th>locator</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs">plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs</a> <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
-          <tr><th><code>sha256</code></th><td><code class="hash">71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c</code></td></tr>
+          <tr><th><code>sha256</code></th><td><code class="hash">6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c</code></td></tr>
           <tr><th>confirm that hash yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs</pre></td></tr>
           <tr><th><code>produced_by</code></th><td><code>fixture-builder</code> <span class="actor actor-agent">agent</span></td></tr>
           <tr><th><code>produced_at</code></th><td><code>2026-09-22</code></td></tr>
           <tr><th>declared in</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs">checks/ac01-duplicate-rejection.mjs</a> <span class="hint">evidence binds by claim ID cited in the artifact (design §6.1)</span></td></tr>
-          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c</code></td></tr>
+          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c</code></td></tr>
         </table>
 
         <h5 class="sub2">Executable verification &mdash; run these yourself</h5>
@@ -530,7 +550,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
           <summary>The code that is run &mdash; read it before you trust its result</summary>
           <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs">plugin/scripts/fixtures/slice/checks/ac01-duplicate-rejection.mjs</a>. This page deliberately does not paste an excerpt:
             an excerpt is a summary, and a summary of the code is exactly the thing you should not be verifying against.
-            Open the file. Its hash is <code class="hash">71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c</code>; the command in the row above recomputes it.</p>
+            Open the file. Its hash is <code class="hash">6aba5fc1c4688901922631843220ff25ec439e95a4b9dee58bb4cca511e67e9c</code>; the command in the row above recomputes it.</p>
         </details>
       </div>
     
@@ -585,7 +605,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:23</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">best evidence is `L1` (attested): an agent's say-so is never enough (design §6.3, §5.3 mechanism 4)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">best evidence is `L1` (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4)</span></td></tr>
       <tr><th>unfalsified</th><td><code>false</code></td></tr>
     </table>
 
@@ -685,7 +705,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </table>
         
         <p class="warnline"><strong><code>HUMAN VERIFIED</code> is not available for this claim.</strong>
-          Its evidence ceiling is <code>AGENT VERIFIED</code>: best evidence is `L1` (attested): an agent's say-so is never enough (design §6.3, §5.3 mechanism 4).
+          Its evidence ceiling is <code>AGENT VERIFIED</code>: best evidence is `L1` (attested), produced by agent: testimony is never enough for a human state (design §6.3, §5.3 mechanism 4).
           Appending <code>HUMAN VERIFIED</code> here would assert more than the evidence can carry. Fix the evidence first.</p>
         <p class="fine"><strong>An absent marker already means <code>NOT VERIFIED</code></strong> (design §3.4), so you never write that line to mean
           &ldquo;nobody has looked yet&rdquo;. The only reason to append it is to record that something <em>stopped</em> being verified (design §5.4, §5.5).
@@ -710,7 +730,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:25</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-notverified">NOT VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)</span></td></tr>
       <tr><th>unfalsified</th><td><code>false</code></td></tr>
     </table>
 
@@ -793,12 +813,12 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </div>
         <table class="kv">
           <tr><th>locator</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs">plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs</a> <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
-          <tr><th><code>sha256</code></th><td><code class="hash">1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b</code></td></tr>
+          <tr><th><code>sha256</code></th><td><code class="hash">4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0</code></td></tr>
           <tr><th>confirm that hash yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs</pre></td></tr>
           <tr><th><code>produced_by</code></th><td><code>fixture-builder</code> <span class="actor actor-agent">agent</span></td></tr>
           <tr><th><code>produced_at</code></th><td><code>2026-09-20</code></td></tr>
           <tr><th>declared in</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs">checks/ac03-sort-order.mjs</a> <span class="hint">evidence binds by claim ID cited in the artifact (design §6.1)</span></td></tr>
-          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b</code></td></tr>
+          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0</code></td></tr>
         </table>
 
         <h5 class="sub2">Executable verification &mdash; run these yourself</h5>
@@ -840,7 +860,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
           <summary>The code that is run &mdash; read it before you trust its result</summary>
           <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs">plugin/scripts/fixtures/slice/checks/ac03-sort-order.mjs</a>. This page deliberately does not paste an excerpt:
             an excerpt is a summary, and a summary of the code is exactly the thing you should not be verifying against.
-            Open the file. Its hash is <code class="hash">1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b</code>; the command in the row above recomputes it.</p>
+            Open the file. Its hash is <code class="hash">4f722787c09e6886b276f41d8ae6f001de4af77e69582c3b261ef1db8297c9d0</code>; the command in the row above recomputes it.</p>
         </details>
       </div>
     
@@ -895,7 +915,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:29</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">MODIFIED REPLAY did not fail: the check passes while the thing it asserts is broken (design §14.3)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-agent">AGENT VERIFIED</span> <span class="hint">MODIFIED REPLAY exited 0 — it FAILED TO FAIL. The check passes while the thing it asserts is broken, which is the definition of a vacuous check (design §14.3)</span></td></tr>
       <tr><th>unfalsified</th><td><code>true</code> <span class="hint">modified replay failed to fail</span></td></tr>
     </table>
 
@@ -938,12 +958,12 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </div>
         <table class="kv">
           <tr><th>locator</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs">plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs</a> <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
-          <tr><th><code>sha256</code></th><td><code class="hash">d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a</code></td></tr>
+          <tr><th><code>sha256</code></th><td><code class="hash">b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e</code></td></tr>
           <tr><th>confirm that hash yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs</pre></td></tr>
           <tr><th><code>produced_by</code></th><td><code>fixture-builder</code> <span class="actor actor-agent">agent</span></td></tr>
           <tr><th><code>produced_at</code></th><td><code>2026-09-22</code></td></tr>
           <tr><th>declared in</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs">checks/ac04-transform-runs.mjs</a> <span class="hint">evidence binds by claim ID cited in the artifact (design §6.1)</span></td></tr>
-          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a</code></td></tr>
+          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e</code></td></tr>
         </table>
 
         <h5 class="sub2">Executable verification &mdash; run these yourself</h5>
@@ -985,7 +1005,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
           <summary>The code that is run &mdash; read it before you trust its result</summary>
           <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs">plugin/scripts/fixtures/slice/checks/ac04-transform-runs.mjs</a>. This page deliberately does not paste an excerpt:
             an excerpt is a summary, and a summary of the code is exactly the thing you should not be verifying against.
-            Open the file. Its hash is <code class="hash">d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a</code>; the command in the row above recomputes it.</p>
+            Open the file. Its hash is <code class="hash">b7321c60f107a97ce381f78549bef072e6219ffcae509fa283365d3d057acc2e</code>; the command in the row above recomputes it.</p>
         </details>
       </div>
     
@@ -1017,7 +1037,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <pre class="shell"><span class="prompt">$ </span>node checks/ac04-transform-runs.mjs   <span class="cmt"># expect pass</span>
 <span class="prompt">$ </span>node checks/ac04-transform-runs.mjs --perturb accept-duplicates   <span class="cmt"># expect fail</span></pre>
         <p class="warnline"><strong><code>HUMAN VERIFIED</code> is not available for this claim.</strong>
-          Its evidence ceiling is <code>AGENT VERIFIED</code>: MODIFIED REPLAY did not fail: the check passes while the thing it asserts is broken (design §14.3).
+          Its evidence ceiling is <code>AGENT VERIFIED</code>: MODIFIED REPLAY exited 0 — it FAILED TO FAIL. The check passes while the thing it asserts is broken, which is the definition of a vacuous check (design §14.3).
           Appending <code>HUMAN VERIFIED</code> here would assert more than the evidence can carry. Fix the evidence first.</p>
         <p class="fine"><strong>An absent marker already means <code>NOT VERIFIED</code></strong> (design §3.4), so you never write that line to mean
           &ldquo;nobody has looked yet&rdquo;. The only reason to append it is to record that something <em>stopped</em> being verified (design §5.4, §5.5).
@@ -1042,7 +1062,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <tr><th>source</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/llm/claims.md">plugin/scripts/fixtures/slice/llm/claims.md:35</a></td></tr>
       <tr><th>checkbox</th><td><code>[x]</code> <span class="hint">a different axis from the verification state: ticked means the work was done, not that it was verified</span></td></tr>
       <tr><th>current state</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">from <code>marker</code></span></td></tr>
-      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)</span></td></tr>
+      <tr><th>evidence ceiling</th><td><span class="state state-human">HUMAN VERIFIED</span> <span class="hint">L3 evidence EXECUTED this run: REPLAY exited 0 and MODIFIED REPLAY exited 1 — it failed as it must (design §14.2, §14.4)</span></td></tr>
       <tr><th>unfalsified</th><td><code>false</code></td></tr>
     </table>
 
@@ -1082,7 +1102,7 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
       <code>drift</code> field on this claim: <span class="null">null</span>.</p>
     
     
-    <h4 class="sub">Evidence <span class="h3note">1 record &mdash; open the files; do not take this page's word for any of it</span></h4>
+    <h4 class="sub">Evidence <span class="h3note">2 records &mdash; open the files; do not take this page's word for any of it</span></h4>
     
       <div class="evidence">
         <div class="ev-head">
@@ -1099,12 +1119,12 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </div>
         <table class="kv">
           <tr><th>locator</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs">plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs</a> <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
-          <tr><th><code>sha256</code></th><td><code class="hash">295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16</code></td></tr>
+          <tr><th><code>sha256</code></th><td><code class="hash">61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6</code></td></tr>
           <tr><th>confirm that hash yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs</pre></td></tr>
-          <tr><th><code>produced_by</code></th><td><code>fixture-owner</code> <span class="actor actor-human">human</span></td></tr>
+          <tr><th><code>produced_by</code></th><td><code>fixture-builder</code> <span class="actor actor-agent">agent</span></td></tr>
           <tr><th><code>produced_at</code></th><td><code>2026-09-23</code></td></tr>
           <tr><th>declared in</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs">checks/cl01-record-count.mjs</a> <span class="hint">evidence binds by claim ID cited in the artifact (design §6.1)</span></td></tr>
-          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16</code></td></tr>
+          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6</code></td></tr>
         </table>
 
         <h5 class="sub2">Executable verification &mdash; run these yourself</h5>
@@ -1134,7 +1154,72 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         <div class="scope">
           <div class="scope-col scope-yes">
             <h5>What this establishes</h5>
-            <ul><li><strong>REPLAY.</strong> Running <code>node checks/cl01-record-count.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;alter one score in the source dataset in memory; the recomputed generated dataset must change&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li><li><strong>Actor class.</strong> <code>produced_by</code> is <code>fixture-owner (human)</code> &mdash; this check was authored by a human, not by the agent whose work it examines.</li></ul>
+            <ul><li><strong>REPLAY.</strong> Running <code>node checks/cl01-record-count.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;alter one score in the source dataset in memory; the recomputed generated dataset must change&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li></ul>
+          </div>
+          <div class="scope-col scope-no">
+            <h5>What this does <em>not</em> establish</h5>
+            <ul><li><strong>That the claim is true.</strong> A deterministic script can be consistently wrong. REPLAY proves the script reproduces; it does not prove the script asserts the right thing, and a green result is not proof of correctness.</li><li><strong>That the check catches anything beyond the one perturbation recorded here.</strong> MODIFIED REPLAY falsifies a check against a single, chosen way of breaking it. Other defects may pass unnoticed.</li><li><strong>That the claim's wording is the requirement anyone cares about.</strong> A check binds to the sentence above, verbatim and by <code>text_sha256</code>. Whether that sentence is the right sentence is a human judgement, and it is exactly why re-running something can never by itself produce <code>HUMAN VERIFIED</code>.</li><li><strong>Independence.</strong> <code>produced_by</code> is <code>fixture-builder (agent)</code>. INDEPENDENT VERIFICATION requires a distinct actor, in a distinct session, with no access to the builder's reasoning (design §14.2). That has not happened for this record.</li></ul>
+          </div>
+        </div>
+
+        <details class="code-peek" open>
+          <summary>The code that is run &mdash; read it before you trust its result</summary>
+          <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs">plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs</a>. This page deliberately does not paste an excerpt:
+            an excerpt is a summary, and a summary of the code is exactly the thing you should not be verifying against.
+            Open the file. Its hash is <code class="hash">61bac9cf9819368c354f2570c991ba2cd75bd465e20e4b5993e4d67819f6d8c6</code>; the command in the row above recomputes it.</p>
+        </details>
+      </div>
+      <div class="evidence">
+        <div class="ev-head">
+          <span class="ev-kind">test</span>
+          <span class="det det-L3">L3</span>
+          <span class="ev-loc"><a class="path" href="../../plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs">human/cl01-independent-relationship.mjs</a></span>
+          <span class="ev-dl"><a class="path" href="../../plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs" download>open</a></span>
+        </div>
+        <div class="det-explain">
+          <strong>L3 &mdash; Deterministic.</strong>
+          Same inputs produce byte-identical outputs.
+          <span class="det-verify">Verified by: Re-execute; compare `sha256`.</span>
+          <span class="det-ceiling ">May reach HUMAN VERIFIED — but only with a MODIFIED REPLAY that failed as it should (design §14.4).</span>
+        </div>
+        <table class="kv">
+          <tr><th>locator</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs">plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs</a> <span class="hint">repo-relative; <code>link_resolution: local</code></span></td></tr>
+          <tr><th><code>sha256</code></th><td><code class="hash">25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944</code></td></tr>
+          <tr><th>confirm that hash yourself</th><td><pre class="shell inline"><span class="prompt">$ </span>sha256sum plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs</pre></td></tr>
+          <tr><th><code>produced_by</code></th><td><code>fixture-owner</code> <span class="actor actor-human">human</span></td></tr>
+          <tr><th><code>produced_at</code></th><td><code>2026-09-23</code></td></tr>
+          <tr><th>declared in</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs">human/cl01-independent-relationship.mjs</a> <span class="hint">evidence binds by claim ID cited in the artifact (design §6.1)</span></td></tr>
+          <tr><th>declared-in <code>sha256</code></th><td><code class="hash">25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944</code></td></tr>
+        </table>
+
+        <h5 class="sub2">Executable verification &mdash; run these yourself</h5>
+        
+    <div class="cmd cmd-replay">
+      <div class="cmd-head"><span class="cmd-title">REPLAY — re-execute the recorded command with the recorded inputs; expect the recorded result. Proves the artifact is reproducible.</span></div>
+      <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
+      <pre class="shell"><span class="prompt">$ </span>node human/cl01-independent-relationship.mjs</pre>
+      <table class="kv kv-tight">
+        <tr><th>expected result</th><td><code>pass</code></td></tr>
+        <tr><th>outcome recorded in the manifest</th><td><code>pass</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+      </table>
+    </div>
+        
+    <div class="cmd cmd-modified">
+      <div class="cmd-head"><span class="cmd-title">MODIFIED REPLAY — re-execute with a deliberate perturbation that should change the outcome. EXPECT FAILURE. Proves the check is not vacuous.</span><span class="cmd-perturb">perturbation: delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds</span></div>
+      <div class="cmd-cwd">run from working directory <code>plugin/scripts/fixtures/slice</code> &nbsp;&rarr;&nbsp; <a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></div>
+      <pre class="shell"><span class="prompt">$ </span>node human/cl01-independent-relationship.mjs --perturb drop-generated-row</pre>
+      <table class="kv kv-tight">
+        <tr><th>expected result</th><td><code>fail</code></td></tr>
+        <tr><th>outcome recorded in the manifest</th><td><code>fail</code> <span class="hint">recorded when it was last run by its producer &mdash; not by this page</span></td></tr>
+        <tr><th>as expected</th><td><span class="outcome-ok">true</span></td></tr>
+      </table>
+    </div>
+
+        <div class="scope">
+          <div class="scope-col scope-yes">
+            <h5>What this establishes</h5>
+            <ul><li><strong>REPLAY.</strong> Running <code>node human/cl01-independent-relationship.mjs</code> from <code>plugin/scripts/fixtures/slice</code> is expected to <code>pass</code>. It reproduces &mdash; that is, the recorded artifact can be regenerated rather than merely described (design §14.2).</li><li><strong>Byte-stability.</strong> The level is <code>L3</code>: same inputs, byte-identical outputs. A hash comparison over the result is therefore meaningful (design §14.1).</li><li><strong>MODIFIED REPLAY.</strong> With the deliberate perturbation &ldquo;delete one row from the generated dataset in memory, so the relationship between the two datasets no longer holds&rdquo; the check is expected to <code>fail</code>, and the manifest records that it did. The check is <em>not vacuous</em> with respect to that one perturbation (design §14.2, §14.3).</li><li><strong>Actor class.</strong> <code>produced_by</code> is <code>fixture-owner (human)</code> &mdash; this check was authored by a human, not by the agent whose work it examines.</li></ul>
           </div>
           <div class="scope-col scope-no">
             <h5>What this does <em>not</em> establish</h5>
@@ -1144,9 +1229,9 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
 
         <details class="code-peek" open>
           <summary>The code that is run &mdash; read it before you trust its result</summary>
-          <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs">plugin/scripts/fixtures/slice/checks/cl01-record-count.mjs</a>. This page deliberately does not paste an excerpt:
+          <p>The command above runs <a class="path" href="../../plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs">plugin/scripts/fixtures/slice/human/cl01-independent-relationship.mjs</a>. This page deliberately does not paste an excerpt:
             an excerpt is a summary, and a summary of the code is exactly the thing you should not be verifying against.
-            Open the file. Its hash is <code class="hash">295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16</code>; the command in the row above recomputes it.</p>
+            Open the file. Its hash is <code class="hash">25fd976aae54ce7de4417877c86e0c6be6325ade26f3136a8eda67af49165944</code>; the command in the row above recomputes it.</p>
         </details>
       </div>
     
@@ -1176,7 +1261,9 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
         </table>
         <p class="fine"><strong>Before you may write <code>HUMAN VERIFIED</code> on S1-CL-01</strong>, run both of these yourself from <code>plugin/scripts/fixtures/slice</code> and check the outcomes with your own eyes &mdash; the second one must <em>fail</em> (design §14.4):</p>
         <pre class="shell"><span class="prompt">$ </span>node checks/cl01-record-count.mjs   <span class="cmt"># expect pass</span>
-<span class="prompt">$ </span>node checks/cl01-record-count.mjs --perturb source-score   <span class="cmt"># expect fail</span></pre>
+<span class="prompt">$ </span>node checks/cl01-record-count.mjs --perturb source-score   <span class="cmt"># expect fail</span>
+<span class="prompt">$ </span>node human/cl01-independent-relationship.mjs   <span class="cmt"># expect pass</span>
+<span class="prompt">$ </span>node human/cl01-independent-relationship.mjs --perturb drop-generated-row   <span class="cmt"># expect fail</span></pre>
         
         <p class="fine"><strong>An absent marker already means <code>NOT VERIFIED</code></strong> (design §3.4), so you never write that line to mean
           &ldquo;nobody has looked yet&rdquo;. The only reason to append it is to record that something <em>stopped</em> being verified (design §5.4, §5.5).
@@ -1329,22 +1416,22 @@ footer.foot{color:var(--muted);font-size:.83rem;border-top:1px solid var(--line)
     <table class="kv">
       <tr><th>manifest schema</th><td><code>surface-manifest/v1</code></td></tr>
       <tr><th>governance version</th><td><code>0.9.1</code></td></tr>
-      <tr><th><code>generated_at</code> <span class="hint">the manifest's field &mdash; not this page's run time</span></th><td><code>2026-09-23T00:00:00.000Z</code></td></tr>
-      <tr><th>manifest <code>content_sha256</code></th><td><code class="hash">f00eeabfc0a1239fde7eec9d63ae5a08aa011087c01a6cf78798e3532693a0ca</code></td></tr>
+      <tr><th><code>generated_at</code> <span class="hint">the manifest's field &mdash; not this page's run time</span></th><td><code>2026-09-23T23:05:38.252Z</code></td></tr>
+      <tr><th>manifest <code>content_sha256</code></th><td><code class="hash">a8d76b32f476c5e8bb4b5b7bebcddbc027c1280696ec9836af06e8d7d87d3342</code></td></tr>
       <tr><th>surface root</th><td><a class="path" href="../../plugin/scripts/fixtures/slice">plugin/scripts/fixtures/slice</a></td></tr>
       <tr><th><code>bound.commit_sha</code></th><td><span class="null">null</span> <span class="hint">null: this manifest is not pinned to a commit</span></td></tr>
       <tr><th><code>bound.claims_source_sha256</code></th><td><code class="hash">67874a7f1327a03a99fd1d72672b6602f185b39045009f610206ad103dd3b802</code></td></tr>
       <tr><th><code>bound.pdataset_source_sha256</code></th><td><code class="hash">5e64c355abd1a6d5f7cbbefdb7fcd67ba9ad8d30bd4cfe983110ab70937a5fbb</code></td></tr>
-      <tr><th><code>bound.delta_sha256</code></th><td><code class="hash">d23790179ab05364fb311cdaa143ad374cf4c7c40fc6503f1191e33b6068a064</code></td></tr>
+      <tr><th><code>bound.delta_sha256</code></th><td><code class="hash">c5f06253611ed9bd46c691d384a21e80851840a10c0e314991eabbffdc533f99</code></td></tr>
       <tr><th>design projection</th><td><code>DISABLED</code>, sha256 <span class="null">null</span></td></tr>
-      <tr><th>verification projection</th><td><code>ENABLED</code>, sha256 <code class="hash">34df4f2ed3a19c7f8e276725c00e2216bac02c60716aa4f5195f53e3c1a55805</code></td></tr>
-      <tr><th><code>previous</code></th><td><span class="null">null</span> <span class="hint">no prior manifest to diff against</span></td></tr>
+      <tr><th>verification projection</th><td><code>ENABLED</code>, sha256 <code class="hash">7907b266c8066baa7c8bd045fa6157b3f408ff1f186fd7f49f088f09cc277fdc</code></td></tr>
+      <tr><th><code>previous</code></th><td>[object Object] <span class="hint">no prior manifest to diff against</span></td></tr>
       <tr><th><code>gaps</code></th><td><span class="null">none</span></td></tr>
       <tr><th>delta declarations</th><td><code>Renderer: none</code> &middot;
         <code>Pages mechanism: none</code> &middot;
         <code>Output dir: docs/verification</code> &middot;
         <code>Status: ENABLED</code></td></tr>
-      <tr><th>evidence sources</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks">checks</a> &middot; <a class="path" href="../../plugin/scripts/fixtures/slice/evidence">evidence</a></td></tr>
+      <tr><th>evidence sources</th><td><a class="path" href="../../plugin/scripts/fixtures/slice/checks">checks</a> &middot; <a class="path" href="../../plugin/scripts/fixtures/slice/evidence">evidence</a> &middot; <a class="path" href="../../plugin/scripts/fixtures/slice/human">human</a></td></tr>
       <tr><th>claim kinds <span class="hint">delta-bound, not enumerated in canon</span></th><td><code>AC</code> <code>CL</code> <code>DS</code></td></tr>
     </table>
   </section>

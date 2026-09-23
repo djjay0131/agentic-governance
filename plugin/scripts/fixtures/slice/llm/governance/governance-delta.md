@@ -31,7 +31,7 @@ Verification: ENABLED
 Surface root: plugin/scripts/fixtures/slice
 Claim kinds: AC, CL, DS
 Claims source: llm/claims.md
-Evidence sources: checks, evidence
+Evidence sources: checks, evidence, human
 PDataset source: llm/pdatasets.md
 Renderer: none
 Pages mechanism: none

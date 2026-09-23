@@ -2,8 +2,9 @@
 // EVIDENCE S1-CL-01
 // kind: test
 // determinism: L3
-// produced-by: fixture-owner (human)
+// produced-by: fixture-builder (agent)
 // produced-at: 2026-09-23
+// pdatasets: S1-DS-01, S1-DS-02
 // replay: node checks/cl01-record-count.mjs
 // replay-expect: pass
 // replay-outcome: pass
@@ -24,6 +25,15 @@
 // This check is written against the DATA, not against the transformation's
 // internals: it recomputes the generated dataset from the source and compares
 // it, byte for byte, with the committed data/generated.csv.
+//
+// It is `produced-by: fixture-builder (agent)`, and that was corrected on
+// 2026-09-23 rather than being how it was first written. It imports
+// `normalize()` from `transform.mjs` — the agent's own helper — so it cannot
+// disagree with the pipeline about what the rules are; labelling it human
+// would have made `produced_by.class` decorative at the exact moment the
+// engine started reading it. The human-authored, independent variation for
+// this claim is `human/cl01-independent-relationship.mjs`, which shares no
+// code with the pipeline at all.
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';

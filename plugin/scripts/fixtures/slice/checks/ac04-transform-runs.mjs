@@ -4,6 +4,7 @@
 // determinism: L3
 // produced-by: fixture-builder (agent)
 // produced-at: 2026-09-22
+// pdatasets: S1-DS-01
 // replay: node checks/ac04-transform-runs.mjs
 // replay-expect: pass
 // replay-outcome: pass
@@ -27,8 +28,13 @@
 // `unfalsified`: verified to run, not verified to matter (design §14.4).
 //
 // The `modified-replay-outcome: pass` header line above records that
-// observed outcome honestly. It is the input the vacuous-check detector
-// reads; changing it to `fail` would be falsifying the record.
+// observed outcome honestly — but the detector no longer BELIEVES it. Since
+// 2026-09-23 `surface.mjs` runs `replay.mjs` over both commands and reads the
+// exit status, so this line is `attested_outcome` and the exit status is
+// `recorded_outcome`. Editing this line to `fail` does not promote the claim;
+// it produces a `replay-outcome-misreported` error naming the file, because
+// the MODIFIED REPLAY still exits 0 when it is actually run. That is the
+// whole point: a verdict must not be a function of a comment.
 
 import fs from 'node:fs';
 import { normalize, SOURCE_PATH } from '../transform.mjs';
