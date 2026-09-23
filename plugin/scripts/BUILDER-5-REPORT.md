@@ -14,9 +14,10 @@ Verifier to attack, not a claim that the work is verified.
 Three scripts shipped with no CI coverage at all and a critical defect that
 independent verification found by flipping one word in one code comment;
 `surface.test.mjs` now holds 44 assertions covering every defect in
-`VERIFIER-1-REPORT.md`, **every one of them watched failing under an injected
-defect before it was kept**, CI runs it, and the two unpinned `@v4` action tags
-are now 40-hex commit SHAs resolved from the GitHub API.
+`VERIFIER-1-REPORT.md`, **all 44 watched failing under a named injected defect**
+(mechanically re-checked, §2.5), all 44 green on the live tree, CI runs it, and
+the two unpinned `@v4` action tags are now 40-hex commit SHAs resolved from the
+GitHub API.
 
 | The brief's ten | Where | Assertions | Shown failing by |
 |---|---|---|---|
@@ -112,8 +113,9 @@ live tree, because another builder was editing `surface.mjs` while I worked
 ```
 
 **`A4` is red in every mutant run below, including the ones where it is not the
-target.** That is not harness noise: the committed fixture manifest is stale
-against the current `surface.mjs`, which is a real finding and is §7.
+target.** That is not harness noise. The snapshot was taken 44 seconds before
+another builder re-baselined the committed fixture manifest, and `A4`'s job is
+to notice exactly that — see §7. On the live tree it is green.
 
 ### 2.2 Every assertion, and the defect that turned it red
 
@@ -122,7 +124,7 @@ against the current `surface.mjs`, which is a real finding and is §7.
 | A1 | the committed fixture passes its own default run | delete `checks/ac01-*.mjs`; runner refuses everything; scale upside down; ceiling removed |
 | A2 | the five fixture verdicts are exactly what the README documents | the same four |
 | A3 | every declared replay is EXECUTED, not believed | runner refuses everything; ceiling removed |
-| A4 | the committed manifest is current | perturb the committed `content_sha256`; and see §7 — it is red on the live tree right now |
+| A4 | the committed manifest is current | perturb the committed `content_sha256`; and see §7 — it went red on a genuinely stale manifest and was closed by a re-baseline |
 | B1 | D1: flipping `modified-replay-outcome` does NOT reach HUMAN VERIFIED | **believe the `*-outcome:` comment again**; ceiling removed |
 | B2 | D1: the misreported outcome is named | believe the comment; runner refuses everything; ceiling removed |
 | B3 | D1: the comment is testimony, the exit status is evidence | believe the comment; runner refuses everything; ceiling removed |
@@ -501,9 +503,82 @@ tells the truth, which is why the assertion can see the difference at all.
   exit=1
 ```
 
-### 2.5 The passing suite
+### 2.5 The suite passing
 
-<!-- VERBATIM-GREEN -->
+On the live tree, against `surface.mjs` `38b2a0fa…` and the fixture manifest
+re-baselined at 19:42:46, all 44 pass:
+
+```text
+PASS  the committed fixture passes its own default run (0 error, exit 0)
+PASS  the five fixture verdicts are exactly what the fixture README documents
+PASS  every declared replay is EXECUTED, not believed
+PASS  the committed manifest is current: a regeneration reproduces its own content_sha256
+PASS  D1: flipping `modified-replay-outcome` does NOT reach HUMAN VERIFIED
+PASS  D1: the misreported outcome is named — `replay-outcome-misreported`
+PASS  D1: the comment is recorded as testimony and the exit status as evidence
+PASS  D1: a misreported outcome is an error even with no state being claimed
+PASS  a check that passes under its own perturbation is reported `failed-to-falsify`
+PASS  the gate OPENS: a genuinely falsifying L3 check reaches HUMAN VERIFIED, exit 0
+PASS  the reason names the execution, not the declaration
+PASS  L1-only evidence cannot reach HUMAN VERIFIED — the asserted state is REFUSED
+PASS  the scale is not inverted: L1 is capped in the same run in which L3 passes
+PASS  D2: mutating a bound dataset invalidates the claim it carried
+PASS  D2: the finding NAMES the identifier and the dataset that moved
+PASS  D2: the reset marker is proposed in the §3.4 grammar, not written into the claims file
+PASS  D2: the executed replay fails independently of the hash comparison
+PASS  D3: a default run after a claim-text edit REFUSES to overwrite the baseline
+PASS  D3: the drift is named and the §3.5 marker to append is proposed
+PASS  D3: repetition does not launder it — the second run refuses identically
+PASS  append-only: acknowledging the drift by APPENDING clears it, exit 0
+PASS  append-only: the prior HUMAN VERIFIED marker is still visible in history
+PASS  D3: --accept-baseline-rewrite does overwrite — the refusal has a stated way out
+PASS  append-only: DELETING a prior marker line is caught as `marker-history-mutated`
+PASS  two runs over identical inputs differ in `generated_at` and nothing else
+PASS  content_sha256 is identical across runs, even though real processes ran
+PASS  wall-clock timings are not in the manifest at all
+PASS  no absolute URL appears in the manifest under `Pages mechanism: none`
+PASS  the URL guardrail refuses to write the manifest at all (exit 2)
+PASS  a missing declared path resolves to `missing` with every derived field null
+PASS  a missing declared path is a finding AND a gap AND in coverage — never silence
+PASS  a dangling evidence locator is a finding and a gap
+PASS  an un-ID'd claim is carried, counted and printed
+PASS  a second un-ID'd claim is counted too — the tally is derived, not fixed
+PASS  replay: a real in-root check runs and its outcome comes from the exit status
+PASS  replay: a command with shell metacharacters is REFUSED, never executed
+PASS  replay: a script resolving outside the surface root is REFUSED
+PASS  --no-execute produces gaps and errors, and lifts no claim above AGENT VERIFIED
+PASS  html: an unresolved link is reported, rendered as a gap marker, and sets exit 1
+PASS  html: creating exactly the reported paths clears every unresolved link, exit 0
+PASS  html: two runs over an unchanged manifest are byte-identical
+PASS  html: the page emits no <script> and no absolute URL
+PASS  html: an absolute URL in the manifest is refused, and no page is written
+PASS  html: a <script> tag in claim text is escaped, never emitted as markup
+
+all regression tests passed
+```
+
+And the mechanical version of the claim this report rests on — every assertion
+name that appears in the suite also appears in a `FAIL` line of some mutant run:
+
+```console
+$ node -e "…compare the 44 names in LIVE.txt against every FAIL line in the mutant runs…"
+assertions in the suite: 44
+ALL 44 assertions were observed FAILING under an injected defect
+```
+
+The four CI steps, run in order locally:
+
+```console
+$ node plugin/scripts/governance-checks.mjs --layout
+4 of 5 checks passed, 0 failed. 1 check(s) SKIPPED, verifying nothing: verification-markers.   exit=0
+$ node plugin/scripts/governance-checks.test.mjs
+all regression tests passed                                                                     exit=0
+$ node plugin/scripts/surface.test.mjs
+all regression tests passed                                                                     exit=0
+$ node plugin/scripts/surface-html.mjs --out "$RUNNER_TEMP/index.html"
+  links: 86 emitted, 21 distinct targets, 0 unresolved
+  absolute URLs: 0 (guardrail enforced)   script tags: 0 (guardrail enforced)                    exit=0
+```
 
 ---
 
@@ -649,8 +724,8 @@ paraphrasing them.
 ## 7. Disclosure — `surface.mjs` was being edited while I tested
 
 `plugin/scripts/surface.mjs` was being rewritten by another builder for the
-whole of my session — six saves between 19:28 and 19:42, still in progress when
-I finished. Two consequences, both stated rather than worked around:
+whole of my session — six saves between 19:28 and 19:42, settling at 19:37:08
+and holding there through handover. Two consequences, both stated rather than worked around:
 
 **1. At 19:31 the file was syntactically fine and semantically broken.** A call
 to `commandInputPaths(cmd)` had landed without its definition, so
@@ -662,8 +737,9 @@ now return empty shapes instead of throwing**: the first time it happened the
 harness died at case 1 and hid the other 43 answers. A test suite that cannot
 report on a broken tool is a test suite that goes quiet exactly when it matters.
 
-**2. `A4` is red on the live tree, and the finding is real.** The current
-`surface.mjs` emits six manifest fields the committed fixture manifest predates:
+**2. `A4` went red, named a real defect, and was closed within the hour.** At
+19:35 the current `surface.mjs` was emitting six manifest fields the committed
+fixture manifest predated:
 
 ```text
 .verification.claims[].evidence[].produced_by.class_source
@@ -679,25 +755,21 @@ regenerated 85e0ff3840e04e052399973e07c7429d52d5e9c1f96e4b8b53b77afe028bb8c8
 committed   a8d76b32f476c5e8bb4b5b7bebcddbc027c1280696ec9836af06e8d7d87d3342
 ```
 
-Nothing is *wrong* with the tree — the default run still reports 0 errors and
-exit 0, the five verdicts are unchanged, and no claim is invalidated. The
-manifest is simply older than the generator. But **the committed manifest is its
-own drift baseline** (§5.5), so a stale one silently disarms drift and
-artifact-invalidation detection for every later run, which is precisely the
-class of defect `A4` exists to catch. It caught one on its first day.
+Nothing was *wrong* with the tree — the default run still reported 0 errors and
+exit 0, the five verdicts were unchanged, no claim was invalidated. The manifest
+was simply older than the generator. But **the committed manifest is its own
+drift baseline** (§5.5), so a stale one silently disarms drift and
+artifact-invalidation detection for every later run, which is exactly the class
+of defect `A4` exists to catch. It caught one on its first day, in a
+work-in-progress tree, before the tree was handed over.
 
 **I did not fix it.** `plugin/scripts/fixtures/**` is outside my permitted
-paths, and the re-baseline belongs to whoever is changing the generator — it is
-the same disclosure Builder 2 made in their §7 ("I re-baselined the fixture
-manifest once, deliberately"). One command closes it:
-
-```sh
-node plugin/scripts/surface.mjs --root plugin/scripts/fixtures/slice
-```
-
-**Until that runs, CI is red**, on this one assertion, for a true reason. I would
-rather hand over a red build with a named cause than a green one with a test
-deleted.
+paths, and the re-baseline belongs to whoever is changing the generator. The
+other builder regenerated it at **19:42:46** —
+`content_sha256 41a24926506585ad…` — and `A4` went green on the next run. The
+suite is green as handed over; the mutation evidence in §2.4 still shows `A4`
+red in every run, because those runs used the `19:42:02` snapshot, which is 44
+seconds older than the fix.
 
 A last caveat on my own evidence: every mutation result in §2 is against a
 snapshot, and `surface.mjs` has changed since — the snapshot hash is in §2.1 so
