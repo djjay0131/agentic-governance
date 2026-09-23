@@ -315,6 +315,24 @@ Criteria are the fixture assertions in §13 below.
 
 ## 13. End-to-end fixture designs
 
+> **Amended 2026-09-23 (slice reconciliation A-3).** The 2026-09-23 vertical-slice
+> brief asks for **one** fixture exercising both the software-engineering and the
+> research/data concepts, "without creating an artificially large system". Both
+> designs below stand unchanged for the full implementation; the slice builds a
+> single merged fixture at `plugin/scripts/fixtures/slice/` that takes:
+>
+> - from **13.1** — claim identity, the marker block, the `L1` cap, claim-text
+>   drift, and the vacuous-check detector (`P1-AC-04`, the fixture's reason to exist);
+> - from **13.2** — a real source dataset, a deterministic transformation, a
+>   generated dataset, PDataset provenance and hashes, and the perturbation that
+>   proves the claim depends on its data (`S1-CL-01`).
+>
+> Merging is a scope decision for the slice, not a design change. Two fixtures
+> remain correct for the full capability; one is enough to prove the architecture,
+> and the brief's own example claim — *every valid source record produces exactly
+> one normalized output record, and duplicate source IDs are rejected* — is
+> already the shape of 13.2's transformation step.
+
 Both fixtures are directories under `plugin/scripts/fixtures/`, exercised by
 `surface.test.mjs`. Both run with zero dependencies and no network.
 
