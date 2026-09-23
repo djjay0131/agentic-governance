@@ -1,0 +1,13 @@
+id,name,score,recorded_at
+s-004,  Ada Lovelace ,91.5,2026-09-01
+s-001,Grace Hopper,88,2026-09-01
+s-007,Alan   Turing,95.25,2026-09-02
+s-002,Katherine Johnson,99,2026-09-02
+s-009,Edsger Dijkstra,77.25,2026-09-03
+s-003,Barbara Liskov,93,2026-09-03
+s-001,Grace Hopper,88,2026-09-04
+s-010,Donald Knuth,89.5,2026-09-04
+s-005,Margaret Hamilton,96,2026-09-05
+s-008,Tony Hoare,,2026-09-05
+s-006,Frances Allen,84.75,2026-09-06
+s-011,Leslie Lamport,90,2026-09-06

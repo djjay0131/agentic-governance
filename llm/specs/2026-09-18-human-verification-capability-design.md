@@ -752,6 +752,25 @@ changing a verification marker on a criterion line **fails `--l0`**.
 never L0-eligible either. They went in as part of semantic PRs, and the fast
 track is INACTIVE in that repo, so nothing ever ran `--l0` on them.)
 
+> **Amended 2026-09-23 (slice reconciliation C-3).** The code sketch below is
+> **wrong in two ways**, found when it was implemented. Implement §3.5, not this
+> sketch.
+>
+> 1. **It calls `pairedConstraint`**, which permits a 1:1 removed/added line
+>    replacement. §3.5 requires the opposite in terms: *"a marker that is
+>    rewritten in place is the opposite of append-only"*, and *"Removal is a
+>    violation, and it is mechanically checkable."* A paired shape would permit
+>    exactly the rewrite the shape exists to forbid.
+> 2. **Its filter requires every changed line to be a checkbox list item.**
+>    Marker lines are not checkbox items — they are continuation lines beginning
+>    with `—` (§3.4). The sketch would reject the very lines it exists to permit.
+>
+> The implemented rule: **no line may be removed or edited versus the base; every
+> added line must be a well-formed marker; and no added marker may assert a human
+> state**, because the L0 lane is the agent lane. The real cost is stated rather
+> than hidden: a file declaring `verification-marker` gives up in-lane checkbox
+> flips.
+
 **Resolution — a sixth canonical shape, `verification-marker`:**
 
 ```js

@@ -19,6 +19,7 @@
 //   node governance-checks.mjs --delta llm/governance/governance-delta.md  # delta path override
 //   node governance-checks.mjs --adr-dir llm/governance/adr                # ADR dir override
 //   node governance-checks.mjs --base origin/main                          # base ref override
+//   node governance-checks.mjs --claims llm/master-roadmap.md              # claim source override
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -115,6 +116,11 @@ const ADR_REL = argValue('--adr-dir', LAYOUT.declared.adr || LAYOUT_DEFAULTS.adr
 const CONSTITUTION_REL = LAYOUT.declared.constitution || LAYOUT_DEFAULTS.constitution;
 const ADR_DIR = path.join(ROOT, ADR_REL);
 const LEGAL_STATUSES = ['Proposed', 'Accepted', 'Superseded', 'Deprecated'];
+// Where this repo's claims live. Same precedence as every other path here:
+// CLI flag > delta declaration (`## Roadmap` / `Path:`) > nothing. There is no
+// canonical default: a repo with no roadmap has no claims, and guessing one
+// would manufacture either a false PASS or a false FAIL.
+const CLAIMS_REL = argValue('--claims', readClaimsPath(DELTA));
 
 // Hard denies (llm/governance/l0-fast-track.md §The Deny Rule): the governance
 // delta (it contains the allowlist that judges the PR), repo-local governance
@@ -157,7 +163,104 @@ const HARD_DENY = [...new Set([
 // document sitting under the artifacts directory.
 const POLICY_BASENAMES = HARD_DENY.filter((g) => /^\*\*\/[^/*]+$/.test(g)).map((g) => g.slice(3));
 
-const SHAPES = ['path-only', 'status-line-only', 'index-table-rows', 'checkbox-only', 'link-target-only'];
+const SHAPES = [
+  'path-only',
+  'status-line-only',
+  'index-table-rows',
+  'checkbox-only',
+  'link-target-only',
+  'verification-marker',
+];
+
+// ---------- verification markers (human-verification capability) ----------
+//
+// A claim line carries an append-only marker block
+// (llm/specs/2026-09-18-human-verification-capability-design.md §3.4, §3.5):
+//
+//   - [x] `P3-AC-04` A gate test asserts that no `/p/**` response carries
+//     `public` (ADR-0004)
+//     — AGENT VERIFIED (PR #22, 2026-09-16)
+//     — HUMAN VERIFIED (PR #25, 2026-09-17)
+//
+// Deliberately isomorphic to the ADR `Status:` line, which this script already
+// validates and every contributor already reads. Two consequences the rest of
+// this section depends on:
+//
+//   * **Current state is the LAST marker line; history is the lines above it.**
+//   * **An absent marker block means `NOT VERIFIED`** — the default cannot be
+//     forged by omission, and costs nothing to adopt.
+
+// The five asserted states (§5.1). `NOT VERIFIED` is not here: it is the
+// default, and its only written form is the reset marker below.
+const MARKER_STATES = [
+  'AGENT VERIFIED',
+  'HUMAN REVIEWED',
+  'HUMAN VERIFIED',
+  'VERIFICATION FAILED',
+  'NEEDS REWORK',
+];
+
+// States only a human may assert (§5.2 transition table, §5.3 mechanism 2).
+const HUMAN_ONLY_STATES = ['HUMAN REVIEWED', 'HUMAN VERIFIED'];
+
+// Constrained legal marker form — no free prose in the parenthetical, exactly
+// as LEGAL_STATUS_LINE enforces for ADRs (§3.4).
+const LEGAL_MARKER = new RegExp(
+  `^—\\s(${MARKER_STATES.join('|')})\\s\\(PR #\\d+(, \\d{4}-\\d{2}-\\d{2})?\\)$`
+);
+// The reset form §3.5 appends on invalidation: `— NOT VERIFIED (<reason>, DATE)`.
+// The reason is the one place prose is legal, because §5.5 writes machine-
+// generated text into it (`artifact changed: <identifier>`); the date is not
+// optional here, because a reset with no date cannot be ordered against the
+// marker it invalidates.
+const LEGAL_RESET_MARKER = /^—\sNOT VERIFIED \([^()]+, \d{4}-\d{2}-\d{2}\)$/;
+
+// A claim line: a Markdown checkbox item, optionally carrying a backticked
+// claim ID as its first token (§3.2 `<SCOPE>-<KIND>-<nn>`). `<KIND>` is
+// delta-bound and deliberately not enumerated here — canon must not learn what
+// a "study" is (activity plan A1-AC-04).
+const CLAIM_LINE = /^\s*[-*]\s+\[( |[xX])\]\s+(.*)$/;
+const CLAIM_ID = /^`([A-Z][A-Z0-9]*-[A-Z]+-\d+)`/;
+
+// A marker written on the claim line itself instead of below it. §3.5 reads
+// the current state off the LAST marker LINE, so an inline marker asserts
+// nothing while looking to a reader exactly like verification.
+const INLINE_MARKER = new RegExp(`\\s—\\s*(NOT VERIFIED|${MARKER_STATES.join('|')})\\b`);
+
+// Anything that is *trying* to be a marker. Kept deliberately wider than
+// LEGAL_MARKER so that a malformed attempt is reported as malformed rather
+// than silently ignored — silence would let an unparseable line sit under a
+// claim looking to a human reader exactly like verification.
+const MARKER_CANDIDATE = new RegExp(
+  `(^\\s*[—–]\\s)|(\\b(NOT VERIFIED|${MARKER_STATES.join('|')})\\b)`
+);
+
+// Legal transitions, §5.2, exhaustively. The table is the authority; this is a
+// transcription of it, and nothing may be added here that is not in it.
+// `any -> NOT VERIFIED` is the automatic reset row (§5.4/§5.5), so every state
+// carries it. There is no row *out of* VERIFICATION FAILED or NEEDS REWORK
+// other than that reset: rework resets, it does not re-promote in place.
+const LEGAL_TRANSITIONS = {
+  'NOT VERIFIED': ['AGENT VERIFIED', 'HUMAN REVIEWED', 'HUMAN VERIFIED', 'VERIFICATION FAILED', 'NEEDS REWORK', 'NOT VERIFIED'],
+  'AGENT VERIFIED': ['HUMAN REVIEWED', 'HUMAN VERIFIED', 'VERIFICATION FAILED', 'NEEDS REWORK', 'NOT VERIFIED'],
+  'HUMAN REVIEWED': ['HUMAN VERIFIED', 'VERIFICATION FAILED', 'NEEDS REWORK', 'NOT VERIFIED'],
+  'HUMAN VERIFIED': ['VERIFICATION FAILED', 'NEEDS REWORK', 'NOT VERIFIED'],
+  'VERIFICATION FAILED': ['NOT VERIFIED'],
+  'NEEDS REWORK': ['NOT VERIFIED'],
+};
+
+// Determinism levels, §14.1 — and the direction matters more than anything
+// else in this file. **L3 is the STRONGEST (deterministic) and L1 the WEAKEST
+// (attested).** §4.1 and §5.5 of the design once said "Level 3" where they
+// meant `L1`; the amendment recorded at §14.1 (2026-09-23) makes this table
+// canonical. Implementing the cap below against an inverted scale would invert
+// the single mechanism (§5.3 mechanism 4) that stops an agent's own say-so
+// being laundered into HUMAN VERIFIED, so the ordering is asserted explicitly
+// rather than inferred from the string.
+const DETERMINISM_RANK = { L1: 1, L2: 2, L3: 3 };
+const DETERMINISM_TOKEN = /\b(L[123])\b/g;
+// §6.3 — achievable state is capped by best evidence.
+const EVIDENCE_CEILING = { none: 'NOT VERIFIED', L1: 'AGENT VERIFIED', L2: 'HUMAN VERIFIED', L3: 'HUMAN VERIFIED' };
 
 // ---------- helpers ----------
 
@@ -317,6 +420,44 @@ function readLayout(deltaRel) {
     out.warnings.push(`${deltaRel} §Repository Layout: no path declaration parsed — using canonical default paths`);
   }
   return out;
+}
+
+// Reads the claim source from the delta's `## Roadmap` block (`Path: …`,
+// llm/governance/governance-delta-template.md §Roadmap). Returns null — never
+// a guess — when the repo declares nothing, declares "none", or has left the
+// template's instructional placeholder in place. Never throws: an unreadable
+// delta means "undeclared", which the check reports as a SKIP.
+//
+// The template's placeholder is `[e.g. \`llm/master-roadmap.md\`; "none" if …]`,
+// which contains a backticked path. cleanLayoutValue would happily extract it
+// and point the check at a file that does not exist in this repo, turning an
+// unfilled template into a hard failure. Anything still carrying `e.g.` is
+// therefore read as unfilled.
+function readClaimsPath(deltaRel) {
+  const abs = path.join(ROOT, deltaRel);
+  let text;
+  try {
+    if (!fs.existsSync(abs)) return null;
+    text = read(abs);
+  } catch {
+    return null;
+  }
+  let inBlock = false;
+  for (const line of text.split('\n')) {
+    if (/^##\s+\S/.test(line)) {
+      inBlock = /^##\s+Roadmap\s*$/i.test(line.trim());
+      continue;
+    }
+    if (!inBlock) continue;
+    const m = line.match(/^\s*(?:[-*]\s+)?Path:\s*(.+?)\s*$/i);
+    if (!m) continue;
+    let v = m[1];
+    if (/\be\.g\.\s/i.test(v)) return null; // unfilled template placeholder
+    if (/^\[?\s*(none|n\/a|tbd)\b/i.test(v)) return null; // declared: no roadmap
+    const value = cleanLayoutValue(v);
+    return value;
+  }
+  return null;
 }
 
 // ---------- check 1: governance-links ----------
@@ -625,6 +766,44 @@ function shapeConstraint(file, shape) {
     // link text and all surrounding prose must be unchanged.
     return pairedConstraint(file, removed, added, (l) => l.replace(/\]\([^)]*\)/g, '](·)'), 'link-target');
   }
+  if (shape === 'verification-marker') {
+    // Append-only, and that is the entire reason this shape exists
+    // (design §3.5: "Removal is a violation, and it is mechanically
+    // checkable"). Deliberately NOT a pairedConstraint: `status-line-only` and
+    // `checkbox-only` permit a 1:1 line REPLACEMENT, which is exactly what
+    // append-only forbids. A marker block that can be rewritten in place is
+    // the opposite of a record — the one event a reader most needs to see is
+    // the verification that was later withdrawn, and rewriting hides it.
+    const failures = [];
+    if (removed.length > 0) {
+      failures.push(
+        `${file}: the verification-marker shape is append-only — ${removed.length} line(s) removed or edited vs ${BASE}. ` +
+          `Deleting or editing an existing marker line, or changing a claim's text, is a violation (§3.5); a reset APPENDS "— NOT VERIFIED (<reason>, YYYY-MM-DD)". ` +
+          `First offending line: "${removed[0].trim().slice(0, 90)}"`
+      );
+    }
+    for (const line of added) {
+      const m = classifyMarker(line);
+      if (!m.ok) {
+        failures.push(
+          `${file}: added line is not a well-formed verification marker — ${m.why}: "${line.trim().slice(0, 90)}"`
+        );
+        continue;
+      }
+      if (HUMAN_ONLY_STATES.includes(m.state)) {
+        // §5.2: `HUMAN REVIEWED` and `HUMAN VERIFIED` are human-only
+        // assertions. The L0 fast track is the lane in which an AI role may
+        // merge (l0-fast-track.md §Purpose), so an L0 diff asserting a human
+        // state is an agent asserting a human's finding about its own work —
+        // the precise failure §5.3 exists to prevent. It is also semantic by
+        // condition 2, so it leaves the fast track either way.
+        failures.push(
+          `${file}: added marker asserts "${m.state}", a human-only state (§5.2). The L0 fast track is the agent lane; a human verification assertion is semantic and takes human review. Agents may append AGENT VERIFIED, VERIFICATION FAILED, NEEDS REWORK or a NOT VERIFIED reset.`
+        );
+      }
+    }
+    return failures;
+  }
   return [`${file}: unknown shape "${shape}"`];
 }
 
@@ -689,12 +868,272 @@ function checkCert() {
   return failures;
 }
 
+// ---------- check 7: verification-markers ----------
+
+// Classify one candidate marker line. Returns the asserted state, or the
+// specific reason it is malformed — "malformed" with no reason is useless to
+// the person who has to fix it.
+function classifyMarker(rawLine) {
+  const s = rawLine.trim();
+  const legal = s.match(LEGAL_MARKER);
+  if (legal) return { ok: true, state: legal[1] };
+  if (LEGAL_RESET_MARKER.test(s)) return { ok: true, state: 'NOT VERIFIED' };
+  if (!/^—\s/.test(s)) {
+    return { ok: false, why: 'a marker line is "— <STATE> (PR #<n>[, YYYY-MM-DD])" and must begin with an em dash (U+2014)' };
+  }
+  const body = s.replace(/^—\s+/, '');
+  const all = [...MARKER_STATES, 'NOT VERIFIED'];
+  const state = all.find((st) => body.startsWith(st));
+  if (!state) {
+    return { ok: false, why: `state must be one of ${all.join(', ')}` };
+  }
+  const rest = body.slice(state.length).trim();
+  if (state === 'NOT VERIFIED') {
+    return { ok: false, why: 'the reset form is "— NOT VERIFIED (<reason>, YYYY-MM-DD)" — a reason and a date are both required (§3.5)' };
+  }
+  if (!/^\(.*\)$/.test(rest) || !/PR #\d+/.test(rest)) {
+    return { ok: false, why: 'missing the PR citation — the form is "(PR #<n>[, YYYY-MM-DD])"' };
+  }
+  return { ok: false, why: 'no free prose in the parenthetical — it holds "PR #<n>[, YYYY-MM-DD]" and nothing else (§3.4)' };
+}
+
+// Claims and their marker blocks, in file order. A marker belongs to the claim
+// above it and to no other; a blank line, a heading or a fence ends the block,
+// so a marker orphaned from any claim is reported rather than silently
+// reassigned to a claim further up the file.
+function parseClaims(text, fileRel) {
+  const claims = [];
+  const orphans = [];
+  let current = null;
+  let fenced = false;
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].replace(/\s+$/, '');
+    const at = `${fileRel}:${i + 1}`;
+    if (/^\s*```/.test(line)) {
+      fenced = !fenced;
+      current = null;
+      continue;
+    }
+    if (fenced) continue;
+    const cm = line.match(CLAIM_LINE);
+    if (cm) {
+      const idm = cm[2].match(CLAIM_ID);
+      current = { id: idm ? idm[1] : null, at, text: cm[2], markers: [], inline: null };
+      // A marker crammed onto the end of the claim line. It reads to a human
+      // exactly like a marker block and is invisible to "the state is the last
+      // marker line", so it must be reported rather than ignored — silently
+      // ignoring it is how an unverified claim comes to look verified.
+      const inline = cm[2].match(INLINE_MARKER);
+      if (inline) current.inline = inline[1];
+      claims.push(current);
+      continue;
+    }
+    if (line.trim() === '' || /^#{1,6}\s/.test(line) || /^\s*\|/.test(line)) {
+      current = null;
+      continue;
+    }
+    if (!MARKER_CANDIDATE.test(line)) continue;
+    const m = { at, raw: line, ...classifyMarker(line) };
+    if (current) current.markers.push(m);
+    else orphans.push(m);
+  }
+  return { claims, orphans };
+}
+
+// Evidence citations for a set of claim IDs: every tracked or untracked-but-
+// unignored line in the repo that names the claim, outside the claim files
+// themselves. This is §6.1's binding-by-citation, read the only way a
+// dependency-free checker can read it.
+//
+// Honest limit, stated here because the cap below rests on it: the scan reads
+// a determinism level from a `L1`/`L2`/`L3` token on the citing line. It
+// cannot tell a truthful declaration from a false one — nothing textual can.
+// It closes the *omission* path (no level, no evidence) and leaves the
+// *fabrication* path to §5.3's other three mechanisms and to the auditor.
+function evidenceCitations(ids, claimFiles) {
+  const out = new Map(ids.map((id) => [id, []]));
+  if (ids.length === 0) return out;
+  let raw;
+  try {
+    raw = git('grep', '-n', '-I', '--untracked', '-F', ...ids.flatMap((id) => ['-e', id]));
+  } catch (e) {
+    if (e.status === 1) return out; // git grep: no matches
+    throw new Error(`evidence scan failed: ${e.message}`);
+  }
+  for (const line of raw.split('\n')) {
+    const m = line.match(/^([^:]+):(\d+):([\s\S]*)$/);
+    if (!m) continue;
+    const [, file, lineNo, content] = m;
+    if (claimFiles.includes(file)) continue; // the claim's own home is not evidence for it
+    for (const id of ids) {
+      if (!content.includes(id)) continue;
+      const levels = [...content.matchAll(DETERMINISM_TOKEN)].map((x) => x[1]);
+      out.get(id).push({ file, lineNo, levels });
+    }
+  }
+  return out;
+}
+
+// Best (strongest) declared level across a claim's citations. L3 > L2 > L1,
+// per §14.1 as amended — see DETERMINISM_RANK.
+function bestEvidenceLevel(citations) {
+  let best = null;
+  for (const c of citations) {
+    for (const lv of c.levels) {
+      if (best === null || DETERMINISM_RANK[lv] > DETERMINISM_RANK[best]) best = lv;
+    }
+  }
+  return best;
+}
+
+function checkVerificationMarkers() {
+  if (!CLAIMS_REL) {
+    return {
+      skipped:
+        `no claim source declared: the delta's "## Roadmap" block binds no path (or declares "none"), ` +
+        `so no claim, marker or verification state was checked. Pass --claims <path> if this repo's claims live elsewhere.`,
+    };
+  }
+  const abs = path.join(ROOT, CLAIMS_REL);
+  if (!fs.existsSync(abs)) {
+    return [
+      `${CLAIMS_REL}: declared as this repo's claim source but does not exist — a declared source that is absent is a gap, not an empty result`,
+    ];
+  }
+  const files = fs.statSync(abs).isDirectory() ? listMd(abs) : [abs];
+  const claimFiles = files.map((f) => rel(f));
+  const failures = [];
+  const claims = [];
+  for (const f of files) {
+    const parsed = parseClaims(read(f), rel(f));
+    claims.push(...parsed.claims);
+    for (const o of parsed.orphans) {
+      failures.push(
+        `${o.at}: verification marker is not attached to any claim — a marker belongs on the claim line it verifies (§3.3): "${o.raw.trim().slice(0, 90)}"`
+      );
+    }
+  }
+  if (claims.length === 0 && failures.length === 0) {
+    return {
+      skipped: `${claimFiles.join(', ')}: no claim checkbox items found, so no marker grammar or verification state was checked.`,
+    };
+  }
+
+  // 1. Grammar, and the ID a marker needs in order to mean anything.
+  const unidentified = [];
+  const seen = new Map(); // claim id -> first `at`
+  for (const c of claims) {
+    if (c.inline) {
+      failures.push(
+        `${c.at}: "${c.inline}" is written on the claim line itself — a marker belongs on its own line below the claim, because the current state is the LAST marker line (§3.5). As written it asserts nothing while reading like verification.`
+      );
+    }
+    if (c.id) {
+      // A duplicated ID is not an address. Two claims sharing one would also
+      // let a verified copy stand in for an unverified one in every downstream
+      // lookup, evidence scan and cap check.
+      if (seen.has(c.id)) {
+        failures.push(
+          `${c.at}: claim ID ${c.id} is already used at ${seen.get(c.id)} — a claim ID is an address (§3.2) and must be unique`
+        );
+      } else {
+        seen.set(c.id, c.at);
+      }
+    }
+    if (!c.id && c.markers.length === 0) {
+      unidentified.push(c.at);
+      continue;
+    }
+    if (!c.id && c.markers.length > 0) {
+      failures.push(
+        `${c.at}: carries a verification marker but no claim ID — verification binds to an addressable claim (§3.2), and an un-ID'd claim cannot be cited by its evidence`
+      );
+    }
+    for (const m of c.markers) {
+      if (!m.ok) {
+        failures.push(`${m.at}: malformed verification marker — ${m.why}: "${m.raw.trim().slice(0, 90)}"`);
+      }
+    }
+  }
+
+  // 2. Transitions. History is the marker block read top to bottom from the
+  //    implicit `NOT VERIFIED`; the current state is the last line (§3.5).
+  // A list, not a map keyed by ID: a duplicated ID is reported above, but it
+  // must not also make one copy of the claim disappear from the cap check
+  // below — that would let a verified duplicate shadow an unverified original.
+  const states = [];
+  for (const c of claims) {
+    let state = 'NOT VERIFIED';
+    for (const m of c.markers) {
+      if (!m.ok) continue; // already reported; an unparseable line asserts nothing
+      const legal = LEGAL_TRANSITIONS[state] || [];
+      if (!legal.includes(m.state)) {
+        failures.push(
+          `${m.at}: illegal transition "${state}" -> "${m.state}"${c.id ? ` on ${c.id}` : ''} — §5.2's table permits only ${legal.join(', ')} from "${state}"`
+        );
+        continue; // do not advance: an illegal edge does not move the state
+      }
+      if (HUMAN_ONLY_STATES.includes(m.state) && !/PR #\d+/.test(m.raw)) {
+        failures.push(
+          `${m.at}: "${m.state}" is a human-only state and must cite the PR carrying the human approval (§5.3 mechanism 2)`
+        );
+      }
+      state = m.state;
+    }
+    if (c.id) states.push({ id: c.id, state, claim: c });
+  }
+
+  // 3. The determinism cap (§5.3 mechanism 4, §6.3, §14.4). A claim whose only
+  //    evidence is `L1` — attested, the WEAKEST level — cannot reach a human
+  //    state. `L1` is an agent's own say-so by definition, so this is the
+  //    mechanism that stops say-so being laundered into human verification.
+  //    Read §14.1 before touching the direction of this comparison.
+  const humanStateClaims = states.filter((s) => HUMAN_ONLY_STATES.includes(s.state));
+  if (humanStateClaims.length > 0) {
+    const citations = evidenceCitations([...new Set(humanStateClaims.map((s) => s.id))], claimFiles);
+    for (const { id, state, claim } of humanStateClaims) {
+      const cites = citations.get(id) || [];
+      const best = bestEvidenceLevel(cites);
+      if (cites.length === 0) {
+        failures.push(
+          `${claim.at}: ${id} is "${state}" but no evidence anywhere in the tree cites it — §6.3 caps a claim with no evidence at NOT VERIFIED`
+        );
+        continue;
+      }
+      if (best === null) {
+        failures.push(
+          `${claim.at}: ${id} is "${state}" but no citing artifact declares a determinism level (L1/L2/L3) — §14.1: an undeclared level is a gap marker, never a default (${cites.length} citation(s): ${cites.slice(0, 3).map((c) => `${c.file}:${c.lineNo}`).join(', ')})`
+        );
+        continue;
+      }
+      const ceiling = EVIDENCE_CEILING[best];
+      if (best === 'L1') {
+        failures.push(
+          `${claim.at}: ${id} is "${state}" but its only evidence is L1 (attested — the WEAKEST level, §14.1) — §6.3/§14.4 cap an L1-only claim at "${ceiling}". An agent's assertion about its own work is L1 by definition; it is testimony, not verification.`
+        );
+      }
+    }
+  }
+
+  if (unidentified.length > 0) {
+    // Counted and reported, never silently dropped (§3.2). Not a failure:
+    // adoption is incremental and an ID-less criterion is simply invisible to
+    // the projection — but it must never disappear from the output.
+    console.warn(
+      `WARN: ${unidentified.length} claim(s) carry no claim ID and no marker, so they are invisible to verification: ${unidentified.slice(0, 5).join(', ')}${unidentified.length > 5 ? ', …' : ''}`
+    );
+  }
+  return failures;
+}
+
 // ---------- runner ----------
 
 const checks = [
   ['governance-links', checkLinks],
   ['adr-index', checkAdrIndex],
   ['adr-status', checkAdrStatus],
+  ['verification-markers', checkVerificationMarkers],
 ];
 if (layoutMode) checks.push(['layout', checkLayout]);
 if (l0Mode) checks.push(['l0-paths', checkL0Paths], ['cert-present', checkCert]);

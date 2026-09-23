@@ -111,6 +111,28 @@ interactive console, which is what §7.3 was actually protecting against.
 **Resolution: amend §7.3** to distinguish *deferred interactive console* from
 *required generated-command execution path*.
 
+### C-3 — §9.1's code sketch contradicts §3.5's append-only rule
+
+Found during implementation, not during the first read. §9.1 resolves the
+`checkbox-only` collision with a sixth shape and sketches it as:
+
+```js
+return pairedConstraint(file, removed, added, (l) => l.replace(/\[( |[xX])\]/, '[·]')
+```
+
+Wrong twice:
+
+1. **`pairedConstraint` permits a 1:1 removed/added replacement** — precisely
+   the in-place rewrite §3.5 forbids: *"Removal is a violation, and it is
+   mechanically checkable."*
+2. **Its filter requires every changed line to be a checkbox list item**, but
+   markers are continuation lines beginning with `—` (§3.4). The sketch would
+   reject the lines it exists to permit.
+
+**Resolution: amend §9.1 to defer to §3.5.** Implemented as: no line removed or
+edited versus base; every added line a well-formed marker; no added marker
+asserting a human state, since the L0 lane is the agent lane.
+
 ## 5. Requires an amendment (no ADR needed)
 
 | # | Amendment | File | Why not an ADR |
@@ -118,6 +140,7 @@ interactive console, which is what §7.3 was actually protecting against.
 | A-1 | `Level 3` → `L1` in §4.1 and §5.5 | capability design | Correcting a typo'd citation of §14.1, not deciding anything |
 | A-2 | §7.3 gains the generated-command execution path; interactive console stays deferred | capability design | Clarifies scope the section already intended |
 | A-3 | One merged slice fixture drawn from §13.1 + §13.2 | activity plan | Scope note for the slice; both fixture designs stand |
+| A-4 | §9.1's sketch defers to §3.5 (C-3) | capability design | Correcting a sketch against the rule it was meant to implement |
 
 **No ADR is required for the slice.** §8 already anticipates ADR-0002 and
 ADR-0003 for the *full* capability; the slice neither settles nor pre-empts

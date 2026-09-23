@@ -1,0 +1,577 @@
+{
+  "schema": "surface-manifest/v1",
+  "generator": "plugin/scripts/surface.mjs",
+  "governance_version": "0.9.1",
+  "generated_at": "2026-09-23T00:00:00.000Z",
+  "content_sha256": "f00eeabfc0a1239fde7eec9d63ae5a08aa011087c01a6cf78798e3532693a0ca",
+  "root": "plugin/scripts/fixtures/slice",
+  "delta": {
+    "path": "llm/governance/governance-delta.md",
+    "surface_status": "ENABLED",
+    "renderer": "none",
+    "pages_mechanism": "none",
+    "output_dir": "docs/verification"
+  },
+  "bound": {
+    "commit_sha": null,
+    "claims_source_sha256": "67874a7f1327a03a99fd1d72672b6602f185b39045009f610206ad103dd3b802",
+    "pdataset_source_sha256": "5e64c355abd1a6d5f7cbbefdb7fcd67ba9ad8d30bd4cfe983110ab70937a5fbb",
+    "delta_sha256": "d23790179ab05364fb311cdaa143ad374cf4c7c40fc6503f1191e33b6068a064"
+  },
+  "projections": {
+    "design": {
+      "status": "DISABLED",
+      "sha256": null
+    },
+    "verification": {
+      "status": "ENABLED",
+      "sha256": "34df4f2ed3a19c7f8e276725c00e2216bac02c60716aa4f5195f53e3c1a55805"
+    }
+  },
+  "verification": {
+    "status": "ENABLED",
+    "claim_kinds": [
+      "AC",
+      "CL",
+      "DS"
+    ],
+    "claims_source": "llm/claims.md",
+    "pdataset_source": "llm/pdatasets.md",
+    "evidence_sources": [
+      "checks",
+      "evidence"
+    ],
+    "claims": [
+      {
+        "id": "P1-AC-01",
+        "scope": "P1",
+        "kind": "AC",
+        "text": "Every valid source record produces exactly one normalized output record, and duplicate source IDs are rejected.",
+        "text_sha256": "15884430064cd27ce2bf1b0183266c87f9a65341c41197860170a6853614e43c",
+        "authority": "activity-plan §13.1",
+        "source": {
+          "path": "llm/claims.md",
+          "line": 19
+        },
+        "checkbox": "x",
+        "marker_state": "HUMAN VERIFIED",
+        "marker_state_source": "marker",
+        "current_marker": "— HUMAN VERIFIED (PR #42, 2026-09-23)",
+        "history": [
+          "— AGENT VERIFIED (PR #41, 2026-09-22)"
+        ],
+        "markers": [
+          {
+            "line": 21,
+            "raw": "— AGENT VERIFIED (PR #41, 2026-09-22)",
+            "state": "AGENT VERIFIED",
+            "pr": 41,
+            "date": "2026-09-22",
+            "reason": null,
+            "well_formed": true
+          },
+          {
+            "line": 22,
+            "raw": "— HUMAN VERIFIED (PR #42, 2026-09-23)",
+            "state": "HUMAN VERIFIED",
+            "pr": 42,
+            "date": "2026-09-23",
+            "reason": null,
+            "well_formed": true
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "test",
+            "determinism": "L3",
+            "locator": "checks/ac01-duplicate-rejection.mjs",
+            "sha256": "71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c",
+            "produced_by": {
+              "actor": "fixture-builder",
+              "class": "agent"
+            },
+            "produced_at": "2026-09-22",
+            "replay": {
+              "command": "node checks/ac01-duplicate-rejection.mjs",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "pass",
+              "recorded_outcome": "pass",
+              "as_expected": true
+            },
+            "modified_replay": {
+              "command": "node checks/ac01-duplicate-rejection.mjs --perturb accept-duplicates",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "fail",
+              "recorded_outcome": "fail",
+              "as_expected": true,
+              "perturbation": "stop rejecting duplicate source ids in the transformation"
+            },
+            "declared_in": "checks/ac01-duplicate-rejection.mjs",
+            "declared_in_sha256": "71bc5eb40e1d8715d51833d8107edfc4ca408113f3e23c6300eb4d2443b8743c"
+          }
+        ],
+        "best_determinism": "L3",
+        "ceiling": "HUMAN VERIFIED",
+        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "unfalsified": false,
+        "unfalsified_reason": null,
+        "state": "HUMAN VERIFIED",
+        "state_source": "marker",
+        "drift": null
+      },
+      {
+        "id": "P1-AC-02",
+        "scope": "P1",
+        "kind": "AC",
+        "text": "Normalization preserves the meaning of every source record it accepts.",
+        "text_sha256": "202c9b47a92446476c20170a75957889ca8dd082c10334f3bd3b7ebb2694de28",
+        "authority": "design §6.3",
+        "source": {
+          "path": "llm/claims.md",
+          "line": 23
+        },
+        "checkbox": "x",
+        "marker_state": "AGENT VERIFIED",
+        "marker_state_source": "marker",
+        "current_marker": "— AGENT VERIFIED (PR #41, 2026-09-22)",
+        "history": [],
+        "markers": [
+          {
+            "line": 24,
+            "raw": "— AGENT VERIFIED (PR #41, 2026-09-22)",
+            "state": "AGENT VERIFIED",
+            "pr": 41,
+            "date": "2026-09-22",
+            "reason": null,
+            "well_formed": true
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "assertion",
+            "determinism": "L1",
+            "locator": "evidence/attestations.md",
+            "sha256": "db20ef5e8d5d751f966f37b5b0c846e1b8f105fb76c7f4fdfc71fb64f9866409",
+            "produced_by": {
+              "actor": "fixture-builder",
+              "class": "agent"
+            },
+            "produced_at": "2026-09-22",
+            "replay": null,
+            "modified_replay": null,
+            "declared_in": "evidence/attestations.md",
+            "declared_in_sha256": "db20ef5e8d5d751f966f37b5b0c846e1b8f105fb76c7f4fdfc71fb64f9866409"
+          }
+        ],
+        "best_determinism": "L1",
+        "ceiling": "AGENT VERIFIED",
+        "ceiling_reason": "best evidence is `L1` (attested): an agent's say-so is never enough (design §6.3, §5.3 mechanism 4)",
+        "unfalsified": false,
+        "unfalsified_reason": null,
+        "state": "AGENT VERIFIED",
+        "state_source": "marker",
+        "drift": null
+      },
+      {
+        "id": "P1-AC-03",
+        "scope": "P1",
+        "kind": "AC",
+        "text": "The generated dataset contains one row per accepted source record, and its rows are sorted ascending by normalized ID.",
+        "text_sha256": "be5c53bb391019c28ad0f128bc5e31f2032d414920629af066fcb998a87f78b1",
+        "authority": "design §5.4",
+        "source": {
+          "path": "llm/claims.md",
+          "line": 25
+        },
+        "checkbox": "x",
+        "marker_state": "NOT VERIFIED",
+        "marker_state_source": "marker",
+        "current_marker": "— NOT VERIFIED (claim text edited, 2026-09-23)",
+        "history": [
+          "— AGENT VERIFIED (PR #41, 2026-09-20)",
+          "— HUMAN VERIFIED (PR #42, 2026-09-21)"
+        ],
+        "markers": [
+          {
+            "line": 26,
+            "raw": "— AGENT VERIFIED (PR #41, 2026-09-20)",
+            "state": "AGENT VERIFIED",
+            "pr": 41,
+            "date": "2026-09-20",
+            "reason": null,
+            "well_formed": true
+          },
+          {
+            "line": 27,
+            "raw": "— HUMAN VERIFIED (PR #42, 2026-09-21)",
+            "state": "HUMAN VERIFIED",
+            "pr": 42,
+            "date": "2026-09-21",
+            "reason": null,
+            "well_formed": true
+          },
+          {
+            "line": 28,
+            "raw": "— NOT VERIFIED (claim text edited, 2026-09-23)",
+            "state": "NOT VERIFIED",
+            "pr": null,
+            "date": "2026-09-23",
+            "reason": "claim text edited",
+            "well_formed": true
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "test",
+            "determinism": "L3",
+            "locator": "checks/ac03-sort-order.mjs",
+            "sha256": "1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b",
+            "produced_by": {
+              "actor": "fixture-builder",
+              "class": "agent"
+            },
+            "produced_at": "2026-09-20",
+            "replay": {
+              "command": "node checks/ac03-sort-order.mjs",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "pass",
+              "recorded_outcome": "pass",
+              "as_expected": true
+            },
+            "modified_replay": {
+              "command": "node checks/ac03-sort-order.mjs --perturb shuffle-output",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "fail",
+              "recorded_outcome": "fail",
+              "as_expected": true,
+              "perturbation": "reverse the transformation's output order"
+            },
+            "declared_in": "checks/ac03-sort-order.mjs",
+            "declared_in_sha256": "1796fc5e8e50d793c5f5d4580f63725f041733483868db24ab5a0673c81c403b"
+          }
+        ],
+        "best_determinism": "L3",
+        "ceiling": "HUMAN VERIFIED",
+        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "unfalsified": false,
+        "unfalsified_reason": null,
+        "state": "NOT VERIFIED",
+        "state_source": "marker",
+        "drift": null
+      },
+      {
+        "id": "P1-AC-04",
+        "scope": "P1",
+        "kind": "AC",
+        "text": "The transformation runs to completion without error on the committed source dataset.",
+        "text_sha256": "220dd693ba49d082ec3f169bddf844ed58298b4429a123ea3d6baf8a475e18c2",
+        "authority": "design §14.3",
+        "source": {
+          "path": "llm/claims.md",
+          "line": 29
+        },
+        "checkbox": "x",
+        "marker_state": "AGENT VERIFIED",
+        "marker_state_source": "marker",
+        "current_marker": "— AGENT VERIFIED (PR #43, 2026-09-22)",
+        "history": [],
+        "markers": [
+          {
+            "line": 30,
+            "raw": "— AGENT VERIFIED (PR #43, 2026-09-22)",
+            "state": "AGENT VERIFIED",
+            "pr": 43,
+            "date": "2026-09-22",
+            "reason": null,
+            "well_formed": true
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "test",
+            "determinism": "L3",
+            "locator": "checks/ac04-transform-runs.mjs",
+            "sha256": "d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a",
+            "produced_by": {
+              "actor": "fixture-builder",
+              "class": "agent"
+            },
+            "produced_at": "2026-09-22",
+            "replay": {
+              "command": "node checks/ac04-transform-runs.mjs",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "pass",
+              "recorded_outcome": "pass",
+              "as_expected": true
+            },
+            "modified_replay": {
+              "command": "node checks/ac04-transform-runs.mjs --perturb accept-duplicates",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "fail",
+              "recorded_outcome": "pass",
+              "as_expected": false,
+              "perturbation": "stop rejecting duplicate source ids in the transformation"
+            },
+            "declared_in": "checks/ac04-transform-runs.mjs",
+            "declared_in_sha256": "d5bfe2aa23464407af8d4ef1526d59bbbe5bb165173d1a31ed0badff8cea9a0a"
+          }
+        ],
+        "best_determinism": "L3",
+        "ceiling": "AGENT VERIFIED",
+        "ceiling_reason": "MODIFIED REPLAY did not fail: the check passes while the thing it asserts is broken (design §14.3)",
+        "unfalsified": true,
+        "unfalsified_reason": "modified replay failed to fail",
+        "state": "AGENT VERIFIED",
+        "state_source": "marker",
+        "drift": null
+      },
+      {
+        "id": "S1-CL-01",
+        "scope": "S1",
+        "kind": "CL",
+        "text": "The generated dataset contains exactly nine normalized records, one for each source record that is both valid and uniquely identified.",
+        "text_sha256": "d0f31d96b9f46dbc29463e9e15cafb9d11bf4a9a994971c70fcbd104bbf4a919",
+        "authority": "activity-plan §13.2",
+        "source": {
+          "path": "llm/claims.md",
+          "line": 35
+        },
+        "checkbox": "x",
+        "marker_state": "HUMAN VERIFIED",
+        "marker_state_source": "marker",
+        "current_marker": "— HUMAN VERIFIED (PR #44, 2026-09-23)",
+        "history": [
+          "— AGENT VERIFIED (PR #43, 2026-09-22)"
+        ],
+        "markers": [
+          {
+            "line": 36,
+            "raw": "— AGENT VERIFIED (PR #43, 2026-09-22)",
+            "state": "AGENT VERIFIED",
+            "pr": 43,
+            "date": "2026-09-22",
+            "reason": null,
+            "well_formed": true
+          },
+          {
+            "line": 37,
+            "raw": "— HUMAN VERIFIED (PR #44, 2026-09-23)",
+            "state": "HUMAN VERIFIED",
+            "pr": 44,
+            "date": "2026-09-23",
+            "reason": null,
+            "well_formed": true
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "test",
+            "determinism": "L3",
+            "locator": "checks/cl01-record-count.mjs",
+            "sha256": "295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16",
+            "produced_by": {
+              "actor": "fixture-owner",
+              "class": "human"
+            },
+            "produced_at": "2026-09-23",
+            "replay": {
+              "command": "node checks/cl01-record-count.mjs",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "pass",
+              "recorded_outcome": "pass",
+              "as_expected": true
+            },
+            "modified_replay": {
+              "command": "node checks/cl01-record-count.mjs --perturb source-score",
+              "cwd": "plugin/scripts/fixtures/slice",
+              "expect": "fail",
+              "recorded_outcome": "fail",
+              "as_expected": true,
+              "perturbation": "alter one score in the source dataset in memory; the recomputed generated dataset must change"
+            },
+            "declared_in": "checks/cl01-record-count.mjs",
+            "declared_in_sha256": "295a6bcb37e85a132ec868cfb55db42a88393431468a7d55088cfd509fb5dd16"
+          }
+        ],
+        "best_determinism": "L3",
+        "ceiling": "HUMAN VERIFIED",
+        "ceiling_reason": "L3 evidence with a MODIFIED REPLAY that failed as it should (design §14.4)",
+        "unfalsified": false,
+        "unfalsified_reason": null,
+        "state": "HUMAN VERIFIED",
+        "state_source": "marker",
+        "drift": null
+      }
+    ],
+    "unidentified_claims": [
+      {
+        "path": "llm/claims.md",
+        "line": 31,
+        "checkbox": " ",
+        "text": "The normalized dataset is published to the project website.",
+        "state": "NOT VERIFIED",
+        "note": "no claim ID — counted and reported, never silently dropped (design §3.2)"
+      }
+    ],
+    "pdatasets": [
+      {
+        "id": "S1-DS-01",
+        "title": "Source records, as collected",
+        "path": "data/source.csv",
+        "sha256": "d496eda0abeee9c1f14dab82477fd13d6e03d4d20b8e9426c3aa2657f9a17793",
+        "bytes": 453,
+        "produced_by": "manual",
+        "derived_from": [],
+        "derived_from_declared": "none",
+        "transformation": "manual (records transcribed by hand from the collection sheet)",
+        "transformation_determinism": "L1",
+        "transformation_determinism_source": "derived: `manual` transformation is `L1` (design §4.1)",
+        "produced_at": "2026-09-20",
+        "schema": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "score",
+            "type": "number"
+          },
+          {
+            "name": "recorded_at",
+            "type": "date"
+          }
+        ],
+        "rows": 12,
+        "license": "CC0-1.0",
+        "view_url": "plugin/scripts/fixtures/slice/data/source.csv",
+        "download_url": "plugin/scripts/fixtures/slice/data/source.csv",
+        "link_resolution": "local",
+        "source": {
+          "path": "llm/pdatasets.md",
+          "line": 12
+        },
+        "provenance_chain": [
+          "S1-DS-01"
+        ],
+        "provenance_root": true
+      },
+      {
+        "id": "S1-DS-02",
+        "title": "Normalized records",
+        "path": "data/generated.csv",
+        "sha256": "69e24c33f1325ad8688ce99f6b9ebb63bf5267420dc4e53dfebe5763f841612e",
+        "bytes": 367,
+        "produced_by": "transform.mjs",
+        "derived_from": [
+          "S1-DS-01"
+        ],
+        "derived_from_declared": "S1-DS-01",
+        "transformation": "transform.mjs",
+        "transformation_determinism": "L3",
+        "transformation_determinism_source": "declared",
+        "produced_at": "2026-09-22",
+        "schema": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "score",
+            "type": "number"
+          },
+          {
+            "name": "recorded_at",
+            "type": "date"
+          }
+        ],
+        "rows": 9,
+        "license": "CC0-1.0",
+        "view_url": "plugin/scripts/fixtures/slice/data/generated.csv",
+        "download_url": "plugin/scripts/fixtures/slice/data/generated.csv",
+        "link_resolution": "local",
+        "source": {
+          "path": "llm/pdatasets.md",
+          "line": 27
+        },
+        "provenance_chain": [
+          "S1-DS-01",
+          "S1-DS-02"
+        ],
+        "provenance_root": false
+      }
+    ],
+    "coverage": {
+      "claims_total": 5,
+      "claims_with_no_evidence": [],
+      "claims_l1_only": [
+        "P1-AC-02"
+      ],
+      "agent_verified_not_human_verified": [
+        "P1-AC-02",
+        "P1-AC-04"
+      ],
+      "unfalsified": [
+        "P1-AC-04"
+      ],
+      "drifted": [],
+      "capped_by_evidence": [],
+      "by_state": {
+        "NOT VERIFIED": 1,
+        "AGENT VERIFIED": 2,
+        "HUMAN REVIEWED": 0,
+        "HUMAN VERIFIED": 2,
+        "VERIFICATION FAILED": 0,
+        "NEEDS REWORK": 0
+      },
+      "by_marker_state": {
+        "NOT VERIFIED": 1,
+        "AGENT VERIFIED": 2,
+        "HUMAN REVIEWED": 0,
+        "HUMAN VERIFIED": 2,
+        "VERIFICATION FAILED": 0,
+        "NEEDS REWORK": 0
+      },
+      "by_best_determinism": {
+        "L1": 1,
+        "L2": 0,
+        "L3": 4,
+        "none": 0
+      },
+      "unidentified_claim_lines": 1,
+      "evidence_records": 5,
+      "pdatasets_total": 2,
+      "pdatasets_missing": []
+    }
+  },
+  "previous": null,
+  "gaps": [],
+  "findings": [
+    {
+      "severity": "warn",
+      "code": "unfalsified",
+      "subject": "P1-AC-04",
+      "message": "reported **unfalsified** — modified replay failed to fail (design §14.4)",
+      "locator": "llm/claims.md:29"
+    },
+    {
+      "severity": "info",
+      "code": "l1-only",
+      "subject": "P1-AC-02",
+      "message": "only `L1` (attested) evidence: capped at `AGENT VERIFIED` and can never reach `HUMAN VERIFIED` (design §6.3)",
+      "locator": "llm/claims.md:23"
+    }
+  ],
+  "findings_by_severity": {
+    "error": 0,
+    "warn": 1,
+    "info": 1
+  }
+}
