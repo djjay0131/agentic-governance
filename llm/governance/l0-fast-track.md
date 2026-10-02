@@ -1,7 +1,7 @@
 # L0 Fast-Track Policy
 
 Status: Active
-Last updated: 2026-07-11
+Last updated: 2026-09-23
 Owner: Project owner (canonical governance)
 Applies to: all repos adopting agentic-governance (see each repo's `llm/governance/governance-delta.md`)
 
@@ -136,6 +136,37 @@ below and is required on every `allow` line.
 | `index-table-rows` | Index regeneration; status/date cells of index rows | Diff confined to index-table rows | Rows match the indexed files' actual statuses |
 | `checkbox-only` | Status checkboxes | Every changed line is a checkbox list item, and each removed/added pair differs only in `[ ]` vs `[x]` | Checked items are verifiably complete via merged work |
 | `link-target-only` | Link/cross-reference path fixes only | Every changed line contains a Markdown link, and each removed/added pair is identical except link targets | The fix corrects a path — it never substitutes **which** document is referenced |
+| `verification-marker` | **Appending** a verification marker to a claim's marker block — `— <STATE> (PR #n[, YYYY-MM-DD])`, or the reset form `— NOT VERIFIED (<reason>, YYYY-MM-DD)` — and nothing else. Agent-assertable states only: `AGENT VERIFIED`, `VERIFICATION FAILED`, `NEEDS REWORK`, or a reset | Nothing is removed or edited vs the base; every added line is a well-formed marker; no added marker asserts `HUMAN REVIEWED` or `HUMAN VERIFIED` | The asserted state is warranted by evidence that exists, is cited, and was produced independently of the work it verifies |
+
+Every other shape permits a line to be **replaced** — `status-line-only`,
+`checkbox-only` and `link-target-only` pair each removed line with an added
+one, and `path-only` and `index-table-rows` do not constrain removal at all.
+`verification-marker` permits no removal of any kind, and that difference is
+the shape's whole reason to exist: the marker block is **append-only**, so
+deleting or editing an existing marker — or editing the claim text under one —
+is a violation, not a smaller change. A
+reset appends `— NOT VERIFIED (<reason>, YYYY-MM-DD)`; the superseded marker
+stays visible, because a reader must be able to see that something *was*
+verified and then stopped being so, and that is the one event no rewrite may
+hide.
+
+Two consequences worth stating plainly:
+
+- **`HUMAN REVIEWED` and `HUMAN VERIFIED` are human-only assertions and cannot
+  be made in this lane.** The fast track is the one lane in which an AI role
+  may merge, so an L0 diff asserting a human's finding would be an agent
+  certifying human verification of its own work. The check refuses it; it is
+  also semantic under condition 2, so it leaves the fast track either way.
+- **Declaring `verification-marker` over a file gives up in-lane checkbox
+  flips for it.** Only one allow rule matches a path, and a tick flip is a line
+  replacement, not an append. That is the right trade wherever a repo has
+  adopted claims: under this model a criterion is complete when it is
+  verified, not when it is ticked.
+
+The grammar, the state vocabulary, the transition table and the append-only
+rule are defined in
+`llm/specs/2026-09-18-human-verification-capability-design.md` §3.4, §3.5 and
+§5; this policy governs only which of them the L0 lane permits.
 
 ### Template Allowlist
 
@@ -163,6 +194,21 @@ deny <adr dir>/0000-template.md
 `llm/**` and `<artifacts dir>/**` are two `link-target-only` lines because
 both trees hold link targets: control-plane documents, and the derived
 views that project them.
+
+A repo whose roadmap carries verification markers **replaces** its
+`allow <roadmap path> checkbox-only` line with
+`allow <roadmap path> verification-marker`, rather than adding a second rule:
+only the first matching allow line applies to a path, so a second one would be
+dead. Keep the roadmap's line above the broad `llm/**` rule for the same
+reason.
+
+This replacement is **enforced**, not merely advised: once the declared claim
+source carries a marker, an `--l0` run that touches it under any other shape
+fails and names the line to change. A weaker shape on that path would waive
+the append-only rule — under `path-only`, deleting a
+`— NOT VERIFIED (<reason>, DATE)` reset restores the stale
+`HUMAN VERIFIED` above it — and the whole point of the shape is that such a
+deletion is a violation and is mechanically checkable.
 
 ### The Deny Rule
 
@@ -271,7 +317,18 @@ Mechanically verifiable by the governance check command in `--l0` mode:
 
 - Changed paths fall inside the allowlist and outside the denied set.
 - Diff shapes match their declared constraints (status-line-only,
-  index-table-rows, checkbox-only, link-target-only).
+  index-table-rows, checkbox-only, link-target-only, verification-marker).
+- For `verification-marker`: that the diff **appends** and does nothing else
+  (no marker line removed or edited, no claim text changed), and that every
+  added marker is well-formed.
+- That **no** added line of **any** changed path asserts `HUMAN REVIEWED` or
+  `HUMAN VERIFIED` in marker form. This is a lane rule, not a shape rule:
+  it is checked before the shape is dispatched, so a claim source allowlisted
+  under a weaker shape cannot opt out of it.
+- That a declared claim source which **carries** verification markers is
+  allowlisted under `verification-marker` and not under a shape that waives
+  the append-only rule. (A claim source carrying no markers is unaffected;
+  adoption is incremental.)
 - Presence of the certification block heading and checked declarations in
   the PR body (when the body is supplied).
 
@@ -283,6 +340,14 @@ discipline, and post-hoc detectability:
 - Whether the cited merged PR actually approved an ADR's decision
   (condition 7).
 - Whether a link fix preserves *which* document is referenced.
+- Whether an appended verification marker is **true** — that the evidence
+  exists, says what the marker claims, and was produced independently of the
+  work it verifies. The check asserts the shape, the grammar and the actor
+  class; it cannot assert the finding.
+- Whether a `HUMAN REVIEWED` or `HUMAN VERIFIED` marker written **outside**
+  this lane carries a real human approval. The check asserts the PR citation;
+  the platform asserts the approval, and only where the repo's Platform
+  Enforcement Reality says approvals bind.
 - Whether the audit session was genuinely independent of the
   authoring/steward session (condition 10).
 - Artifact ordering — unless the platform blocks it, nothing prevents a
@@ -302,17 +367,30 @@ detectable after the fact.
 
 - The canonical check script (`plugin/scripts/governance-checks.mjs`)
   implements the block format and shapes above; a repo may substitute an
-  equivalent command, declared in its delta, provided it preserves both
-  security properties: the read-from-base allowlist and the paired
-  diff-shape constraints.
+  equivalent command, declared in its delta, provided it preserves all
+  three security properties:
+  1. the read-from-base allowlist;
+  2. the diff-shape constraints — including `verification-marker`'s
+     **append-only** rule, which is deliberately **not** paired. Five of
+     the six shapes are paired 1:1 line replacements; a substitute command
+     that implemented the sixth as a paired constraint would satisfy the
+     word "paired" while permitting the in-place marker rewrite the shape
+     exists to forbid;
+  3. the human-only state guard — `HUMAN REVIEWED` and `HUMAN VERIFIED`
+     may not be asserted by an L0 diff, **whatever shape the changed path
+     declares**. The guard belongs to the lane, not to one shape: L0 is
+     the lane in which an AI role may merge, so a shape-bound guard can be
+     routed around by allowlisting the claim source under a weaker shape.
 - Until a repo's governance check command exists and runs, condition 9
   cannot be satisfied and no fast-track merge can occur there.
 
 ## Open Questions
 
-- Whether canonical shapes beyond the five above will be needed (e.g., a
+- Whether canonical shapes beyond the six above will be needed (e.g., a
   generated-file shape verified by regeneration). Add shapes here and in
-  the script together; repos must not invent local shapes.
+  the script together; repos must not invent local shapes. `verification-marker`
+  was the sixth, added under exactly that rule — the row above and the branch in
+  `plugin/scripts/governance-checks.mjs` shipped in one PR.
 
 ## Cross-References
 
@@ -324,3 +402,6 @@ detectable after the fact.
 - `plugin/agents/chief-reviewer.md` — Governance Auditor duty
 - `llm/constitution/shared-principles.md` — the single-exception merge rule
 - `llm/governance/patterns/prompt-patterns.md` — steward/L0 and audit prompt patterns
+- `llm/specs/2026-09-18-human-verification-capability-design.md` — the
+  verification marker grammar (§3.4), the append-only rule (§3.5) and the state
+  machine (§5) that `verification-marker` enforces

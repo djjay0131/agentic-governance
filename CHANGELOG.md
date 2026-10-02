@@ -1,5 +1,52 @@
 # Changelog
 
+## Unreleased
+
+### G-3 Human Verification — a vertical slice, and what building it disproved
+
+The package could establish that a change was classified, branched, reviewed and
+merged. It could not establish whether the thing the change was supposed to
+achieve was **true**. This is the first executable answer: `surface.mjs`,
+`replay.mjs`, `surface-html.mjs`, a fixture, and a sixth L0 diff shape — the
+first non-Markdown artifacts in this control plane.
+
+**Four verifiers attacked work they did not build. All four returned FAIL**, and
+every serious defect was found by one of them rather than by the orchestrator
+who had spot-checked three of the four areas.
+
+- **The engine never executed anything.** It read `// replay-outcome: pass` out
+  of a code comment. One word walked the deliberately vacuous check to
+  `HUMAN VERIFIED` through a clean, zero-finding run — the tool built to catch
+  checks that pass without checking anything, passing without checking anything.
+- **`HUMAN VERIFIED` was forgeable at exit 0.** The human-state guard lived
+  inside one diff shape, while `path-only` returns before reading the diff. A
+  claims file allowlisted `allow llm/** path-only` — one word from a plausible
+  steward mistake — skipped inspection entirely. The guard now runs at the
+  **lane**, because "no agent may mark its own work complete" is a property of
+  the lane and never of a diff shape.
+- **The determinism cap was satisfied by prose *about* the evidence.** It read
+  the level off the same line as the claim ID, so honest evidence files were
+  rejected while two narrative reports satisfied it.
+- **The interface rendered executed and asserted outcomes identically**, undoing
+  the execution fix at the last step.
+
+**And one finding that is not a defect but a bound.** MODIFIED REPLAY is a
+defence against error, not against an adversary: the perturbation is
+*self-administered*, so `if (perturb) exit 1` satisfies it. A verifier drove a
+claim reading "two plus two equals five" to `HUMAN VERIFIED` while the manifest
+recorded `ASSERTION FALSE` verbatim. §14.3 now says so, and names INDEPENDENT
+VERIFICATION as what closes the gap — with the slice's human-authored check as
+the worked example: delete the pipeline and it still passes.
+
+The design also carried an **inverted determinism scale** in two sections —
+`L3` (strongest) written where `L1` (weakest) was meant — which would have
+classified attested and LLM work as deterministic and inverted the cap that
+stops an agent's say-so reaching `HUMAN VERIFIED`.
+
+**G-3 stays `SPECIFIED`.** Not caution: the slice is `AGENT VERIFIED` and no
+human has verified it. G-3's first application is to itself.
+
+
 ## 0.9.1 — 2026-09-18
 
 ### `audit` check 6 passed repos that ran no checks at all

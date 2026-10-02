@@ -4,10 +4,18 @@ jobs:
   governance-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Pinned by commit SHA, not by tag. A tag is mutable — the owner can
+      # repoint `v4` at any commit — so a tag pin is a promise, not a
+      # guarantee. `llm/memory_bank/activeContext.md` records this as an open
+      # supply-chain gap across the portfolio ("Actions are pinned by mutable
+      # tag everywhere except `website`"); this repo is the canon, and a canon
+      # that does not do the thing it prescribes is not evidence it works.
+      # Both SHAs are the commit `v4` pointed at on 2026-09-23 (v4.4.0),
+      # resolved from the GitHub API, not transcribed.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0  # governance-checks' adr-status diffs against origin/main
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
       - name: Run governance convention checks
@@ -23,3 +31,19 @@ jobs:
         # v0.6.0, when it was found to be silently mis-binding the artifacts
         # slot and passing adr-index/adr-status on a nonexistent directory.
         run: node plugin/scripts/governance-checks.test.mjs
+      - name: Surface regression tests
+        # surface.mjs, replay.mjs and surface-html.mjs shipped with no CI
+        # coverage at all, and independent verification found that flipping one
+        # word in one code comment promoted a vacuous check to `HUMAN VERIFIED`
+        # with zero findings and exit 0. Every defect in that report is a test
+        # here, and the suite runs the real generators over a copy of the
+        # committed fixture — ten real subprocesses per invocation.
+        run: node plugin/scripts/surface.test.mjs
+      - name: Verification surface renders with every link resolving
+        # surface-html.mjs emits repo-relative links and exits 1 if any target
+        # is absent on disk. This is the one assertion the regression suite
+        # cannot make: it works over a reconstructed copy of the tree, so only
+        # a run against the real repository catches a moved or renamed file
+        # that the published page cites. Written to a temp path — CI verifies
+        # the page, it does not regenerate the committed one.
+        run: node plugin/scripts/surface-html.mjs --out "$RUNNER_TEMP/index.html"

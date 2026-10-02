@@ -368,7 +368,7 @@ at, with working view and download links.
 | `bytes` | yes | |
 | `produced_by` | yes | pipeline step id (§15) or `manual` |
 | `derived_from` | yes* | id(s) of the source PDataset(s); `none` for a root dataset. *Required — this field **is** the provenance chain the brief asks for, and `none` must be stated rather than omitted, so a root dataset is distinguishable from an unrecorded one.* |
-| `transformation` | yes* | the executable artifact that produced this from `derived_from`, or `manual` with a reason. *A `manual` transformation is a Level 3 operation by §14 regardless of how deterministic it looks.* |
+| `transformation` | yes* | the executable artifact that produced this from `derived_from`, or `manual` with a reason. *A `manual` transformation is an **`L1`** (attested) operation by §14 regardless of how deterministic it looks.* |
 | `produced_at` | yes | ISO date |
 | `schema` | no | column names/types when tabular |
 | `rows` | no | |
@@ -516,7 +516,7 @@ verification rested on:
 | `commit_sha` | the repository state the claim was verified against |
 | `artifact_sha256` | each cited file — verification code, config, fixture |
 | `dataset_sha256` | each cited PDataset (§4.1 already records `sha256`) |
-| `model_id` + `model_version` | Level 3 operations (§14) |
+| `model_id` + `model_version` | **`L1`** (attested) operations (§14) |
 | `execution_id` | the run whose output was the evidence |
 | `text_sha256` | the claim sentence (§5.4, unchanged) |
 
@@ -530,7 +530,7 @@ Two deliberate limits, stated so nobody over-reads this:
   prevent it, and anyone who can edit the tree can edit the manifest. The claim
   is that a silent substitution becomes a visible one, which is all a
   git-hosted system can honestly offer.
-- **Level 3 cannot bind an output.** For nondeterministic operations the
+- **`L1` cannot bind an output.** For nondeterministic operations the
   manifest binds the *inputs* — prompt, model id, parameters, seed where one
   exists — and not the output, because re-running produces a different one
   legitimately. §14's distinction between reproducing the *procedure* and
@@ -626,10 +626,29 @@ Renderer: none          # none | quarto
   container without a host install. Recorded as an available option, not a
   requirement.
 
-**Executable UI is deferred entirely.** An interactive verification console is a
-genuinely attractive idea and a genuinely large one; it belongs in the backlog
-after the data model has shipped and been used. Building it now would be
-designing a UI for data that does not yet exist.
+**An interactive verification console is deferred entirely.** It is a genuinely
+attractive idea and a genuinely large one; it belongs in the backlog after the
+data model has shipped and been used. Building it now would be designing a UI
+for data that does not yet exist.
+
+> **Amended 2026-09-23 (slice reconciliation A-2).** As first written this
+> paragraph deferred "executable UI" as a whole, which reads as deferring any
+> way for a human to re-run a check. That is more than was intended and more
+> than the capability can afford: a human who cannot re-execute the evidence is
+> back to trusting an agent's summary, which is the gap G-3 exists to close.
+>
+> The distinction the section actually needs:
+>
+> - **Deferred** — an interactive console that executes code *in the page*.
+> - **Required, and in scope under `Renderer: none`** — the generated page
+>   emits the exact REPLAY and MODIFIED REPLAY commands, with their inputs,
+>   expected results and working directory, for the human to run in their own
+>   shell.
+>
+> The second costs zero dependencies, because emitting a string is not
+> executing it. It also keeps the **execution boundary explicit**: the page
+> states plainly that it renders commands and does not run them. A page that
+> animated a fake result would be worse than one that runs nothing.
 
 ---
 
@@ -733,6 +752,25 @@ changing a verification marker on a criterion line **fails `--l0`**.
 never L0-eligible either. They went in as part of semantic PRs, and the fast
 track is INACTIVE in that repo, so nothing ever ran `--l0` on them.)
 
+> **Amended 2026-09-23 (slice reconciliation C-3).** The code sketch below is
+> **wrong in two ways**, found when it was implemented. Implement §3.5, not this
+> sketch.
+>
+> 1. **It calls `pairedConstraint`**, which permits a 1:1 removed/added line
+>    replacement. §3.5 requires the opposite in terms: *"a marker that is
+>    rewritten in place is the opposite of append-only"*, and *"Removal is a
+>    violation, and it is mechanically checkable."* A paired shape would permit
+>    exactly the rewrite the shape exists to forbid.
+> 2. **Its filter requires every changed line to be a checkbox list item.**
+>    Marker lines are not checkbox items — they are continuation lines beginning
+>    with `—` (§3.4). The sketch would reject the very lines it exists to permit.
+>
+> The implemented rule: **no line may be removed or edited versus the base; every
+> added line must be a well-formed marker; and no added marker may assert a human
+> state**, because the L0 lane is the agent lane. The real cost is stated rather
+> than hidden: a file declaring `verification-marker` gives up in-lane checkbox
+> flips.
+
 **Resolution — a sixth canonical shape, `verification-marker`:**
 
 ```js
@@ -772,6 +810,14 @@ undeclared level is a gap marker, not an assumption, because the safe-looking
 default (`L1`) would quietly cap claims and the useful-looking default (`L3`)
 would quietly launder assertions.
 
+> **Amended 2026-09-23 (slice reconciliation A-1).** §4.1 and §5.5 previously
+> said "Level 3" where they meant **`L1`** — the *weakest* level — while this
+> table defines `L3` as the *strongest*. The scale was inverted in two places.
+> An implementer following those sections literally would have classified
+> manual, attested and LLM work as **deterministic**, inverting the one cap in
+> §5.3 mechanism 4 that stops an agent's own say-so reaching `HUMAN VERIFIED`.
+> This table is canonical; those citations now read `L1`.
+
 ### 14.2 Three verification modes
 
 **REPLAY** — re-execute the recorded command with the recorded inputs; expect
@@ -801,6 +847,42 @@ mechanises.
 
 That is not a hypothetical benefit. It is the strongest available argument for
 this capability, and it is drawn from this portfolio's own recent history.
+
+> **Amended 2026-09-23 (slice verification, D8). What MODIFIED REPLAY cannot
+> prove, found by building it.**
+>
+> **The perturbation is self-administered.** `--perturb` is implemented *by the
+> artifact under test*. Nothing external checks that the perturbation is real,
+> so the rule "MODIFIED REPLAY must fail" is satisfiable by
+> `if (perturb) process.exit(1)`.
+>
+> An independent Verifier demonstrated the consequence: a claim reading **"two
+> plus two equals five"** reached `HUMAN VERIFIED` while the manifest recorded
+> `ASSERTION FALSE` verbatim in **both** execution records. The check failed on
+> perturbation exactly as required, and the requirement was met by a check that
+> proves nothing.
+>
+> **So MODIFIED REPLAY is a defence against error, not against an adversary.**
+> That distinction was not drawn above and should have been. The three vacuous
+> guards this section cites were *honest mistakes* — nobody wrote them to
+> deceive — and against that failure mode, which is overwhelmingly the common
+> one, MODIFIED REPLAY works and the argument above stands. Against an artifact
+> written to satisfy the check, it does not, and no amount of re-running fixes
+> that: the artifact and the perturbation share an author.
+>
+> **What actually closes the gap is the thing this capability already names but
+> does not yet mechanise:** INDEPENDENT VERIFICATION (§14.2) — a *different*
+> implementation, by a different actor, from the claim text alone. The slice
+> shipped one, `human/cl01-independent-relationship.mjs`, and the Verifier
+> singled it out: deleting the pipeline's `transform.mjs` leaves it passing
+> while the agent-authored check cannot even load. That is what "independent"
+> has to mean, and it is the property MODIFIED REPLAY lacks.
+>
+> **Consequence for the determinism cap.** A modified replay that *crashes* —
+> missing input, stack trace, empty stdout — is currently graded "it failed as
+> it must". Falsified and failed-to-run are not distinguished, and the
+> discriminator is already in the execution record, unread. Until that is
+> closed, a green MODIFIED REPLAY is weaker evidence than §14.4 assumes.
 
 ### 14.4 Enforcement
 
