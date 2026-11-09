@@ -206,3 +206,91 @@ Requirements on the build:
 - `llm/features/BACKLOG.md`: G-1 to G-3, and candidates G-5 to G-10
 - `llm/specs/2026-09-18-human-verification-capability-design.md`: G-3, the gap E1 is expected to confirm
 - `llm/specs/2026-10-01-harness-independence-audit.md`: the runtime coupling that limits E2 to the deterministic layer
+
+## 9. Builder contract for the harness (ready to dispatch)
+
+The harness is L2 work delegated to OpenCode on the project VM. This is the
+contract, written to the Universal Bounded-Contract Skeleton
+(`llm/governance/patterns/prompt-patterns.md`). It is **not dispatched**
+until the owner settles open question 5; `<HARNESS DIR>` below is then
+replaced with the chosen path (default proposal `plugin/scripts/study/`).
+
+```text
+ROLE: You are the Study Harness Builder (Specialist 1) for the
+  standards-completeness study (issue #32), working in
+  djjay0131/agentic-governance on branch feature/study-harness, cut from
+  research/standards-completeness-study.
+
+OBJECTIVE: A dependency-free Node harness that scores the E1 codings and
+  runs the E2 fault-injection suite, producing byte-identical outputs on
+  every rerun.
+
+REQUIRED READING (before writing anything):
+  llm/memory_bank/activeContext.md; this spec (§3.1, §3.2, §4);
+  docs/research/standards-benchmark/coding-scheme.md;
+  docs/research/standards-benchmark/benchmark-landscape.md §4 (F1-F12);
+  plugin/scripts/README.md; plugin/scripts/governance-checks.mjs;
+  plugin/scripts/governance-checks.test.mjs (test style to match).
+
+REQUIRED SKILLS/WORKFLOWS: test-first. Write the determinism test and one
+  failing fixture test before the code that satisfies them.
+
+FILE CONTRACT:
+  - You may create/edit ONLY: <HARNESS DIR>/**,
+    docs/research/standards-benchmark/results/**,
+    .github/workflows/ci.yml (to add the harness tests only).
+  - You must NOT touch: plugin/scripts/governance-checks.mjs (import it or
+    shell out to it; report defects, never fix them), anything under llm/,
+    the catalog and coding CSVs, the paper.
+
+DELIVERABLES:
+  1. <HARNESS DIR>/score.mjs: validates requirements-catalog.csv and every
+     coding-*.csv (columns, IDs match catalog 1:1, depth 0-5, evidence
+     present for depth >= 1, scope values legal). Computes per source:
+     rows, covered (depth >= 2), enforced (depth >= 4), depth histogram;
+     for any two coders, unweighted kappa on scope and linear-weighted
+     kappa on depth; the four sensitivity variants in spec §3.1. Writes
+     results/e1-coverage.csv, results/e1-agreement.csv,
+     results/e1-summary.md. With only coding-CL.csv present it must run
+     and label every output PILOT.
+  2. <HARNESS DIR>/govfault.mjs build|run: builds one git repo per fault
+     F1-F12 plus a clean control each, in a temp dir, from fixed
+     templates with fixed author, email and GIT_*_DATE so SHAs are stable;
+     runs the checker in default, --layout and --l0 modes; writes
+     results/e2-detection.csv (fault, mode, exit code, failing checks,
+     expected catcher, match yes/no).
+  3. results/manifest.json per run: canon SHA, harness SHA, sha256 of
+     every input file, node version. No wall-clock timestamps in any
+     data file.
+  4. <HARNESS DIR>/*.test.mjs: runs each command twice and asserts
+     byte-identical outputs; kappa against a hand-computed 2x2 and 6x6
+     example; every clean control passes; F1-F6 are detected by the
+     expected check.
+  5. A README in <HARNESS DIR> with usage, following repo doc standards.
+
+DEFINITION OF DONE: llm/governance/definition-of-done.md, Implementation
+  Work. Plus: `node plugin/scripts/governance-checks.mjs --layout` passes,
+  and the existing checker tests still pass.
+
+CONSTRAINTS:
+  - Not in scope: E3, E4, E5; any change to policy; any agent or LLM call.
+  - Everything that is run is code; no step depends on a prompt.
+  - If F7, F8 or F12 are unexpectedly detected, or any clean control
+    fails, record it in the report as a finding. Do not adjust the
+    fixture to make it pass.
+  - Uncertain classification => semantic => human review.
+
+GIT: Commit to feature/study-harness and push that branch. Do not open a
+  PR, do not merge, never touch main. Claude verifies from a fresh clone,
+  then opens the draft PR declaring L2.
+
+FINAL REPORT: files delivered; test output pasted verbatim; the
+  e1-summary.md and e2-detection.csv produced on the pilot data; any
+  checker defect found; open questions for the owner.
+```
+
+Verification before the PR (Claude, from a fresh clone, not from the
+builder's report): rerun every command twice and diff the outputs; recompute
+two kappa values by hand; confirm each clean control passes and each of
+F1–F6 fails on the named check; confirm no file outside the file contract
+changed.
