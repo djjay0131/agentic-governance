@@ -1,7 +1,7 @@
 # Feature Catalog — Master Index
 
 Status: Active
-Last updated: 2026-09-10
+Last updated: 2026-11-09
 Owner: Project owner (canonical governance)
 
 Single source of truth for every capability spec'd or proposed for this
@@ -26,6 +26,12 @@ follow-up section, not here.
 | G-1 | Model selection for delegated agents | BACKLOG | Govern *which model* a subagent runs on, the way Modes 1–3 already govern how many agents and what shape. |
 | G-2 | `establish` should make governance checks a *required* status check | BACKLOG | The skill wires the check, then leaves it advisory — so no adopted repo actually blocks a merge on it. |
 | G-3 | Human verification of claims | SPECIFIED | The package governs *process* exhaustively and *outcome* nowhere — an agent's own say-so is what marks work complete. |
+| G-5 | Security baseline for adopters | BACKLOG (candidate) | SSDF and OpenSSF Scorecard are the weakest-covered sources in the standards pilot; most items could be installed by `establish` and checked. |
+| G-6 | Governance measurement | BACKLOG (candidate) | The canon claims to spend human review only where it changes meaning, and measures nothing that would show it. |
+| G-7 | Risk register | BACKLOG (candidate) | Risks are listed per deliverable and never tracked, treated or closed. |
+| G-8 | Agent provenance and supplier policy | BACKLOG (candidate) | Extends G-1: which model, harness and plugin produced an artifact is unrecorded, and model vendors and plugins are ungoverned. |
+| G-9 | Release governance for adopters | BACKLOG (candidate) | Canon versions itself carefully and sets no release, build or integrity rules for the repos that adopt it. |
+| G-10 | Incident response | BACKLOG (candidate) | Only an emergency-repair exception exists; no incident intake, communication or post-incident review. |
 
 ---
 
@@ -242,3 +248,30 @@ Format (the shape table, and condition 10's definition of independence
 as temporal and artifactual); `llm/governance/definition-of-done.md`;
 `llm/memory_bank/systemPatterns.md` §5 (canon must not learn about
 adopters).
+
+---
+
+## G-5 to G-10 · Candidates from the standards-completeness pilot
+
+**Status of these entries.** Each is a *candidate*, found by a
+single-coder pilot (Claude) that coded the canon at `01c7d69` against 174
+requirements from ten standards. They are recorded here so the gaps are
+not orphaned in a research folder, and they are deliberately not
+specified. Each is confirmed, merged or dropped once the two-coder study
+in `llm/specs/2026-11-09-standards-completeness-study-design.md` reports.
+Evidence per requirement is in
+`docs/research/standards-benchmark/coding-CL.csv`; the themes are
+summarized in `docs/research/standards-benchmark/README.md`.
+
+| # | Requirements behind it (catalog IDs) | First question for a spec |
+|---|---|---|
+| G-5 | SSDF PO.1, PO.4, PS.2, PW.4–PW.9, RV.1–RV.3; Scorecard Security-Policy, Dependency-Update-Tool, Token-Permissions, Pinned-Dependencies, SAST, Dangerous-Workflow | Which of these can `establish` install and the checker verify without becoming a security product? |
+| G-6 | 12207 6.3.7; AI RMF MEASURE 1, 3, 4; 42001 clause 9 | Can the measures be derived from PR history alone, so nothing new has to be recorded? |
+| G-7 | 12207 6.3.4; 42001 clauses 6 and 8; AI RMF MAP 4–5, MANAGE 1 | Is a risk register control plane (it governs decisions) and does it belong in the memory bank or beside the ADRs? |
+| G-8 | 218A PS.3.2, PW.5.1, RV.1.1; 42001 A.6.2.8, A.10.3; AI RMF GOVERN 6, MAP 3 | Does this merge with G-1, and does it depend on the harness-independence work (`llm/specs/2026-10-01-harness-independence-audit.md`)? |
+| G-9 | 12207 6.4.10; IEEE 828 BUILD, RELEASE; SSDF PS.2, PS.3 | Is release policy a project fact (delta) or canon? |
+| G-10 | 42001 A.8.4; AI RMF MANAGE 4; SSDF RV.1–RV.3 | What is the smallest incident rule that is not just the emergency-repair exception renamed? |
+
+A seventh theme from the pilot, requirement identity and traceability
+(29148, 12207 6.4.2–6.4.3, 42001 A.6.2.2), is already **G-3** and adds
+standards evidence to it rather than a new entry.

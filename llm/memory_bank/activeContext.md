@@ -2,6 +2,23 @@
 
 **As of 2026-09-17 — v0.9.0.**
 
+## In flight (2026-11-09): standards-completeness study, issue #32
+
+A study of the canon itself, not a change to it. It measures coverage and
+enforcement depth against ten software engineering and AI governance
+standards, tests the deterministic layer with seeded faults, and checks
+adopter practice. Design: `llm/specs/2026-11-09-standards-completeness-study-design.md`.
+Data and paper draft: `docs/research/standards-benchmark/`, `docs/paper/`.
+A plain explainer of the workflow and its fifteen human touchpoints is at
+`docs/how-it-works/README.md`.
+
+A single-coder pilot (Claude, not a study result) found the canon strong on
+decisions, change control, review and AI accountability, and thin on
+requirements, security, measurement, risk, release and incident response.
+Those gaps are backlog candidates G-5 to G-10. Open decisions for the owner:
+harness location (spec open question 5), venue, and whether E5 belongs here
+or in the memory-track paper.
+
 ## Changed since v0.3.1
 
 Nine releases in one session, driven by a portfolio-wide rollout. **Every defect
