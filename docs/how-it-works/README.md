@@ -174,10 +174,10 @@ sequenceDiagram
 Activation needs two things the owner produces: a repo-local ADR granting
 the steward merge authority, and a human-approved, human-merged PR flipping
 the delta to `ACTIVE`. Deactivation needs only a human statement and a
-delta flip. As of this writing no repo in the portfolio, including canon
-itself, has activated it. Canon's own delta records why: every agent session
-uses the owner's token, so the platform cannot tell a steward merge from an
-owner merge.
+delta flip. Canon itself has not activated it, and its delta records why:
+every agent session uses the owner's token, so the platform cannot tell a
+steward merge from an owner merge. (Adopters' status is checked by the
+census in the standards study, not assumed here.)
 
 ## 5. How agents are run
 

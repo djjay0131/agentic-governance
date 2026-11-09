@@ -151,8 +151,9 @@ L0 has its own lane. The Steward certifies a change, a separately run
 auditor session audits it, and the check script verifies every changed path
 against an allowlist read from the base branch, so a change cannot amend
 the rules that judge it. The lane ships inert. A repository activates it
-only through its own decision record and a human-merged pull request, and
-none in the portfolio has. The reason is recorded in canon's own delta:
+only through its own decision record and a human-merged pull request.
+Canon has not activated it [census to report adopters], and records why in
+its own delta:
 every agent session uses the owner's token, so the platform cannot tell a
 Steward merge from an owner merge.
 
