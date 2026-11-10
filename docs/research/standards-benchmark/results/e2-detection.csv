@@ -1,0 +1,73 @@
+row_type,fault,mode,exit_code,failing_checks,expected_catcher,match
+fault,F1,default,1,adr-status,adr-status,yes
+fault,F1,layout,1,adr-status,adr-status,yes
+fault,F1,l0,1,adr-status;l0-paths,adr-status,yes
+control,C-F1,default,0,,none,yes
+control,C-F1,layout,0,,none,yes
+control,C-F1,l0,0,,none,yes
+fault,F2,default,1,adr-index,adr-index,yes
+fault,F2,layout,1,adr-index,adr-index,yes
+fault,F2,l0,1,adr-index;l0-paths,adr-index,yes
+control,C-F2,default,0,,none,yes
+control,C-F2,layout,0,,none,yes
+control,C-F2,l0,0,,none,yes
+fault,F3,default,0,,layout,no
+fault,F3,layout,1,layout,layout,yes
+fault,F3,l0,0,,layout,no
+control,C-F3,default,0,,none,yes
+control,C-F3,layout,0,,none,yes
+control,C-F3,l0,0,,none,yes
+fault,F4,default,0,,layout,no
+fault,F4,layout,1,layout,layout,yes
+fault,F4,l0,1,l0-paths,layout,no
+control,C-F4,default,0,,none,yes
+control,C-F4,layout,0,,none,yes
+control,C-F4,l0,0,,none,yes
+fault,F5,default,0,,l0-paths,no
+fault,F5,layout,0,,l0-paths,no
+fault,F5,l0,1,l0-paths,l0-paths,yes
+control,C-F5,default,0,,none,yes
+control,C-F5,layout,0,,none,yes
+control,C-F5,l0,0,,none,yes
+fault,F6,default,0,,cert-present,no
+fault,F6,layout,0,,cert-present,no
+fault,F6,l0,1,cert-present,cert-present,yes
+control,C-F6,default,0,,none,yes
+control,C-F6,layout,0,,none,yes
+control,C-F6,l0,0,,none,yes
+fault,F7,default,0,,none,yes
+fault,F7,layout,0,,none,yes
+fault,F7,l0,0,,none,yes
+control,C-F7,default,0,,none,yes
+control,C-F7,layout,0,,none,yes
+control,C-F7,l0,0,,none,yes
+fault,F8,default,0,,none,yes
+fault,F8,layout,0,,none,yes
+fault,F8,l0,0,,none,yes
+control,C-F8,default,0,,none,yes
+control,C-F8,layout,0,,none,yes
+control,C-F8,l0,0,,none,yes
+fault,F9,default,0,,platform (audit check 3),no
+fault,F9,layout,0,,platform (audit check 3),no
+fault,F9,l0,0,,platform (audit check 3),no
+control,C-F9,default,0,,none,yes
+control,C-F9,layout,0,,none,yes
+control,C-F9,l0,0,,none,yes
+fault,F10,default,0,,audit check 6,no
+fault,F10,layout,0,,audit check 6,no
+fault,F10,l0,0,,audit check 6,no
+control,C-F10,default,0,,none,yes
+control,C-F10,layout,0,,none,yes
+control,C-F10,l0,0,,none,yes
+fault,F11,default,0,,audit check 9,no
+fault,F11,layout,0,,audit check 9,no
+fault,F11,l0,0,,audit check 9,no
+control,C-F11,default,0,,none,yes
+control,C-F11,layout,0,,none,yes
+control,C-F11,l0,0,,none,yes
+fault,F12,default,0,,none,yes
+fault,F12,layout,0,,none,yes
+fault,F12,l0,0,,none,yes
+control,C-F12,default,0,,none,yes
+control,C-F12,layout,0,,none,yes
+control,C-F12,l0,0,,none,yes

@@ -1,0 +1,18 @@
+{
+  "canon_refs": [
+    "01c7d69"
+  ],
+  "canon_sha": "01c7d6971b4362bd3ba4df18bf66186046a140c2",
+  "catalog_rows": 174,
+  "coders": [
+    "CL"
+  ],
+  "experiment": "E1",
+  "harness_sha": "562e0026dd151f1e493167079584e35d28ac9250",
+  "inputs": {
+    "coding-CL.csv": "05d2da1806603156f5549a93f7b0f652c32c5e1d21d61bfc54bcc9caa0635af8",
+    "requirements-catalog.csv": "e65ba282d9ba240c48c94cc613c853997c7350688fe426303a0a8ace1d428b2c"
+  },
+  "node_version": "v22.23.2",
+  "run_status": "PILOT"
+}
