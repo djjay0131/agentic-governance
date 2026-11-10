@@ -1,7 +1,7 @@
 # Coding scheme: governance coverage and enforcement depth
 
-Status: Draft (v0.1, used for the single-coder pilot)
-Last updated: 2026-11-09
+Status: Draft (v0.2)
+Last updated: 2026-11-10
 Owner: Project owner
 Design authority: `llm/specs/2026-11-09-standards-completeness-study-design.md` §4
 
@@ -65,6 +65,25 @@ Notes on the scale.
   caveat in `rationale`.
 - **Covered** means depth ≥ 2. **Enforced** means depth ≥ 4.
 
+## 3a. Columns
+
+Each coder copies `template-coding.csv` to `coding-<initials>.csv` (the
+harness scores every `coding-*.csv`, which is why the template is named
+otherwise) and fills every row.
+
+| Column | Content |
+|---|---|
+| `req_id` | Prefilled; do not edit |
+| `coder` | Your initials |
+| `canon_ref` | The **full** 40-character SHA of the canon commit you coded against (a short SHA cannot be expanded in a shallow clone, which broke manifest determinism in the harness) |
+| `scope` | Your scope value (§2), confirming or overriding the catalog's preliminary one |
+| `depth` | 0–5 (§3) |
+| `depth_label` | The label for that depth |
+| `weakest_part_depth` | Composite requirements only: the depth of the weakest substantive part (tie-break 2). Leave blank when the row is not composite; blank means "same as `depth`" |
+| `evidence` | Required for depth ≥ 1 (§4) |
+| `rationale` | One line; required for depth 0 |
+| `gap` | Optional: what is missing, and any backlog item it relates to |
+
 ## 4. Evidence rule
 
 Every depth ≥ 1 needs an `evidence` pointer of the form
@@ -90,9 +109,10 @@ Depth 0 needs a one-line `rationale` saying where the coder looked.
 
 | File | Who | Status |
 |---|---|---|
-| `coding-CL.csv` | Claude (single-coder pilot, canon `01c7d69`) | Done. Not a study result. |
+| `template-coding.csv` | Blank sheet, one row per catalog row | Copy this |
+| `coding-CL.csv` | Claude (single-coder pilot, canon `01c7d69`) | Done. Not a study result. **Coders must not open it until both codings are committed.** |
 | `coding-JC.csv` | Jason | To do |
-| `coding-AK.csv` | Atharva | To do |
+| `coding-YS.csv` | Yovi Solomon | To do |
 
 Agreement is weighted Cohen's κ on depth (linear weights) and unweighted κ
 on scope, computed by the study harness. Disagreements go to an

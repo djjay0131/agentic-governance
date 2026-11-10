@@ -16,6 +16,7 @@ standards, and how deeply it enforces what it covers.
 |---|---|
 | `requirements-catalog.csv` | 174 requirement rows from ten sources, each with clause or practice ID, a paraphrase, a preliminary scope screen, and a note on how far the clause numbering was confirmed |
 | `coding-scheme.md` | The codebook: scope screen, the 0–5 depth scale, evidence and tie-break rules |
+| `template-coding.csv` | Blank coding sheet for the study coders |
 | `coding-CL.csv` | Single-coder pilot coding by Claude against canon commit `01c7d69` (v0.9.1). **Not a study result.** |
 | `benchmark-landscape.md` | Which existing benchmarks apply (from Atharva's memory-benchmark survey), and the five we build |
 
