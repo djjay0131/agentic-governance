@@ -23,3 +23,7 @@ jobs:
         # v0.6.0, when it was found to be silently mis-binding the artifacts
         # slot and passing adr-index/adr-status on a nonexistent directory.
         run: node plugin/scripts/governance-checks.test.mjs
+      - name: Study harness tests (E1 scorer)
+        run: node plugin/scripts/study/score.test.mjs
+      - name: Study harness tests (E2 GovFault)
+        run: node plugin/scripts/study/govfault.test.mjs
