@@ -1,7 +1,7 @@
 # Standards-Completeness Study: Design
 
 Status: Draft
-Date: 2026-11-09
+Date: 2026-11-09 (roles revised 2026-11-10)
 Owner: Project owner
 Governance: agentic-governance v0.9.1
 Tracking issue: #32
@@ -63,7 +63,7 @@ for E1 is `docs/research/standards-benchmark/coding-scheme.md`.
 - **Instrument.** `requirements-catalog.csv` (174 rows). Requirements are
   paraphrased and identified by clause or control ID; nothing is quoted
   from the standards.
-- **Procedure.** Jason (JC) and Atharva (AK) each code every row
+- **Procedure.** Jason (JC) and Yovi Solomon (YS) each code every row
   independently against a pinned canon commit, after a joint calibration on
   ten rows that are then excluded from agreement. Chris Brown adjudicates
   disagreements and does not code. Claude's pilot file (`coding-CL.csv`) is
@@ -160,7 +160,8 @@ Requirements on the build:
 | Role | Who |
 |---|---|
 | Lead, coder JC | Jason Cusati |
-| Coder AK; owner of E5 and the memory-benchmark mapping | Atharva Kokane |
+| Coder YS (E1, E3) | Yovi Solomon |
+| Owner of E5 and the memory-benchmark mapping, once the state-of-the-art paper is done | Atharva Kokane |
 | Adjudicator | Chris Brown |
 | Harness build | OpenCode on agents4research, briefed and verified by Claude |
 | Pilot coding, drafting | Claude |
@@ -171,7 +172,7 @@ Requirements on the build:
   written for organizations, not repositories. The scope screen and the
   deployer framing rule (codebook §2) are the mitigation, and both are
   reported, so a reader can disagree with them.
-- **Coder bias.** Two of the coders built or used the canon. Claude, which
+- **Coder bias.** One coder built the canon and the other has used it. Claude, which
   helped write the canon, does not count as a coder. The adjudicator did
   not build it.
 - **Depth is not effectiveness.** A checked rule nobody runs is weaker than
