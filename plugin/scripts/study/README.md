@@ -1,32 +1,38 @@
 # Standards-Completeness Study Harness
 
 Status: Active
-Last updated: 2026-11-10
+Last updated: 2026-11-19
 Owner: Project owner (standards-completeness study)
 
 ## Purpose
 
 The deterministic half of the standards-completeness study (issue #32). It
-scores the E1 codings against `requirements-catalog.csv` and runs the E2
-GovFault fixture suite against the canonical checker. Both commands are plain
-Node with no dependencies, and both produce byte-identical outputs for the same
-inputs. Design authority:
-`llm/specs/2026-11-09-standards-completeness-study-design.md` §3.1, §3.2, §4.
+scores the E1 codings against `requirements-catalog.csv`, runs the E2 GovFault
+fixture suite against the canonical checker, and builds the E4 adopter census
+and human-attention ledger from a pinned manifest and a recorded API cache. All
+commands are plain Node with no dependencies, and all produce byte-identical
+outputs for the same inputs. Design authority:
+`llm/specs/2026-11-09-standards-completeness-study-design.md` §3.1, §3.2, §3.4,
+§4.
 
 ## Scope
 
-`score.mjs`, `govfault.mjs`, their shared `lib.mjs`, and the tests. It reads the
-catalog, the coding files, and `governance-checks.mjs`. It does not change
-policy, the catalog, a coding file, the checker, or the paper. E3, E4 and E5 are
-out of scope; nothing here calls an agent or an LLM.
+`score.mjs`, `govfault.mjs`, `census.mjs`, their shared `lib.mjs`, and the
+tests. It reads the catalog, the coding files, `governance-checks.mjs`, and the
+GitHub REST API. It does not change policy, the catalog, a coding file, the
+checker, or the paper. E3 and E5 are out of scope; nothing here calls an agent
+or an LLM.
 
 ## Requirements
 
 - Node.js (any recent version; no dependencies).
-- `git` on `PATH`: GovFault builds real repositories and the manifest records
-  the harness and canon commits.
+- `git` on `PATH`: GovFault builds real repositories, E4 checks out pinned
+  commits, and the manifest records the harness and canon commits.
 - The target data directory contains `requirements-catalog.csv` and one or more
-  `coding-*.csv` files.
+  `coding-*.csv` files for E1.
+- E4 `init` and `record` need a GitHub token from `GITHUB_TOKEN` (or the token
+  `gh auth token` prints). `run --offline` needs no token and makes no network
+  call.
 
 ## Path Resolution
 
@@ -150,20 +156,73 @@ a fixture defect. If F7, F8 or F12 is unexpectedly detected, or a clean control
 fails, the result is reported as a finding; the fixture is not adjusted to make
 it pass.
 
+## E4: `census.mjs`
+
+```bash
+# Pin the adopters listed in canon's delta §Related Repos:
+node plugin/scripts/study/census.mjs init --manifest <file.json> \
+  [--window-from <date>] [--window-to <date>] [--owner <login>] [--anon-map <file.json>]
+
+# Fetch every API response and repository snapshot the manifest needs:
+node plugin/scripts/study/census.mjs record --manifest <file.json> --cache <dir>
+
+# Compute only from the recorded cache, with no network:
+node plugin/scripts/study/census.mjs run --manifest <file.json> --cache <dir> --offline [--data <dir>]
+```
+
+`init` reads canon's delta §Related Repos and resolves, for each adopter, the
+default-branch head SHA, the adoption date (the oldest commit that touches the
+adopter's governance delta), and a ledger window. The generated manifest is
+committed, so later runs are pinned. It uses the REST API only.
+
+`--anon-map` accepts a JSON object mapping a full repository name to a display
+alias. When an alias is used, the committed manifest carries the alias and the
+real mapping is written to `<manifest>.local.json`, which stays untracked. The
+census, ledger, manifest and PR text then use only the alias.
+
+`record` fetches every response the run needs and stores the raw JSON on disk
+under `cache/requests/`, keyed by request. It follows REST pagination and stores
+the next-page link with each response. It also stores a depth-1 bare repository
+per adopter at the pinned SHA under `cache/repos/`. Credentials are used only to
+fetch and are removed from the cached repository's remote before it is stored.
+
+`run --offline` reads only the cache and never calls the network. For each
+adopter it creates a temporary clone of the pinned SHA and runs the command
+declared in the adopter's own `## Governance Check Command`, with
+`CLAUDE_PLUGIN_ROOT` pointing at this checkout's `plugin/` directory. The
+`<canon checkout>` placeholder and `${CLAUDE_PLUGIN_ROOT}` are resolved locally.
+It records the exit code and the `FAIL` check names.
+
+`e4-census.csv` has one row per adopter: pinned SHA, adoption date, default
+branch, pinned canon version, current canon version, pin status, declared check
+command, exit status and failing checks, CI workflow presence, whether the check
+is a required status check, branch protection state, and the count of direct
+(non-merge, non-PR) commits to the default branch after the adoption date.
+
+`e4-ledger.csv` has one row per PR merged in the window: PR number, declared
+level (title first, then label), level source, author type and the marker that
+determined it (`Co-Authored-By`, `Claude-Session`, `Generated-with`, or a PR
+body marker), number of human reviews (bots and the PR author excluded), hours
+from open to first human review, hours from open to merge, and whether the level
+label was reclassified downward from the issue-events history.
+
 ## Manifests and Determinism
 
-Every run writes a manifest beside its results: `results/manifest.json` for E1
-and `results/manifest-e2.json` for E2. Each records the canon SHA, harness SHA,
-the SHA-256 of every input file, and the Node version. E2 also records the base
-and case SHA of every fixture. There are no wall-clock timestamps in any data
-file, and no absolute paths: results depend on input content, not on where the
-data directory lives.
+Every run writes a manifest beside its results: `results/manifest.json` for E1,
+`results/manifest-e2.json` for E2, and `results/manifest-e4.json` for E4. Each
+records the canon SHA, harness SHA, the SHA-256 of every input file, and the
+Node version. E2 also records the base and case SHA of every fixture. E4 also
+records the input manifest hash, the cache index hash, and a cache hash over the
+sorted request responses and pinned repository refs. There are no wall-clock
+timestamps in any data file, and no absolute paths: results depend on input
+content, not on where the data directory lives. Rows and keys are sorted.
 
 ## Tests
 
 ```bash
 node plugin/scripts/study/score.test.mjs
 node plugin/scripts/study/govfault.test.mjs
+node plugin/scripts/study/census.test.mjs
 ```
 
 `score.test.mjs` checks kappa against a hand-computed 2x2 example (2/3) and a
@@ -175,7 +234,15 @@ asserts every clean control passes in every mode; and asserts F1–F6 are detect
 by the named check. It reports, without asserting, whether F7, F8 and F12 were
 detected.
 
-CI runs both test files after the checker regression tests
+`census.test.mjs` uses the synthetic fixture cache under
+`fixtures/census/`: two invented adopters, a small recorded REST cache, and two
+bare repositories. It runs `run --offline` twice and asserts byte-identical
+outputs, runs it in a second data directory, and runs it with network access
+disabled by a preload that throws on `fetch`, `http`, `https`, `net`, `tls` and
+`dns`. It also asserts the recorded census fields, marker detection, review
+counting, durations and downward reclassification.
+
+CI runs all three test files after the checker regression tests
 (`.github/workflows/ci.yml`).
 
 ## Limitations
@@ -186,6 +253,17 @@ CI runs both test files after the checker regression tests
   the deterministic checker, which is why F9–F11 are `match=no`.
 - The fixture delta is a fixed instance, not the canon's own allowlist. It
   exists to isolate one fault at a time, not to re-test allowlist membership.
+- E4 is an API snapshot pinned by the manifest. Branch protection, required
+  status checks and CI presence are recorded as the API returned them at record
+  time, not re-derived later.
+- Direct commits use the commit's associated-PR endpoint. A commit that has no
+  associated PR and no merge parent counts as direct; a squash or rebase commit
+  with an associated PR does not.
+- Author type is a marker heuristic, not proof of authorship. A PR with no
+  agent marker is recorded as human; the recorded marker column makes the
+  classification auditable.
+- A committed E4 cache is optional. The raw cache is a run input and is kept
+  out of git when it is large; `record` reproduces it from the pinned manifest.
 - Uncertain classifications remain semantic and go to human review.
 
 ## Cross-References

@@ -1,0 +1,20 @@
+{
+  "adopters": 8,
+  "cache_hash": "42e2945f76fb09d184240252512d0c19359e6d4222190685da5160ea35b9c4ad",
+  "canon_sha": "d7ae6d7cb35af326f27260161c35d50daa88498a",
+  "current_canon_version": "v0.9.1",
+  "experiment": "E4",
+  "harness_sha": "d7ae6d7cb35af326f27260161c35d50daa88498a",
+  "inputs": {
+    "cache_index": {
+      "file": "index.json",
+      "sha256": "03ae5cb8dca436ed1127f2dd952bda2291adae2a1db978b9ab38e2c7b6967806"
+    },
+    "manifest": {
+      "file": "e4-manifest.json",
+      "sha256": "2d3832a6ab946d334a59d51eb9261408a0ac6a5e8ad5ccd500d286d8abf225b2"
+    }
+  },
+  "ledger_rows": 211,
+  "node_version": "v22.23.3"
+}
