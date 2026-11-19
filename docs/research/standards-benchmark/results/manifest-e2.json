@@ -1,5 +1,5 @@
 {
-  "canon_sha": "562e0026dd151f1e493167079584e35d28ac9250",
+  "canon_sha": "d7ae6d7cb35af326f27260161c35d50daa88498a",
   "experiment": "E2",
   "fixtures": {
     "C-F1": {
@@ -99,11 +99,11 @@
       "main_sha": "7d13bb5114305256f9be54ceb4bf74e1f0961584"
     }
   },
-  "harness_sha": "562e0026dd151f1e493167079584e35d28ac9250",
+  "harness_sha": "d7ae6d7cb35af326f27260161c35d50daa88498a",
   "inputs": {
     "governance-checks.mjs": "997732d5e57c4f149b002decd46711f0a1606926598101b869b08d46220797b3",
     "govfault.mjs": "7274f979071b2655c50d47eda343024a341c4a0ff67886e723703565c67b0cc5",
     "lib.mjs": "9251379e886c7d8da6eecbfe1092f3e9db5c997775efb6fec30ad816585da093"
   },
-  "node_version": "v22.23.2"
+  "node_version": "v22.23.3"
 }
