@@ -1,0 +1,190 @@
+{
+  "repos": [
+    {
+      "default_branch": "main",
+      "pinned_sha": "5c407785eeb9c9f9e556fa7ddfc66cff2f28d1ee",
+      "refs": {
+        "refs/heads/main": "5c407785eeb9c9f9e556fa7ddfc66cff2f28d1ee"
+      },
+      "repo": "example-alpha/standard-adopter"
+    },
+    {
+      "default_branch": "master",
+      "pinned_sha": "ec940d8585dbacdc4836e267375853d7760be092",
+      "refs": {
+        "refs/heads/master": "ec940d8585dbacdc4836e267375853d7760be092"
+      },
+      "repo": "example-beta/floating-adopter"
+    }
+  ],
+  "requests": [
+    {
+      "file": "requests/8d57d49b52e8a18a1d962acf101e50b6e5686af4a846ac217a1de4d059a0a189.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter",
+      "next": null,
+      "sha256": "8f278b020a4b48ae296cb19a8377346ee1823cbe5db0967ef8138e9f4a9ee499",
+      "status": 200
+    },
+    {
+      "file": "requests/d1a11378070473e23ab7b81d508514546f32ecadb6aaad5a6541c7a53e3ef6b9.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/branches/main/protection",
+      "next": null,
+      "sha256": "c900a3905c8f1e28a5a7fdcdff3d7bb3cb2661f4ecc3224566a0a09fbdf0986c",
+      "status": 200
+    },
+    {
+      "file": "requests/e45d8c26e13c418ebed391cd6f59c793c5a40553316da08bbee4a055aa6e8986.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/commits?per_page=100&sha=main&since=2026-09-01T00%3A00%3A00Z",
+      "next": null,
+      "sha256": "97810e5348c2f89c33373f2846a679cde85bd834a0a6dbcdd54a837f9a53e0c7",
+      "status": 200
+    },
+    {
+      "file": "requests/f91e06e3c0a8f9dac3c3170b36cff33b4241392582eeeb3e409110207b19d656.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/commits/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/pulls",
+      "next": null,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "status": 200
+    },
+    {
+      "file": "requests/3d361864bfd93cb83affa751ee83e6490d3de7c9fcc3517f5200806e7f9b521c.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/commits/cccccccccccccccccccccccccccccccccccccccc/pulls",
+      "next": null,
+      "sha256": "d50877eb4d3eb83131e41924ce0cb409f01a65f698510bdcb91dadfb58656748",
+      "status": 200
+    },
+    {
+      "file": "requests/02a08cfce4623d12ff141a73ae8054fd33e289ea7c634ea005c769be8f89e878.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/contents/llm/governance/governance-delta.md?ref=5c407785eeb9c9f9e556fa7ddfc66cff2f28d1ee",
+      "next": null,
+      "sha256": "145ddd4eae95637103ff52e0cd984d8f73da6e8cbbfaaa5792074b169382a8bc",
+      "status": 200
+    },
+    {
+      "file": "requests/5c68c65c2e1c8a03e400b75381000479c4564bb0b4f118141ac9969712b04255.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/git/trees/5c407785eeb9c9f9e556fa7ddfc66cff2f28d1ee?recursive=1",
+      "next": null,
+      "sha256": "b80b5d7354f334f604812961bc196eaae4966d9aee77f270153899d7aeed915c",
+      "status": 200
+    },
+    {
+      "file": "requests/ee50b3bd71d5f8c035eb1bbe4afdee5150a83dcf6f3429db139267e7eda77a3d.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/issues/10/events?per_page=100",
+      "next": null,
+      "sha256": "ad23a1ff0f0ae2e89dde97ea4d1b68351b5e28dd4323e5d1b94e87f66609a008",
+      "status": 200
+    },
+    {
+      "file": "requests/fb0016c5f0b99607720894cd6828c47af2299eea4747fc05922fe13a5d8de1c7.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/issues/11/events?per_page=100",
+      "next": null,
+      "sha256": "2e0255a03a299104281d668cf2057afec10bfea9841577ae67104b8b72765205",
+      "status": 200
+    },
+    {
+      "file": "requests/a4515ef9cafac7809d5db5144d8091282ec905901ff1a5db56b64c9c2d8c9a04.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/pulls?direction=desc&per_page=100&since=2026-09-01T00%3A00%3A00Z&sort=updated&state=closed",
+      "next": null,
+      "sha256": "12d8640effa7a2eb661b7d76d5ce5b0875a12104daf85185c42ce7e48d095926",
+      "status": 200
+    },
+    {
+      "file": "requests/622cf60a71c668d0e5f5861b2c20d8287f27105f5f12dc926284d6f2b145521c.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/pulls/10/commits?per_page=100",
+      "next": null,
+      "sha256": "cddef788f8a2a192d520d295c42ece1a9c7789ac903bf33288168a9887cbbcc9",
+      "status": 200
+    },
+    {
+      "file": "requests/5277ada5d70861e3cfda93553b38a4f3e5d4990ee97062bfa3dc332b9dac812d.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/pulls/10/reviews?per_page=100",
+      "next": null,
+      "sha256": "49418942e3618445553db62a8afffba2bfb3585efc787058594fed6a1cbef0f1",
+      "status": 200
+    },
+    {
+      "file": "requests/1f7f244e13a103e1929fa446a1344e3e27663499a2f2721b9cc8db24d9fe6788.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/pulls/11/commits?per_page=100",
+      "next": null,
+      "sha256": "0e95221b017af2883e372d35fbb04880f5fd0815fdaab0c7ad7ca95a5336eb78",
+      "status": 200
+    },
+    {
+      "file": "requests/5e37bf3feba482f972f4e7e239cdd74288cf3564971350a4d161b1d1203ab255.json",
+      "key": "GET https://api.github.com/repos/example-alpha/standard-adopter/pulls/11/reviews?per_page=100",
+      "next": null,
+      "sha256": "3941aca9fcce860a76eec467f4b2177f23d3eb4de756aa35ec887d3e2f5696b0",
+      "status": 200
+    },
+    {
+      "file": "requests/7764400cd0d00fec9428390ea98afff93d9ff5e5c1e69e77c49dedfc519ca426.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter",
+      "next": null,
+      "sha256": "463a638419275af845d951f8e95b0fbe199ad31a842e657c4c76e89450a4c1c8",
+      "status": 200
+    },
+    {
+      "file": "requests/af5c77f86e1a64cb1ffdc3c66e6d940a445c08227ceb31dbb78d17b5b6882047.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/branches/master/protection",
+      "next": null,
+      "sha256": "858190eb192215c04521753715c5dfcc0d41f228c45b4f010414f5df578aafc7",
+      "status": 404
+    },
+    {
+      "file": "requests/862a615ac66eeefca4b5dd796f121b32faf4a04ac003472f7abb96d1dfa130a1.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/commits?per_page=100&sha=master&since=2026-09-05T00%3A00%3A00Z",
+      "next": null,
+      "sha256": "cff3c874b4d8bd4d9488d96e005ca13e87f38936ecd9d8102b4031eb5a1d178b",
+      "status": 200
+    },
+    {
+      "file": "requests/a7d54e3f8801f92b12fb6090402541b11dc171d6391cc4c2736bf867f8993a9c.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/commits/dddddddddddddddddddddddddddddddddddddddd/pulls",
+      "next": null,
+      "sha256": "a9983e6617902ac94ccd08caa13d705c2ef4c779ac94d6a6018f01a517188ff5",
+      "status": 200
+    },
+    {
+      "file": "requests/062e4c58fa5c175d118edb228c45d3c6305e907b9f11b931516120ff199c0d42.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/contents/llm/governance/governance-delta.md?ref=ec940d8585dbacdc4836e267375853d7760be092",
+      "next": null,
+      "sha256": "d8763efea91e32967ee02b9b999463af49cea089ca2bf192c5dd4349af6db75f",
+      "status": 200
+    },
+    {
+      "file": "requests/54784cfa3e5ece0597e68a1ca69acee949aaf839b912bbb186dc14a3bdf9376f.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/git/trees/ec940d8585dbacdc4836e267375853d7760be092?recursive=1",
+      "next": null,
+      "sha256": "b5ac79b36e4ff68b9a347c5c9ad753ee613cca7481202d5a56b5a031dc03b442",
+      "status": 200
+    },
+    {
+      "file": "requests/bb294e16c14caa183246cf056bb972ad30cf01c5b4b246c8277349acca0ed679.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/issues/20/events?per_page=100",
+      "next": null,
+      "sha256": "bc3afb3fd225820767d5f0b49befaf83e066912fc839a5895ed52b2a61802157",
+      "status": 200
+    },
+    {
+      "file": "requests/466ac298269a2fe96c9a49d6b08a7d5641d362fe3cb897fdf4a94306ea41bd16.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/pulls?direction=desc&per_page=100&since=2026-09-05T00%3A00%3A00Z&sort=updated&state=closed",
+      "next": null,
+      "sha256": "69098eb57f31b876544d5b2d53793a871cdf15dca18084b5c3494e83529844d3",
+      "status": 200
+    },
+    {
+      "file": "requests/8bfcf5f74088877b5e7a826310d27e6b250b5767def718037ca8592417087f24.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/pulls/20/commits?per_page=100",
+      "next": null,
+      "sha256": "4fc8fd7c9aa49ecf7dea5f6d67574195faa5dbff40eede7d25b70fb548cc57d3",
+      "status": 200
+    },
+    {
+      "file": "requests/8f5e67740e1ddbca55345dca4ea14ee2b1f2ad771821c6eea534e813a79952ba.json",
+      "key": "GET https://api.github.com/repos/example-beta/floating-adopter/pulls/20/reviews?per_page=100",
+      "next": null,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "status": 200
+    }
+  ]
+}

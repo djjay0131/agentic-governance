@@ -27,3 +27,5 @@ jobs:
         run: node plugin/scripts/study/score.test.mjs
       - name: Study harness tests (E2 GovFault)
         run: node plugin/scripts/study/govfault.test.mjs
+      - name: Study harness tests (E4 census)
+        run: node plugin/scripts/study/census.test.mjs

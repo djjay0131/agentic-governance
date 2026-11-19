@@ -1,0 +1,26 @@
+{
+  "adopters": [
+    {
+      "adoption_date": "2026-09-01",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-01",
+        "to": "2026-11-01"
+      },
+      "repo": "example-alpha/standard-adopter",
+      "sha": "5c407785eeb9c9f9e556fa7ddfc66cff2f28d1ee"
+    },
+    {
+      "adoption_date": "2026-09-05",
+      "default_branch": "master",
+      "ledger_window": {
+        "from": "2026-09-05",
+        "to": "2026-11-01"
+      },
+      "repo": "example-beta/floating-adopter",
+      "sha": "ec940d8585dbacdc4836e267375853d7760be092"
+    }
+  ],
+  "canon_repository": "example/agentic-governance",
+  "experiment": "E4"
+}

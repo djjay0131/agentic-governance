@@ -1,0 +1,86 @@
+{
+  "adopters": [
+    {
+      "adoption_date": "2026-09-08",
+      "default_branch": "master",
+      "ledger_window": {
+        "from": "2026-09-08",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/agentic-kg",
+      "sha": "0792385174a5de307ceaca323df74b54f0a87272"
+    },
+    {
+      "adoption_date": "2026-08-21",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-08-21",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/agentic-kgcs",
+      "sha": "ac51b1a72c93800b6c27eac012878da53ef8bfd0"
+    },
+    {
+      "adoption_date": "2026-09-10",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-10",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/agentic-kgis",
+      "sha": "22631e5923e21e8ac7241e1d49346c7b622cdc05"
+    },
+    {
+      "adoption_date": "2026-09-08",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-08",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/ai-empirical-se-chapter",
+      "sha": "25eff0c49588dd30ddf7cb46cee00110d6dc7e56"
+    },
+    {
+      "adoption_date": "2026-09-10",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-10",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/baseball-ai",
+      "sha": "e38e49fec8edb8d833fddc0f28ce2d645bbc9dd5"
+    },
+    {
+      "adoption_date": "2026-08-29",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-08-29",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/fantasy-sports",
+      "sha": "c2e517386f2517f51fdfd3a6b5968e46bc9e9386"
+    },
+    {
+      "adoption_date": "2026-09-10",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-10",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/home-network",
+      "sha": "c74c0b86d79d672f27c3312ece88400c16a432a2"
+    },
+    {
+      "adoption_date": "2026-09-10",
+      "default_branch": "main",
+      "ledger_window": {
+        "from": "2026-09-10",
+        "to": "2026-11-19"
+      },
+      "repo": "djjay0131/mats-12-application",
+      "sha": "ebc0270d64e12418bfced2fc5f5bde81c437ceaa"
+    }
+  ],
+  "canon_repository": "djjay0131/agentic-governance",
+  "experiment": "E4"
+}
